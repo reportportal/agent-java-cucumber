@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.epam.reportportal.service.BatchedReportPortalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +65,7 @@ public class Utils {
 
 		@Override
 		public ReportPortalService get() {
-			return Injector.getInstance().getBean(ReportPortalService.class);
+			return Injector.getInstance().getBean(BatchedReportPortalService.class);
 		}
 	});
 
@@ -78,7 +79,7 @@ public class Utils {
 		startLaunchRQ.setStartTime(Calendar.getInstance().getTime());
 		startLaunchRQ.setTags(listenerParameters.get().getTags());
 		startLaunchRQ.setMode(listenerParameters.get().getMode());
-		EntryCreatedRS rs = null;
+		EntryCreatedRS rs;
 		String id = null;
 		try {
 			rs = reportPortalService.get().startLaunch(startLaunchRQ);
