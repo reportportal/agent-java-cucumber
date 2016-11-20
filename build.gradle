@@ -21,5 +21,5 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    version = '3.0'
+    gradleVersion = '3.1'
 }
