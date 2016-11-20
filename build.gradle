@@ -3,7 +3,7 @@ plugins {
     id "com.jfrog.bintray" version "1.7"
 }
 apply plugin: 'java'
-apply from: 'release.gradle'
+apply from: 'release-lib.gradle'
 apply from: 'quality.gradle'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
