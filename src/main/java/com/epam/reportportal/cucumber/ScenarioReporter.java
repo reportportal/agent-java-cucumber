@@ -53,7 +53,7 @@ import gherkin.formatter.model.Step;
 public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
 
-	private String rootSuiteId;
+	protected String rootSuiteId;
 
 	public ScenarioReporter() {
 		super();
