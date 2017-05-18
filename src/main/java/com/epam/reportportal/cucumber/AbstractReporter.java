@@ -20,159 +20,128 @@
  */
 package com.epam.reportportal.cucumber;
 
-import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Queue;
-
+import com.epam.reportportal.guice.Injector;
+import com.epam.reportportal.listeners.ListenerParameters;
+import com.epam.reportportal.listeners.Statuses;
+import com.epam.reportportal.service.ReportPortal;
+import com.epam.reportportal.service.ReportPortalClient;
+import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
+import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
+import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
+import gherkin.formatter.Formatter;
+import gherkin.formatter.Reporter;
+import gherkin.formatter.model.*;
+import io.reactivex.Maybe;
 import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rp.com.google.common.base.Supplier;
+import rp.com.google.common.base.Suppliers;
 
-import com.epam.reportportal.listeners.Statuses;
-import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
-import com.google.common.io.ByteSource;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import gherkin.formatter.Formatter;
-import gherkin.formatter.Reporter;
-import gherkin.formatter.model.*;
+import static com.epam.reportportal.cucumber.Utils.extractTags;
 
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
- * 
+ *
  * @author Sergey_Gvozdyukevich
- * 
  */
 public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 
 	protected static final String COLON_INFIX = ": ";
 
-	protected static class ScenarioModel {
-		private String id;
-		private Queue<Step> steps;
-		private String status;
-		private StringBuilder issueComments;
-
-		public ScenarioModel(String newId) {
-			id = newId;
-			steps = new ArrayDeque<Step>();
-			status = Statuses.PASSED;
-			issueComments = new StringBuilder();
-		}
-
-		public String getId() {
-			return id;
-		}
-
-		public void addStep(Step step) {
-			steps.add(step);
-		}
-
-		public Step getNextStep() {
-			return steps.poll();
-		}
-
-		public boolean noMoreSteps() {
-			return steps.isEmpty();
-		}
-
-		public void updateStatus(String newStatus) {
-			if (!newStatus.equals(status)) {
-				if (Statuses.FAILED.equals(status) || Statuses.FAILED.equals(newStatus)) {
-					status = Statuses.FAILED;
-				} else {
-					status = Statuses.SKIPPED;
-				}
-			}
-		}
-
-		public String getStatus() {
-			return status;
-		}
-
-		public void appendIssue(String issue) {
-			issueComments.append("\n").append(issue);
-		}
-
-		public String getIssueComments() {
-			return issueComments.toString();
-		}
-	}
-
 	/* formatter context */
-	protected String currentLaunchId;
 	protected String currentFeatureUri;
-	protected String currentFeatureId;
+
+	protected Maybe<String> currentFeatureId;
 	protected ScenarioModel currentScenario;
 	protected String stepPrefix;
 
 	private Queue<String> outlineIterations;
 	private Boolean inBackground;
 
+	private AtomicBoolean finished = new AtomicBoolean(false);
+
+	protected Supplier<ReportPortal> RP = Suppliers.memoize(new Supplier<ReportPortal>() {
+
+		/* should no be lazy */
+		private final Date startTime = Calendar.getInstance().getTime();
+
+		@Override
+		public ReportPortal get() {
+			final Injector injector = Injector.createDefault();
+			ListenerParameters parameters = injector.getBean(ListenerParameters.class);
+			ReportPortalClient client = injector.getBean(ReportPortalClient.class);
+
+			StartLaunchRQ rq = new StartLaunchRQ();
+			rq.setName(parameters.getLaunchName());
+			rq.setStartTime(startTime);
+			rq.setMode(parameters.getLaunchRunningMode());
+			rq.setTags(parameters.getTags());
+			rq.setDescription(parameters.getDescription());
+
+			ReportPortal rp = ReportPortal.startLaunch(client, parameters.getBatchLogsSize(), parameters.isConvertImage(), rq);
+
+			//TODO???
+			startRootItem();
+			finished = new AtomicBoolean(false);
+			return rp;
+		}
+	});
+
 	protected AbstractReporter() {
-		currentLaunchId = null;
-		currentFeatureUri = null;
-		currentFeatureId = null;
-		currentScenario = null;
 		outlineIterations = new ArrayDeque<String>();
 		stepPrefix = "";
-
 		inBackground = false;
-	}
-
-	/**
-	 * Start RP launch
-	 */
-	protected void beforeLaunch() {
-		currentLaunchId = Utils.startLaunch();
 	}
 
 	/**
 	 * Finish RP launch
 	 */
 	protected void afterLaunch() {
-		Utils.finishLaunch(currentLaunchId);
-		currentLaunchId = null;
+		FinishExecutionRQ finishLaunchRq = new FinishExecutionRQ();
+		finishLaunchRq.setEndTime(Calendar.getInstance().getTime());
+
+		RP.get().finishLaunch(finishLaunchRq);
 	}
-
-	// TODO will not be needed in RP 2.0
-	protected abstract void startRootItem();
-
-	// TODO will not be needed in RP 2.0
-	protected abstract void finishRootItem();
-
-	// TODO will not be needed in RP 2.0
-	protected abstract String getRootItemId();
 
 	/**
 	 * Start Cucumber feature
-	 * 
+	 *
 	 * @param feature
 	 */
 	protected void beforeFeature(Feature feature) {
-		currentFeatureId = Utils.startNonLeafNode(currentLaunchId, getRootItemId(),
-				Utils.buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null), currentFeatureUri, feature.getTags(),
-				getFeatureTestItemType());
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setDescription(Utils.buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
+		rq.setName(currentFeatureUri);
+		rq.setTags(extractTags(feature.getTags()));
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType(getFeatureTestItemType());
+
+		currentFeatureId = RP.get().startTestItem(getRootItemId(), rq);
 	}
 
 	/**
 	 * Finish Cucumber feature
 	 */
 	protected void afterFeature() {
-		Utils.finishTestItem(currentFeatureId);
+		Utils.finishTestItem(RP.get(), currentFeatureId);
 		currentFeatureId = null;
 	}
 
 	/**
 	 * Start Cucumber scenario
-	 * 
+	 *
 	 * @param scenario
-	 * @param outlineIteration
-	 *            - suffix to append to scenario name, can be null
+	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
-		String id = Utils.startNonLeafNode(currentLaunchId, currentFeatureId,
+		Maybe<String> id = Utils.startNonLeafNode(RP.get(), currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
 				currentFeatureUri + ":" + scenario.getLine(), scenario.getTags(), getScenarioTestItemType());
 		currentScenario = new ScenarioModel(id);
@@ -182,68 +151,63 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Finish Cucumber scenario
 	 */
 	protected void afterScenario() {
-		Utils.finishTestItem(currentScenario.getId(), currentScenario.getStatus(), currentScenario.getIssueComments());
+		Utils.finishTestItem(RP.get(), currentScenario.getId(), currentScenario.getStatus(), currentScenario.getIssueComments());
 		currentScenario = null;
 	}
 
 	/**
 	 * Start Cucumber step
-	 * 
+	 *
 	 * @param step
 	 */
 	protected abstract void beforeStep(Step step);
 
 	/**
 	 * Finish Cucumber step
-	 * 
+	 *
 	 * @param result
 	 */
 	protected abstract void afterStep(Result result);
 
 	/**
 	 * Called when before/after-hooks are started
-	 * 
-	 * @param isBefore
-	 *            - if true, before-hook is started, if false - after-hook
+	 *
+	 * @param isBefore - if true, before-hook is started, if false - after-hook
 	 */
 	protected abstract void beforeHooks(Boolean isBefore);
 
 	/**
 	 * Called when before/after-hooks are finished
-	 * 
-	 * @param isBefore
-	 *            - if true, before-hook is finished, if false - after-hook
+	 *
+	 * @param isBefore - if true, before-hook is finished, if false - after-hook
 	 */
 	protected abstract void afterHooks(Boolean isBefore);
 
 	/**
 	 * Called when a specific before/after-hook is finished
-	 * 
+	 *
 	 * @param match
 	 * @param result
-	 * @param isBefore
-	 *            - if true, before-hook, if false - after-hook
+	 * @param isBefore - if true, before-hook, if false - after-hook
 	 */
 	protected abstract void hookFinished(Match match, Result result, Boolean isBefore);
 
 	/**
 	 * Report test item result and error (if present)
-	 * 
-	 * @param result
-	 *            - Cucumber result object
-	 * @param message
-	 *            - optional message to be logged in addition
+	 *
+	 * @param result  - Cucumber result object
+	 * @param message - optional message to be logged in addition
 	 */
 	protected void reportResult(Result result, String message) {
 		String cukesStatus = result.getStatus();
 		String level = Utils.mapLevel(cukesStatus);
 		String errorMessage = result.getErrorMessage();
 		if (errorMessage != null) {
-			Utils.sendLog(getLogDestination(), errorMessage, level, null);
+			Utils.sendLog(errorMessage, level, null);
 		}
 
 		if (message != null) {
-			Utils.sendLog(getLogDestination(), message, level, null);
+			Utils.sendLog(message, level, null);
 		}
 
 		if (currentScenario != null) {
@@ -252,22 +216,15 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	/**
-	 * Return current test item for logging
-	 * 
-	 * @return item id
-	 */
-	protected abstract String getLogDestination();
-
-	/**
 	 * Return RP test item name mapped to Cucumber feature
-	 * 
+	 *
 	 * @return test item name
 	 */
 	protected abstract String getFeatureTestItemType();
 
 	/**
 	 * Return RP test item name mapped to Cucumber scenario
-	 * 
+	 *
 	 * @return test item name
 	 */
 	protected abstract String getScenarioTestItemType();
@@ -310,14 +267,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		}
 
 		file.setName(embeddingName);
-		file.setContent(ByteSource.wrap(data));
+		file.setContent(data);
 
-		Utils.sendLog(getLogDestination(), embeddingName, "UNKNOWN", file);
+		Utils.sendLog(embeddingName, "UNKNOWN", file);
 	}
 
 	@Override
 	public void write(String text) {
-		Utils.sendLog(getLogDestination(), text, "INFO", null);
+		Utils.sendLog(text, "INFO", null);
 	}
 
 	@Override
@@ -332,10 +289,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void feature(Feature feature) {
-		if (currentLaunchId == null) {
-			beforeLaunch();
-			startRootItem();
-		}
 		beforeFeature(feature);
 	}
 
@@ -398,7 +351,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void close() {
-		if (currentLaunchId != null) {
+		if (finished.compareAndSet(false, true)){
 			finishRootItem();
 			afterLaunch();
 		}
@@ -408,4 +361,66 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	public void eof() {
 		afterFeature();
 	}
+
+	// TODO will not be needed in RP 2.0
+	protected abstract void startRootItem();
+
+	// TODO will not be needed in RP 2.0
+	protected abstract void finishRootItem();
+
+	// TODO will not be needed in RP 2.0
+	protected abstract Maybe<String> getRootItemId();
+
+	protected static class ScenarioModel {
+		private Maybe<String> id;
+		private Queue<Step> steps;
+		private String status;
+		private StringBuilder issueComments;
+
+		public ScenarioModel(Maybe<String> newId) {
+			id = newId;
+			steps = new ArrayDeque<Step>();
+			status = Statuses.PASSED;
+			issueComments = new StringBuilder();
+		}
+
+		public Maybe<String> getId() {
+			return id;
+		}
+
+		public void addStep(Step step) {
+			steps.add(step);
+		}
+
+		public Step getNextStep() {
+			return steps.poll();
+		}
+
+		public boolean noMoreSteps() {
+			return steps.isEmpty();
+		}
+
+		public void updateStatus(String newStatus) {
+			if (!newStatus.equals(status)) {
+				if (Statuses.FAILED.equals(status) || Statuses.FAILED.equals(newStatus)) {
+					status = Statuses.FAILED;
+				} else {
+					status = Statuses.SKIPPED;
+				}
+			}
+		}
+
+		public String getStatus() {
+			return status;
+		}
+
+		public void appendIssue(String issue) {
+			issueComments.append("\n").append(issue);
+		}
+
+		public String getIssueComments() {
+			return issueComments.toString();
+		}
+	}
+
 }
