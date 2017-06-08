@@ -20,72 +20,59 @@
  */
 package com.epam.reportportal.cucumber;
 
-import java.util.Calendar;
-
-import com.epam.reportportal.listeners.ReportPortalListenerContext;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
-
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
-import gherkin.formatter.model.Scenario;
 import gherkin.formatter.model.Step;
+import io.reactivex.Maybe;
+import rp.com.google.common.base.Supplier;
+import rp.com.google.common.base.Suppliers;
+
+import java.util.Calendar;
 
 /**
  * Cucumber reporter for ReportPortal that reports scenarios as test methods.
- * 
+ * <p>
  * Mapping between Cucumber and ReportPortal is as follows:
  * <ul>
  * <li>feature - TEST</li>
  * <li>scenario - STEP</li>
  * <li>step - log item</li>
  * </ul>
- * 
+ * <p>
  * Dummy "Root Test Suite" is created because in current implementation of RP
  * test items cannot be immediate children of a launch
- * 
+ * <p>
  * Background steps and hooks are reported as part of corresponding scenarios.
  * Outline example rows are reported as individual scenarios with [ROW NUMBER]
  * after the name.
- * 
+ *
  * @author Sergey_Gvozdyukevich
- * 
  */
 public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
 
-	protected String rootSuiteId;
-
-	public ScenarioReporter() {
-		super();
-		rootSuiteId = null;
-	}
-
-	@Override
-	protected void beforeScenario(Scenario scenario, String outlineIteration) {
-		super.beforeScenario(scenario, outlineIteration);
-		ReportPortalListenerContext.setRunningNowItemId(currentScenario.getId());
-	}
-
-	@Override
-	protected void afterScenario() {
-		super.afterScenario();
-		ReportPortalListenerContext.setRunningNowItemId(null);
-	}
+	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
+		@Override
+		public Maybe<String> get() {
+			StartTestItemRQ rq = new StartTestItemRQ();
+			rq.setName("Root User Story");
+			rq.setStartTime(Calendar.getInstance().getTime());
+			rq.setType("STORY");
+			return RP.get().startTestItem(rq);
+		}
+	});
 
 	@Override
 	protected void beforeStep(Step step) {
 		String decoratedStepName = decorateMessage(Utils.buildStatementName(step, stepPrefix, " ", null));
 		String multilineArg = Utils.buildMultilineArgument(step);
-		Utils.sendLog(getLogDestination(), decoratedStepName + multilineArg, "INFO", null);
+		Utils.sendLog(decoratedStepName + multilineArg, "INFO", null);
 	}
 
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, decorateMessage("STEP " + result.getStatus().toUpperCase()));
-		String comments = Utils.buildIssueComments(result);
-		if (comments != null) {
-			currentScenario.appendIssue(comments);
-		}
 	}
 
 	@Override
@@ -104,11 +91,6 @@ public class ScenarioReporter extends AbstractReporter {
 	}
 
 	@Override
-	protected String getLogDestination() {
-		return currentScenario == null ? null : currentScenario.getId();
-	}
-
-	@Override
 	protected String getFeatureTestItemType() {
 		return "TEST";
 	}
@@ -118,32 +100,24 @@ public class ScenarioReporter extends AbstractReporter {
 		return "STEP";
 	}
 
+
 	@Override
-	protected void startRootItem() {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName("Root Test Suite");
-		rq.setLaunchId(currentLaunchId);
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("SUITE");
-		rootSuiteId = Utils.startTestItem(rq, null);
+	protected Maybe<String> getRootItemId() {
+		return rootSuiteId.get();
 	}
 
 	@Override
-	protected void finishRootItem() {
-		Utils.finishTestItem(rootSuiteId);
+	protected void afterLaunch() {
+		Utils.finishTestItem(RP.get(), rootSuiteId.get());
 		rootSuiteId = null;
-	}
 
-	@Override
-	protected String getRootItemId() {
-		return rootSuiteId;
+		super.afterLaunch();
 	}
 
 	/**
 	 * Add separators to log item to distinguish from real log messages
-	 * 
-	 * @param message
-	 *            to decorate
+	 *
+	 * @param message to decorate
 	 * @return decorated message
 	 */
 	private String decorateMessage(String message) {

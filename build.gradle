@@ -16,7 +16,9 @@ repositories {
 }
 
 dependencies {
-    compile 'com.epam.reportportal:client-java-core:2.6.0'
+    compile 'com.epam.reportportal:client-java:3.0.2'
+    compile 'com.epam.reportportal:commons-model:3.0.0'
+
     compileOnly 'info.cukes:gherkin:2.12.2'
 }
 

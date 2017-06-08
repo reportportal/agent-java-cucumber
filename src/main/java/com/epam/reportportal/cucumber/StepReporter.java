@@ -20,20 +20,19 @@
  */
 package com.epam.reportportal.cucumber;
 
-import java.util.Calendar;
-
-import com.epam.reportportal.listeners.ReportPortalListenerContext;
 import com.epam.reportportal.listeners.Statuses;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
-
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
 import gherkin.formatter.model.Step;
+import io.reactivex.Maybe;
+
+import java.util.Calendar;
 
 /**
  * Cucumber reporter for ReportPortal that reports individual steps as test
  * methods.
- * 
+ * <p>
  * Mapping between Cucumber and ReportPortal is as follows:
  * <ul>
  * <li>feature - SUITE</li>
@@ -45,13 +44,12 @@ import gherkin.formatter.model.Step;
  * name. Hooks are reported as BEFORE/AFTER_METHOD items (NOTE: all screenshots
  * created in hooks will be attached to these, and not to the actual failing
  * steps!)
- * 
+ *
  * @author Sergey_Gvozdyukevich
- * 
  */
 public class StepReporter extends AbstractReporter {
-	protected String currentStepId;
-	protected String hookStepId;
+	protected Maybe<String> currentStepId;
+	protected Maybe<String> hookStepId;
 	protected String hookStatus;
 
 	public StepReporter() {
@@ -61,59 +59,46 @@ public class StepReporter extends AbstractReporter {
 		hookStatus = null;
 	}
 
-	@Override
-	protected void startRootItem() {
-		// noop
-	}
 
 	@Override
-	protected void finishRootItem() {
-		// noop
-	}
-
-	@Override
-	protected String getRootItemId() {
+	protected Maybe<String> getRootItemId() {
 		return null;
 	}
 
 	@Override
 	protected void beforeStep(Step step) {
 		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setLaunchId(currentLaunchId);
 		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
-		currentStepId = Utils.startTestItem(rq, currentScenario.getId());
-		ReportPortalListenerContext.setRunningNowItemId(currentStepId);
+		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}
 
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		String comments = Utils.buildIssueComments(result);
-		Utils.finishTestItem(currentStepId, Utils.mapStatus(result.getStatus()), comments == null ? "" : comments);
+		Utils.finishTestItem(RP.get(), currentStepId, Utils.mapStatus(result.getStatus()));
 		currentStepId = null;
-		ReportPortalListenerContext.setRunningNowItemId(null);
 	}
 
 	@Override
 	protected void beforeHooks(Boolean isBefore) {
 		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setLaunchId(currentLaunchId);
+
 		rq.setName(isBefore ? "Before hooks" : "After hooks");
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
-		hookStepId = Utils.startTestItem(rq, currentScenario.getId());
-		ReportPortalListenerContext.setRunningNowItemId(hookStepId);
+
+		hookStepId = RP.get().startTestItem(currentScenario.getId(), rq);
+
 		hookStatus = Statuses.PASSED;
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		Utils.finishTestItem(hookStepId, hookStatus, "");
+		Utils.finishTestItem(RP.get(), hookStepId, hookStatus);
 		hookStepId = null;
-		ReportPortalListenerContext.setRunningNowItemId(null);
 	}
 
 	@Override
@@ -122,11 +107,6 @@ public class StepReporter extends AbstractReporter {
 		if (result.getStatus().equals("failed")) {
 			hookStatus = Statuses.FAILED;
 		}
-	}
-
-	@Override
-	protected String getLogDestination() {
-		return currentStepId == null ? hookStepId : currentStepId;
 	}
 
 	@Override
