@@ -52,7 +52,7 @@ import java.util.Calendar;
 public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
 
-	private Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
+	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
 		@Override
 		public Maybe<String> get() {
 			StartTestItemRQ rq = new StartTestItemRQ();
