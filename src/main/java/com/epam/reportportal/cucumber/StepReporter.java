@@ -59,15 +59,6 @@ public class StepReporter extends AbstractReporter {
 		hookStatus = null;
 	}
 
-	@Override
-	protected void startRootItem() {
-		// noop
-	}
-
-	@Override
-	protected void finishRootItem() {
-		// noop
-	}
 
 	@Override
 	protected Maybe<String> getRootItemId() {

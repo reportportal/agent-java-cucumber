@@ -25,6 +25,8 @@ import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
 import gherkin.formatter.model.Step;
 import io.reactivex.Maybe;
+import rp.com.google.common.base.Supplier;
+import rp.com.google.common.base.Suppliers;
 
 import java.util.Calendar;
 
@@ -50,7 +52,16 @@ import java.util.Calendar;
 public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
 
-	private Maybe<String> rootSuiteId;
+	private Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
+		@Override
+		public Maybe<String> get() {
+			StartTestItemRQ rq = new StartTestItemRQ();
+			rq.setName("Root User Story");
+			rq.setStartTime(Calendar.getInstance().getTime());
+			rq.setType("STORY");
+			return RP.get().startTestItem(rq);
+		}
+	});
 
 	@Override
 	protected void beforeStep(Step step) {
@@ -89,25 +100,18 @@ public class ScenarioReporter extends AbstractReporter {
 		return "STEP";
 	}
 
-	@Override
-	protected void startRootItem() {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName("Root Test Suite");
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("SUITE");
-		rootSuiteId = RP.get().startTestItem(rq);
-
-	}
-
-	@Override
-	protected void finishRootItem() {
-		Utils.finishTestItem(RP.get(), rootSuiteId);
-		rootSuiteId = null;
-	}
 
 	@Override
 	protected Maybe<String> getRootItemId() {
-		return rootSuiteId;
+		return rootSuiteId.get();
+	}
+
+	@Override
+	protected void afterLaunch() {
+		Utils.finishTestItem(RP.get(), rootSuiteId.get());
+		rootSuiteId = null;
+
+		super.afterLaunch();
 	}
 
 	/**

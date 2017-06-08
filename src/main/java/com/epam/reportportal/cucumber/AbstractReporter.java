@@ -88,7 +88,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 			ReportPortal rp = ReportPortal.startLaunch(client, parameters.getBatchLogsSize(), parameters.isConvertImage(), rq);
 
-			startRootItem();
 			finished = new AtomicBoolean(false);
 			return rp;
 		}
@@ -358,7 +357,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void close() {
 		if (finished.compareAndSet(false, true)) {
-			finishRootItem();
 			afterLaunch();
 		}
 	}
@@ -367,10 +365,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	public void eof() {
 		afterFeature();
 	}
-
-	protected abstract void startRootItem();
-
-	protected abstract void finishRootItem();
 
 	protected abstract Maybe<String> getRootItemId();
 
