@@ -87,8 +87,7 @@ public class StepReporter extends AbstractReporter {
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		String comments = Utils.buildIssueComments(result);
-		Utils.finishTestItem(RP.get(), currentStepId, Utils.mapStatus(result.getStatus()), comments == null ? "" : comments);
+		Utils.finishTestItem(RP.get(), currentStepId, Utils.mapStatus(result.getStatus()));
 		currentStepId = null;
 	}
 
@@ -107,7 +106,7 @@ public class StepReporter extends AbstractReporter {
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		Utils.finishTestItem(RP.get(), hookStepId, hookStatus, "");
+		Utils.finishTestItem(RP.get(), hookStepId, hookStatus);
 		hookStepId = null;
 	}
 

@@ -48,7 +48,8 @@ import static com.epam.reportportal.cucumber.Utils.extractTags;
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
  *
- * @author Sergey_Gvozdyukevich
+ * @author Sergey Gvozdyukevich
+ * @author Andrei Varabyeu
  */
 public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
@@ -59,7 +60,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected String currentFeatureUri;
 
 	protected Maybe<String> currentFeatureId;
-	protected ScenarioModel currentScenario;
+	protected ScenarioContext currentScenario;
 	protected String stepPrefix;
 
 	private Queue<String> outlineIterations;
@@ -87,7 +88,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 			ReportPortal rp = ReportPortal.startLaunch(client, parameters.getBatchLogsSize(), parameters.isConvertImage(), rq);
 
-			//TODO???
 			startRootItem();
 			finished = new AtomicBoolean(false);
 			return rp;
@@ -113,7 +113,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Start Cucumber feature
 	 *
-	 * @param feature
+	 * @param feature Step feature
 	 */
 	protected void beforeFeature(Feature feature) {
 		StartTestItemRQ rq = new StartTestItemRQ();
@@ -123,7 +123,13 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(getFeatureTestItemType());
 
-		currentFeatureId = RP.get().startTestItem(getRootItemId(), rq);
+		Maybe<String> root = getRootItemId();
+		if (null == root) {
+			currentFeatureId = RP.get().startTestItem(rq);
+		} else {
+			currentFeatureId = RP.get().startTestItem(root, rq);
+		}
+
 	}
 
 	/**
@@ -137,35 +143,35 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Start Cucumber scenario
 	 *
-	 * @param scenario
+	 * @param scenario         Scenario
 	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
 		Maybe<String> id = Utils.startNonLeafNode(RP.get(), currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
 				currentFeatureUri + ":" + scenario.getLine(), scenario.getTags(), getScenarioTestItemType());
-		currentScenario = new ScenarioModel(id);
+		currentScenario = new ScenarioContext(id);
 	}
 
 	/**
 	 * Finish Cucumber scenario
 	 */
 	protected void afterScenario() {
-		Utils.finishTestItem(RP.get(), currentScenario.getId(), currentScenario.getStatus(), currentScenario.getIssueComments());
+		Utils.finishTestItem(RP.get(), currentScenario.getId(), currentScenario.getStatus());
 		currentScenario = null;
 	}
 
 	/**
 	 * Start Cucumber step
 	 *
-	 * @param step
+	 * @param step Step object
 	 */
 	protected abstract void beforeStep(Step step);
 
 	/**
 	 * Finish Cucumber step
 	 *
-	 * @param result
+	 * @param result Step result
 	 */
 	protected abstract void afterStep(Result result);
 
@@ -186,8 +192,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Called when a specific before/after-hook is finished
 	 *
-	 * @param match
-	 * @param result
+	 * @param match    Match object
+	 * @param result   Hook result
 	 * @param isBefore - if true, before-hook, if false - after-hook
 	 */
 	protected abstract void hookFinished(Match match, Result result, Boolean isBefore);
@@ -279,7 +285,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void syntaxError(String state, String event, List<String> legalEvents, String uri, Integer line) {
-		// I have no idea when this is called
+		//TODO find out when this is called
 	}
 
 	@Override
@@ -351,7 +357,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void close() {
-		if (finished.compareAndSet(false, true)){
+		if (finished.compareAndSet(false, true)) {
 			finishRootItem();
 			afterLaunch();
 		}
@@ -362,26 +368,21 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		afterFeature();
 	}
 
-	// TODO will not be needed in RP 2.0
 	protected abstract void startRootItem();
 
-	// TODO will not be needed in RP 2.0
 	protected abstract void finishRootItem();
 
-	// TODO will not be needed in RP 2.0
 	protected abstract Maybe<String> getRootItemId();
 
-	protected static class ScenarioModel {
+	public static class ScenarioContext {
 		private Maybe<String> id;
 		private Queue<Step> steps;
 		private String status;
-		private StringBuilder issueComments;
 
-		public ScenarioModel(Maybe<String> newId) {
+		public ScenarioContext(Maybe<String> newId) {
 			id = newId;
 			steps = new ArrayDeque<Step>();
 			status = Statuses.PASSED;
-			issueComments = new StringBuilder();
 		}
 
 		public Maybe<String> getId() {
@@ -414,13 +415,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			return status;
 		}
 
-		public void appendIssue(String issue) {
-			issueComments.append("\n").append(issue);
-		}
-
-		public String getIssueComments() {
-			return issueComments.toString();
-		}
 	}
 
 }

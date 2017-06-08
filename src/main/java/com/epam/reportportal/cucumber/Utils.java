@@ -20,13 +20,10 @@
  */
 package com.epam.reportportal.cucumber;
 
-import com.epam.reportportal.listeners.ListenersUtils;
 import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.ReportPortal;
-import com.epam.ta.reportportal.ws.model.EntryCreatedRS;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
-import com.epam.ta.reportportal.ws.model.issue.Issue;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.model.*;
@@ -34,28 +31,34 @@ import io.reactivex.Maybe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Function;
+import rp.com.google.common.base.Strings;
+import rp.com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nullable;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
 
+	//@formatter:off
+	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
+			.put("passed", Statuses.PASSED)
+			.put("skipped", Statuses.SKIPPED)
+			//TODO replace with NOT_IMPLEMENTED in future
+			.put("undefined", Statuses.SKIPPED).build();
+	//@formatter:on
+
 	private Utils() {
 
 	}
 
-
 	public static void finishTestItem(ReportPortal rp, Maybe<String> itemId) {
-		finishTestItem(rp, itemId, null, "");
+		finishTestItem(rp, itemId, null);
 	}
 
-	public static void finishTestItem(ReportPortal rp, Maybe<String> itemId, String status, String issueComments) {
+	public static void finishTestItem(ReportPortal rp, Maybe<String> itemId, String status) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
@@ -64,16 +67,6 @@ public class Utils {
 		FinishTestItemRQ rq = new FinishTestItemRQ();
 		rq.setStatus(status);
 		rq.setEndTime(Calendar.getInstance().getTime());
-		if (Statuses.SKIPPED.equals(status)) {
-			Issue i = new Issue();
-			i.setIssueType("NOT_ISSUE");
-			rq.setIssue(i);
-		} else if (!issueComments.isEmpty()) {
-			Issue i = new Issue();
-			i.setIssueType("AUTOMATION_BUG");
-			i.setComment(issueComments);
-			rq.setIssue(i);
-		}
 
 		rp.finishTestItem(itemId, rq);
 
@@ -92,7 +85,6 @@ public class Utils {
 	}
 
 	public static void sendLog(final String message, final String level, final File file) {
-
 		ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
 			@Nullable
 			@Override
@@ -149,15 +141,11 @@ public class Utils {
 	 * @return regular status
 	 */
 	public static String mapStatus(String cukesStatus) {
-		String mapped = null;
-		if (cukesStatus.equalsIgnoreCase("passed")) {
-			mapped = Statuses.PASSED;
-		} else if (cukesStatus.equalsIgnoreCase("skipped")) {
-			mapped = Statuses.SKIPPED;
-		} else {
-			mapped = Statuses.FAILED;
+		if (Strings.isNullOrEmpty(cukesStatus)) {
+			return Statuses.FAILED;
 		}
-		return mapped;
+		String status = STATUS_MAPPING.get(cukesStatus.toLowerCase());
+		return null == status ? Statuses.FAILED : status;
 	}
 
 	/**
@@ -171,23 +159,6 @@ public class Utils {
 	 */
 	public static String buildStatementName(BasicStatement stmt, String prefix, String infix, String suffix) {
 		return (prefix == null ? "" : prefix) + stmt.getKeyword() + infix + stmt.getName() + (suffix == null ? "" : suffix);
-	}
-
-	/**
-	 * Generate issue comments for undefined/pending scenarios
-	 *
-	 * @param result - Cucumber result object
-	 * @return - generated comments
-	 */
-	public static String buildIssueComments(Result result) {
-		String cukesStatus = result.getStatus();
-		if (cukesStatus.equals("pending")) {
-			return "Pending step";
-		} else if (cukesStatus.equals("undefined")) {
-			return "Undefined step";
-		} else {
-			return null;
-		}
 	}
 
 	/**

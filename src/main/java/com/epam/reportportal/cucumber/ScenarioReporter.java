@@ -62,10 +62,6 @@ public class ScenarioReporter extends AbstractReporter {
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, decorateMessage("STEP " + result.getStatus().toUpperCase()));
-		String comments = Utils.buildIssueComments(result);
-		if (comments != null) {
-			currentScenario.appendIssue(comments);
-		}
 	}
 
 	@Override
