@@ -16,12 +16,12 @@ repositories {
 }
 
 dependencies {
-    compile 'com.epam.reportportal:client-java:3.0.2'
+    compile 'com.epam.reportportal:client-java:3.0.3'
     compile 'com.epam.reportportal:commons-model:3.0.0'
 
     compileOnly 'info.cukes:gherkin:2.12.2'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.2'
+    gradleVersion = '3.5'
 }
