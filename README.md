@@ -45,7 +45,7 @@ but there are some differences in report structure.
 
 * **Scenario Reporter** 
 * **Step Reporter**
-Step Reporter propagetes the most traditional for ReportPortal test structure 
+Step Reporter propagates the most traditional for ReportPortal test structure 
 keeping your scenarios and steps inside as separate entities. In opposite, Scenario Reporter 
 use scenario as the base point and does not separate step from each other which is sometimes more
 convenient for BDD users.  
