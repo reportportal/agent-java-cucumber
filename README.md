@@ -186,24 +186,3 @@ c.  JVM variables. If JVM variables with names specified in the
 * eof - notifies ReportPortal that test feature execution is finished
 * close - notifies ReportPortal that test execution is finished
 
-#### Objects interrelation
-
-| **TestNG object**    | **ReportPortal object**       |
-|----------------------|-------------------------------|
-| LAUNCH               |LAUNCH                         |
-| BEFORE_SUITE         |TestItem (type = BEFORE_SUITE) |
-| BEFORE_GROUPS        |TestItem (type = BEFORE_GROUPS)|
-| SUITE                |TestItem (type = SUITE)        |
-| BEFORE_TEST          |TestItem (type = BEFORE_TEST)  |
-| TEST                 |TestItem (type = TEST)         |
-| BEFORE_CLASS         |TestItem (type = BEFORE_CLASS) |
-| CLASS                |Not in structure. Avoid it     |
-| BEFORE_METHOD        |TestItem (type = BEFORE_METHOD)|
-| METHOD               |TestItem (type = STEP)         |
-| AFTER_METHOD         |TestItem (type = AFTER_METHOD) |
-| AFTER_CLASS          |TestItem (type = AFTER_CLASS)  |
-| AFTER_TEST           |TestItem (type = AFTER_TEST)   |
-| AFTER_SUITE          |TestItem (type = AFTER_SUITE)  |
-| AFTER_GROUPS         |TestItem (type = AFTER_GROUPS) |
-
-TestItem – report portal specified object for representing:  suite, test, method objects in different test systems. Used as tree structure and can be recursively placed inside himself.
