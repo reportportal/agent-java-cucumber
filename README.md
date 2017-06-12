@@ -167,22 +167,21 @@ c.  JVM variables. If JVM variables with names specified in the
 
 #### Events
 
-* Before - used to finish previously started hood
+* URI - saves story URI to be sent to ReportPortal afterwards
+* Feature - notifies ReportPortal that some feature has started
+* startOfScenarioLifeCycle - Runs before-* hooks for the scenario
+* scenario - notifies ReportPortal that scenario has been finished
+* Before - used to finish previously started hook
+* step - collects step to be sent to ReportPortal afterwards
+* Examples - generates data being sent to ReportPortal to report examples table
+* background - notifies ReportPortal that before-* hooks have been finished
+* Match - notify ReportPortal that next step of current scenario is started 
 * Result - notify ReportPortal that step has finished and after-* hooks should be started (if any)
 * After - notify ReportPortal that after-* hook has finished 	
-* Match - notify ReportPortal that next step of current scenario is started 
 * Embedding/Write - sends log to ReportPortal
-* SyntaxError - IS NOT processed by ReportPortal agent 
-* URI - saves story URI to be sent to ReportPortal afterwards
-* Feature - notifies ReportPortal that some feature has started (beforeFeature(feature);)
-* ScenarioOutline - IS NOT processed by ReportPortal agent
-* Examples - generates data being sent to ReportPortal to report examples table
-* startOfScenarioLifeCycle - Runs before-* hooks for the scenario
-* background - notifies ReportPortal that before-* hooks have been finished
-* scenario - notifies ReportPortal that scenario has been finished
-* step - collects step to be sent to ReportPortal afterwards
 * endOfScenarioLifeCycle - notifies ReportPortal that after-* hooks of scenario has been finished 
-* done - IS NOT processed by ReportPortal agent
 * eof - notifies ReportPortal that test feature execution is finished
+* done - IS NOT processed by ReportPortal agent
 * close - notifies ReportPortal that test execution is finished
-
+* SyntaxError - IS NOT processed by ReportPortal agent 
+* ScenarioOutline - IS NOT processed by ReportPortal agent
