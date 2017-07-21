@@ -86,7 +86,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setTags(parameters.getTags());
 			rq.setDescription(parameters.getDescription());
 
-			ReportPortal rp = ReportPortal.startLaunch(client, parameters.getBatchLogsSize(), parameters.isConvertImage(), rq);
+			ReportPortal rp = ReportPortal.startLaunch(client, parameters, rq);
 
 			finished = new AtomicBoolean(false);
 			return rp;
