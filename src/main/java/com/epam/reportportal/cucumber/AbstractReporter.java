@@ -54,6 +54,15 @@ import static com.epam.reportportal.cucumber.Utils.extractTags;
 public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 
+//  could be used in custom ScenarioReporter implementation like:
+//	public static void setCurrentLaunchId(String launchId)
+//	{
+//		customLaunchIdInUse = true;
+//		currentLaunchId = launchId;
+//	}
+	public static boolean customLaunchIdInUse;
+	public static String currentLaunchId = "";
+
 	protected static final String COLON_INFIX = ": ";
 
 	/* formatter context */
@@ -86,7 +95,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setTags(parameters.getTags());
 			rq.setDescription(parameters.getDescription());
 
-			ReportPortal rp = ReportPortal.startLaunch(client, parameters, rq);
+			ReportPortal rp;
+			if(customLaunchIdInUse)
+			{
+				rp = ReportPortal.reuseLaunch(client, parameters, currentLaunchId);
+			} else
+			{
+				rp = ReportPortal.startLaunch(client, parameters, rq);
+			}
 
 			finished = new AtomicBoolean(false);
 			return rp;
