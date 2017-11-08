@@ -13,11 +13,13 @@ targetCompatibility = 1.6
 repositories {
     jcenter()
     maven { url "http://dl.bintray.com/epam/reportportal" }
+    maven { url "https://jitpack.io" }
+
 }
 
 dependencies {
-    compile 'com.epam.reportportal:client-java:3.0.7'
-    compile 'com.epam.reportportal:commons-model:3.0.0'
+    compile 'com.github.reportportal:client-java:721179a'
+    compile 'com.github.reportportal:commons-model:6794842'
 
     compileOnly 'info.cukes:gherkin:2.12.2'
 }

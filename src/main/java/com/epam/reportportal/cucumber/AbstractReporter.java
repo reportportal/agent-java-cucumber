@@ -20,11 +20,10 @@
  */
 package com.epam.reportportal.cucumber;
 
-import com.epam.reportportal.guice.Injector;
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.listeners.Statuses;
+import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
-import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
@@ -68,16 +67,16 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
 
-	protected Supplier<ReportPortal> RP = Suppliers.memoize(new Supplier<ReportPortal>() {
+	protected Supplier<Launch> RP = Suppliers.memoize(new Supplier<Launch>() {
 
 		/* should no be lazy */
 		private final Date startTime = Calendar.getInstance().getTime();
 
 		@Override
-		public ReportPortal get() {
-			final Injector injector = Injector.createDefault();
-			ListenerParameters parameters = injector.getBean(ListenerParameters.class);
-			ReportPortalClient client = injector.getBean(ReportPortalClient.class);
+		public Launch get() {
+			final ReportPortal reportPortal = ReportPortal.builder().build();
+
+			ListenerParameters parameters = reportPortal.getParameters();
 
 			StartLaunchRQ rq = new StartLaunchRQ();
 			rq.setName(parameters.getLaunchName());
@@ -86,10 +85,10 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setTags(parameters.getTags());
 			rq.setDescription(parameters.getDescription());
 
-			ReportPortal rp = ReportPortal.startLaunch(client, parameters, rq);
+			Launch launch = reportPortal.newLaunch(rq);
 
 			finished = new AtomicBoolean(false);
-			return rp;
+			return launch;
 		}
 	});
 
@@ -106,7 +105,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		FinishExecutionRQ finishLaunchRq = new FinishExecutionRQ();
 		finishLaunchRq.setEndTime(Calendar.getInstance().getTime());
 
-		RP.get().finishLaunch(finishLaunchRq);
+		RP.get().finish(finishLaunchRq);
 	}
 
 	/**
@@ -146,9 +145,13 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
-		Maybe<String> id = Utils.startNonLeafNode(RP.get(), currentFeatureId,
+		Maybe<String> id = Utils.startNonLeafNode(RP.get(),
+				currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
-				currentFeatureUri + ":" + scenario.getLine(), scenario.getTags(), getScenarioTestItemType());
+				currentFeatureUri + ":" + scenario.getLine(),
+				scenario.getTags(),
+				getScenarioTestItemType()
+		);
 		currentScenario = new ScenarioContext(id);
 	}
 

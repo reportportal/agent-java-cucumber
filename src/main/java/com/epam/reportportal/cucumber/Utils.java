@@ -21,6 +21,7 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.Statuses;
+import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
@@ -34,7 +35,6 @@ import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
 public class Utils {
@@ -54,11 +54,11 @@ public class Utils {
 
 	}
 
-	public static void finishTestItem(ReportPortal rp, Maybe<String> itemId) {
+	public static void finishTestItem(Launch rp, Maybe<String> itemId) {
 		finishTestItem(rp, itemId, null);
 	}
 
-	public static void finishTestItem(ReportPortal rp, Maybe<String> itemId, String status) {
+	public static void finishTestItem(Launch rp, Maybe<String> itemId, String status) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
@@ -72,7 +72,7 @@ public class Utils {
 
 	}
 
-	public static Maybe<String> startNonLeafNode(ReportPortal rp, Maybe<String> rootItemId, String name, String description, List<Tag> tags,
+	public static Maybe<String> startNonLeafNode(Launch rp, Maybe<String> rootItemId, String name, String description, List<Tag> tags,
 			String type) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setDescription(description);
@@ -86,9 +86,8 @@ public class Utils {
 
 	public static void sendLog(final String message, final String level, final File file) {
 		ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
-			@Nullable
 			@Override
-			public SaveLogRQ apply(@Nullable String item) {
+			public SaveLogRQ apply(String item) {
 				SaveLogRQ rq = new SaveLogRQ();
 				rq.setMessage(message);
 				rq.setTestItemId(item);
