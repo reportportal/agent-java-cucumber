@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.reportportal:client-java:721179a'
+    compile 'com.github.reportportal:client-java:d7c0194'
     compile 'com.github.reportportal:commons-model:6794842'
 
     compileOnly 'info.cukes:gherkin:2.12.2'
