@@ -115,13 +115,12 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void beforeFeature(Feature feature) {
 		StartTestItemRQ rq = new StartTestItemRQ();
+		Maybe<String> root = getRootItemId();
 		rq.setDescription(Utils.buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
 		rq.setName(currentFeatureUri);
 		rq.setTags(extractTags(feature.getTags()));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(getFeatureTestItemType());
-
-		Maybe<String> root = getRootItemId();
 		if (null == root) {
 			currentFeatureId = RP.get().startTestItem(rq);
 		} else {
