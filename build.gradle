@@ -18,10 +18,10 @@ repositories {
 }
 
 dependencies {
-    compile('com.epam.reportportal:client-java:4.0.0-BETA-1') {
+    compile('com.epam.reportportal:client-java:4.0.0') {
         ext.compileScope = true
     }
-    compile('com.epam.reportportal:commons-model:4.0.0') {
+    compile('com.epam.reportportal:commons-model:4.0.3') {
         ext.compileScope = true
     }
 
