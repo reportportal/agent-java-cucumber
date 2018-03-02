@@ -74,7 +74,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 		@Override
 		public Launch get() {
-			final ReportPortal reportPortal = ReportPortal.builder().build();
+			final ReportPortal reportPortal = buildReportPortal();
 
 			ListenerParameters parameters = reportPortal.getParameters();
 
@@ -96,6 +96,15 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		outlineIterations = new ArrayDeque<String>();
 		stepPrefix = "";
 		inBackground = false;
+	}
+
+	/**
+	 * Extension point to customize ReportPortal instance
+	 *
+	 * @return ReportPortal
+	 */
+	protected ReportPortal buildReportPortal() {
+		return ReportPortal.builder().build();
 	}
 
 	/**
@@ -144,7 +153,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
-		Maybe<String> id = Utils.startNonLeafNode(RP.get(),
+		Maybe<String> id = Utils.startNonLeafNode(
+				RP.get(),
 				currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
 				currentFeatureUri + ":" + scenario.getLine(),
