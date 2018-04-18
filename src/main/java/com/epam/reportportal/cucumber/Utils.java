@@ -47,6 +47,7 @@ public class Utils {
 	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
 			.put("passed", Statuses.PASSED)
 			.put("skipped", Statuses.SKIPPED)
+			.put("pending", Statuses.SKIPPED)
 			//TODO replace with NOT_IMPLEMENTED in future
 			.put("undefined", Statuses.SKIPPED).build();
 	//@formatter:on
