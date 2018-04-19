@@ -32,8 +32,6 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
-import org.apache.tika.mime.MimeTypeException;
-import org.apache.tika.mime.MimeTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Supplier;
@@ -275,18 +273,10 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void embedding(String mimeType, byte[] data) {
 		File file = new File();
-		String embeddingName;
-		try {
-			embeddingName = MimeTypes.getDefaultMimeTypes().forName(mimeType).getType().getType();
-		} catch (MimeTypeException e) {
-			LOGGER.warn("Mime-type not found", e);
-			embeddingName = "embedding";
-		}
-
-		file.setName(embeddingName);
+		file.setName(UUID.randomUUID().toString());
 		file.setContent(data);
-
-		Utils.sendLog(embeddingName, "UNKNOWN", file);
+		file.setContentType(mimeType);
+		Utils.sendLog("embedding", "UNKNOWN", file);
 	}
 
 	@Override
