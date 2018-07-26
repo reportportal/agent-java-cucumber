@@ -25,6 +25,8 @@ import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
 import gherkin.formatter.model.Step;
 import io.reactivex.Maybe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 
@@ -51,6 +53,7 @@ import java.util.Calendar;
  */
 public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
+	private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioReporter.class);
 
 	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
 		@Override
@@ -108,9 +111,12 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void afterLaunch() {
+		if(currentFeatureUri == null){
+			LOGGER.debug("There is no scenarios in the launch");
+			return;
+		}
 		Utils.finishTestItem(RP.get(), rootSuiteId.get());
 		rootSuiteId = null;
-
 		super.afterLaunch();
 	}
 
