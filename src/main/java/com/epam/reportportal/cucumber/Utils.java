@@ -174,7 +174,6 @@ public class Utils {
 		StringBuilder marg = new StringBuilder();
 		StringBuilder markDownSeparator = new StringBuilder();
 		if (table != null) {
-			marg.append("\r\n" + "!!!MARKDOWN_MODE!!!");
 			marg.append("\r\n\r\n");
 			for (Row row : table) {
 				marg.append(TABLE_SEPARATOR);
@@ -182,7 +181,6 @@ public class Utils {
 					marg.append(" ").append(cell).append(" ").append(TABLE_SEPARATOR);
 				}
 				marg.append("\r\n");
-
 				if (markDownSeparator.length() == 0) {
 					markDownSeparator.append(TABLE_SEPARATOR).append("-").append(TABLE_SEPARATOR);
 					marg.append(markDownSeparator);

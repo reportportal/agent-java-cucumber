@@ -70,7 +70,11 @@ public class ScenarioReporter extends AbstractReporter {
 	protected void beforeStep(Step step) {
 		String decoratedStepName = decorateMessage(Utils.buildStatementName(step, stepPrefix, " ", null));
 		String multilineArg = Utils.buildMultilineArgument(step);
-		Utils.sendLog(decoratedStepName + multilineArg, "INFO", null);
+		if (!multilineArg.isEmpty()) {
+			Utils.sendLog("!!!MARKDOWN_MODE!!!\r\n" + decoratedStepName + "\r\n" + multilineArg, "INFO", null);
+		} else {
+			Utils.sendLog(decoratedStepName, "INFO", null);
+		}
 	}
 
 	@Override
@@ -103,7 +107,6 @@ public class ScenarioReporter extends AbstractReporter {
 		return "STEP";
 	}
 
-
 	@Override
 	protected Maybe<String> getRootItemId() {
 		return rootSuiteId.get();
@@ -111,7 +114,7 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void afterLaunch() {
-		if(currentFeatureUri == null){
+		if (currentFeatureUri == null) {
 			LOGGER.debug("There is no scenarios in the launch");
 			return;
 		}
