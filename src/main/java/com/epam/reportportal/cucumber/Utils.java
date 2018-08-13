@@ -25,7 +25,6 @@ import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
-import com.epam.ta.reportportal.ws.model.issue.Issue;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.model.*;
@@ -173,15 +172,20 @@ public class Utils {
 		List<DataTableRow> table = step.getRows();
 		DocString ds = step.getDocString();
 		StringBuilder marg = new StringBuilder();
+		StringBuilder markDownSeparator = new StringBuilder();
 		if (table != null) {
-			marg.append("\r\n");
+			marg.append("\r\n\r\n");
 			for (Row row : table) {
 				marg.append(TABLE_SEPARATOR);
 				for (String cell : row.getCells()) {
 					marg.append(" ").append(cell).append(" ").append(TABLE_SEPARATOR);
 				}
-
 				marg.append("\r\n");
+				if (markDownSeparator.length() == 0) {
+					markDownSeparator.append(TABLE_SEPARATOR).append("-").append(TABLE_SEPARATOR);
+					marg.append(markDownSeparator);
+					marg.append("\r\n");
+				}
 			}
 		}
 
