@@ -57,6 +57,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected String currentFeatureUri;
 
 	protected Maybe<String> currentFeatureId;
+	protected StartTestItemRQ startFeatureRq;
 	protected ScenarioContext currentScenario;
 	protected String stepPrefix;
 
@@ -111,46 +112,53 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void afterLaunch() {
 		FinishExecutionRQ finishLaunchRq = new FinishExecutionRQ();
 		finishLaunchRq.setEndTime(Calendar.getInstance().getTime());
-
 		RP.get().finish(finishLaunchRq);
 	}
 
 	/**
-	 * Start Cucumber feature
+	 * Define Start Cucumber feature RQ
 	 *
 	 * @param feature Step feature
 	 */
 	protected void beforeFeature(Feature feature) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		Maybe<String> root = getRootItemId();
-		rq.setDescription(Utils.buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
-		rq.setName(currentFeatureUri);
-		rq.setTags(extractTags(feature.getTags()));
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType(getFeatureTestItemType());
-		if (null == root) {
-			currentFeatureId = RP.get().startTestItem(rq);
-		} else {
-			currentFeatureId = RP.get().startTestItem(root, rq);
-		}
-
+		//define start feature RQ in this method, because only here we can receive Feature details
+		startFeatureRq = new StartTestItemRQ();
+		startFeatureRq.setDescription(Utils.
+				buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
+		startFeatureRq.setName(currentFeatureUri);
+		startFeatureRq.setTags(extractTags(feature.getTags()));
+		startFeatureRq.setType(getFeatureTestItemType());
 	}
 
 	/**
 	 * Finish Cucumber feature
 	 */
 	protected void afterFeature() {
-		Utils.finishTestItem(RP.get(), currentFeatureId);
-		currentFeatureId = null;
+		if (null != currentFeatureId){
+			Utils.finishTestItem(RP.get(), currentFeatureId);
+			currentFeatureId = null;
+		}
 	}
 
 	/**
-	 * Start Cucumber scenario
+	 * Start Cucumber Feature (if not started) and Scenario
 	 *
 	 * @param scenario         Scenario
 	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
+		// start Feature here, because it should be started only if at least one Scenario is included.
+		// By this reason, it cannot be started in #beforeFeature method,
+		// because it will be executed even if all Scenarios in the Feature are excluded.
+		if (null == currentFeatureId) {
+			Maybe<String> root = getRootItemId();
+			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
+			if (null == root) {
+				currentFeatureId = RP.get().startTestItem(startFeatureRq);
+			} else {
+				currentFeatureId = RP.get().startTestItem(root, startFeatureRq);
+			}
+		}
 		Maybe<String> id = Utils.startNonLeafNode(
 				RP.get(),
 				currentFeatureId,
