@@ -24,6 +24,7 @@ import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
+import com.epam.ta.reportportal.ws.model.ItemAttributeResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
@@ -55,11 +56,11 @@ public class Utils {
 
 	}
 
-	public static void finishTestItem(Launch rp, Maybe<String> itemId) {
+	public static void finishTestItem(Launch rp, Maybe<Long> itemId) {
 		finishTestItem(rp, itemId, null);
 	}
 
-	public static void finishTestItem(Launch rp, Maybe<String> itemId, String status) {
+	public static void finishTestItem(Launch rp, Maybe<Long> itemId, String status) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
@@ -73,12 +74,12 @@ public class Utils {
 
 	}
 
-	public static Maybe<String> startNonLeafNode(Launch rp, Maybe<String> rootItemId, String name, String description, List<Tag> tags,
+	public static Maybe<Long> startNonLeafNode(Launch rp, Maybe<Long> rootItemId, String name, String description, List<Tag> tags,
 			String type) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setDescription(description);
 		rq.setName(name);
-		rq.setTags(extractTags(tags));
+		rq.setAttributes(extractTags(tags));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(type);
 
@@ -86,9 +87,9 @@ public class Utils {
 	}
 
 	public static void sendLog(final String message, final String level, final File file) {
-		ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
+		ReportPortal.emitLog(new Function<Long, SaveLogRQ>() {
 			@Override
-			public SaveLogRQ apply(String item) {
+			public SaveLogRQ apply(Long item) {
 				SaveLogRQ rq = new SaveLogRQ();
 				rq.setMessage(message);
 				rq.setTestItemId(item);
@@ -108,12 +109,12 @@ public class Utils {
 	 * @param tags - Cucumber tags
 	 * @return set of tags
 	 */
-	public static Set<String> extractTags(List<Tag> tags) {
-		Set<String> returnTags = new HashSet<String>();
+	public static Set<ItemAttributeResource> extractTags(List<Tag> tags) {
+		Set<ItemAttributeResource> result = new HashSet<ItemAttributeResource>();
 		for (Tag tag : tags) {
-			returnTags.add(tag.getName());
+			result.add(new ItemAttributeResource(null, tag.getName()));
 		}
-		return returnTags;
+		return result;
 	}
 
 	/**
