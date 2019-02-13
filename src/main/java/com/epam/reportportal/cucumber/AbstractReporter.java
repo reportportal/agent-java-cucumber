@@ -87,15 +87,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributeResource>() : parameters.getAttributes());
 			rq.setDescription(parameters.getDescription());
 
-			final ItemAttributeResource skippedIssueAttr = new ItemAttributeResource(SKIPPED_ISSUE_KEY,
-					String.valueOf(parameters.getSkippedAnIssue()),
-					true
-			);
-
+			final Boolean skippedAnIssue = parameters.getSkippedAnIssue();
+			final ItemAttributeResource skippedIssueAttr = new ItemAttributeResource();
+			skippedIssueAttr.setKey(SKIPPED_ISSUE_KEY);
+			skippedIssueAttr.setValue(skippedAnIssue == null ? "true" : skippedAnIssue.toString());
+			skippedIssueAttr.setSystem(true);
 			rq.getAttributes().add(skippedIssueAttr);
 
 			Launch launch = reportPortal.newLaunch(rq);
-
 			finished = new AtomicBoolean(false);
 			return launch;
 		}
