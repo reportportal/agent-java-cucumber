@@ -21,7 +21,7 @@
 - [Events](https://github.com/reportportal/agent-java-cucumber#events)
 ---
 
-# Compatibility matrix for cucumber agents
+## Compatibility matrix for cucumber agents
 
 | Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Tested version of cucumber agent | Link to agent's repo | Link to agent's github |
 | - | - | - | - | - |
