@@ -1,3 +1,12 @@
+# Compatibility matrix for cucumber agents
+
+| Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Tested version of cucumber agent | Link to agent's repo | Link to agent's github |
+| - | - | - | - | - |
+| 1.2.5  | 2.12.2  | 4.0.2 | https://bintray.com/epam/reportportal/agent-java-cucumber | https://github.com/reportportal/agent-java-cucumber |
+| 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | 4.0.0 | https://bintray.com/epam/reportportal/agent-java-cucumber2 | https://github.com/reportportal/agent-java-cucumber2 |
+| 3x | _ | _ | _ | _ |
+| 4.0.0 - 4.2.6  | 3.2.0 - 5.1.0 | 4.0.0 | https://bintray.com/epam/reportportal/agent-java-cucumber4 | https://github.com/reportportal/agent-java-cucumber4 |
+
 # Cucumber Agent for ReportPortal
  [ ![Download](https://api.bintray.com/packages/epam/reportportal/agent-java-cucumber/images/download.svg) ](https://bintray.com/epam/reportportal/agent-java-cucumber/_latestVersion)
  
