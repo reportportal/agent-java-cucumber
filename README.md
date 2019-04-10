@@ -103,9 +103,9 @@ In order to start using of agent, user should configure property file
 ### reportportal.properties
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-rp.endpoint = https://rp.epam.com/
+rp.endpoint = https://web.demo.reportportal.io
 rp.username = default
-rp.uuid = 8967de3b-fec7-47bb-9dbc-2aa4ceab8b1e
+rp.uuid = 5145b879-83d9-4692-8b07-928cc4b2af7a
 rp.launch = default_TEST_EXAMPLE
 rp.project = default_project
 
