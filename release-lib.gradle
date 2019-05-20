@@ -30,7 +30,7 @@ publishing {
             pom.withXml {
                 def root = asNode()
                 def license = root.appendNode('licenses').appendNode('license')
-                license.appendNode('name', 'GNU GPLv3 License')
+                license.appendNode('name', 'Apache License Version 2.0')
                 license.appendNode('url', 'http://www.gnu.org/licenses/')
                 license.appendNode('distribution', 'repo')
             }
@@ -55,7 +55,7 @@ bintray {
         githubReleaseNotesFile = 'CHANGELOG.md'
 
         userOrg = 'epam'
-        licenses = ['GPL-3.0']
+        licenses = ['Apache-2.0']
     }
 }
 afterReleaseBuild.dependsOn bintrayUpload
