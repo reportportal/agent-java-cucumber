@@ -27,7 +27,7 @@
 | - | - | - | - | - |
 | 1.2.5  | 2.12.2  | 4.0.2 | [bintray/cucumber1](https://bintray.com/epam/reportportal/agent-java-cucumber) | [github/cucumber1](https://github.com/reportportal/agent-java-cucumber) |
 | 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | 4.0.0 | [bintray/cucumber2](https://bintray.com/epam/reportportal/agent-java-cucumber2) | [github/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
-| 3x | _ | _ | _ | _ |
+| 3x | _ | 0.0.1-beta | [bintray/cucumber3](https://bintray.com/epam/reportportal/agent-java-cucumber3) | [github/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
 | 4.0.0 - 4.2.6  | 3.2.0 - 5.1.0 | 4.0.0 | [bintray/cucumber4](https://bintray.com/epam/reportportal/agent-java-cucumber4) | [github/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
 
 ## Installation
