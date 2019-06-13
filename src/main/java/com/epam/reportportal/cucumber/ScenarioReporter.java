@@ -55,9 +55,9 @@ public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioReporter.class);
 
-	protected Supplier<Maybe<Long>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<Long>>() {
+	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
 		@Override
-		public Maybe<Long> get() {
+		public Maybe<String> get() {
 			StartTestItemRQ rq = new StartTestItemRQ();
 			rq.setName("Root User Story");
 			rq.setStartTime(Calendar.getInstance().getTime());
@@ -108,7 +108,7 @@ public class ScenarioReporter extends AbstractReporter {
 	}
 
 	@Override
-	protected Maybe<Long> getRootItemId() {
+	protected Maybe<String> getRootItemId() {
 		return rootSuiteId.get();
 	}
 

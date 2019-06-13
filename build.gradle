@@ -18,10 +18,10 @@ repositories {
 }
 
 dependencies {
-    compile('com.github.reportportal:client-java:138bbc2') {
+    compile('com.github.reportportal:client-java:ecd9415') {
         ext.compileScope = true
     }
-    compile('com.github.reportportal:commons-model:63ef134') {
+    compile('com.github.reportportal:commons-model:4acac77') {
         ext.compileScope = true
     }
 

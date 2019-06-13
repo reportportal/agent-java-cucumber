@@ -24,8 +24,8 @@ import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
-import com.epam.ta.reportportal.ws.model.ItemAttributeResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.model.*;
@@ -56,11 +56,11 @@ public class Utils {
 
 	}
 
-	public static void finishTestItem(Launch rp, Maybe<Long> itemId) {
+	public static void finishTestItem(Launch rp, Maybe<String> itemId) {
 		finishTestItem(rp, itemId, null);
 	}
 
-	public static void finishTestItem(Launch rp, Maybe<Long> itemId, String status) {
+	public static void finishTestItem(Launch rp, Maybe<String> itemId, String status) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
@@ -74,7 +74,7 @@ public class Utils {
 
 	}
 
-	public static Maybe<Long> startNonLeafNode(Launch rp, Maybe<Long> rootItemId, String name, String description, List<Tag> tags,
+	public static Maybe<String> startNonLeafNode(Launch rp, Maybe<String> rootItemId, String name, String description, List<Tag> tags,
 			String type) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setDescription(description);
@@ -87,9 +87,9 @@ public class Utils {
 	}
 
 	public static void sendLog(final String message, final String level, final File file) {
-		ReportPortal.emitLog(new Function<Long, SaveLogRQ>() {
+		ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
 			@Override
-			public SaveLogRQ apply(Long item) {
+			public SaveLogRQ apply(String item) {
 				SaveLogRQ rq = new SaveLogRQ();
 				rq.setMessage(message);
 				rq.setTestItemId(item);
@@ -109,10 +109,10 @@ public class Utils {
 	 * @param tags - Cucumber tags
 	 * @return set of tags
 	 */
-	public static Set<ItemAttributeResource> extractTags(List<Tag> tags) {
-		Set<ItemAttributeResource> result = new HashSet<ItemAttributeResource>();
+	public static Set<ItemAttributesRQ> extractTags(List<Tag> tags) {
+		Set<ItemAttributesRQ> result = new HashSet<ItemAttributesRQ>();
 		for (Tag tag : tags) {
-			result.add(new ItemAttributeResource(null, tag.getName()));
+			result.add(new ItemAttributesRQ(null, tag.getName()));
 		}
 		return result;
 	}

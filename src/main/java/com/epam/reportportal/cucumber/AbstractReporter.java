@@ -25,8 +25,8 @@ import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
-import com.epam.ta.reportportal.ws.model.ItemAttributeResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.Formatter;
@@ -59,7 +59,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/* formatter context */
 	protected String currentFeatureUri;
 
-	protected Maybe<Long> currentFeatureId;
+	protected Maybe<String> currentFeatureId;
 	protected StartTestItemRQ startFeatureRq;
 	protected ScenarioContext currentScenario;
 	protected String stepPrefix;
@@ -84,11 +84,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setName(parameters.getLaunchName());
 			rq.setStartTime(startTime);
 			rq.setMode(parameters.getLaunchRunningMode());
-			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributeResource>() : parameters.getAttributes());
+			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributesRQ>() : parameters.getAttributes());
 			rq.setDescription(parameters.getDescription());
 
 			final Boolean skippedAnIssue = parameters.getSkippedAnIssue();
-			final ItemAttributeResource skippedIssueAttr = new ItemAttributeResource();
+			final ItemAttributesRQ skippedIssueAttr = new ItemAttributesRQ();
 			skippedIssueAttr.setKey(SKIPPED_ISSUE_KEY);
 			skippedIssueAttr.setValue(skippedAnIssue == null ? "true" : skippedAnIssue.toString());
 			skippedIssueAttr.setSystem(true);
@@ -160,7 +160,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		// By this reason, it cannot be started in #beforeFeature method,
 		// because it will be executed even if all Scenarios in the Feature are excluded.
 		if (null == currentFeatureId) {
-			Maybe<Long> root = getRootItemId();
+			Maybe<String> root = getRootItemId();
 			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
 			if (null == root) {
 				currentFeatureId = RP.get().startTestItem(startFeatureRq);
@@ -168,7 +168,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				currentFeatureId = RP.get().startTestItem(root, startFeatureRq);
 			}
 		}
-		Maybe<Long> id = Utils.startNonLeafNode(
+		Maybe<String> id = Utils.startNonLeafNode(
 				RP.get(),
 				currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
@@ -385,20 +385,20 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		afterFeature();
 	}
 
-	protected abstract Maybe<Long> getRootItemId();
+	protected abstract Maybe<String> getRootItemId();
 
 	public static class ScenarioContext {
-		private Maybe<Long> id;
+		private Maybe<String> id;
 		private Queue<Step> steps;
 		private String status;
 
-		public ScenarioContext(Maybe<Long> newId) {
+		public ScenarioContext(Maybe<String> newId) {
 			id = newId;
 			steps = new ArrayDeque<Step>();
 			status = Statuses.PASSED;
 		}
 
-		public Maybe<Long> getId() {
+		public Maybe<String> getId() {
 			return id;
 		}
 

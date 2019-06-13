@@ -48,8 +48,8 @@ import java.util.Calendar;
  * @author Sergey_Gvozdyukevich
  */
 public class StepReporter extends AbstractReporter {
-	protected Maybe<Long> currentStepId;
-	protected Maybe<Long> hookStepId;
+	protected Maybe<String> currentStepId;
+	protected Maybe<String> hookStepId;
 	protected String hookStatus;
 
 	public StepReporter() {
@@ -61,7 +61,7 @@ public class StepReporter extends AbstractReporter {
 
 
 	@Override
-	protected Maybe<Long> getRootItemId() {
+	protected Maybe<String> getRootItemId() {
 		return null;
 	}
 
