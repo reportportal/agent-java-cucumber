@@ -3,7 +3,7 @@ language: java
 script: ./gradlew build
 
 jdk:
-  - oraclejdk8
+  - openjdk8
 
 notifications:
   slack: reportportal:fl6xWHVQp1jvsMmCJxYW9YKP
