@@ -1,22 +1,17 @@
 /*
- * Copyright 2016 EPAM Systems
+ * Copyright 2019 EPAM Systems
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This file is part of EPAM Report Portal.
- * https://github.com/epam/ReportPortal
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Report Portal is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Report Portal is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Report Portal.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.epam.reportportal.cucumber;
 
@@ -25,8 +20,8 @@ import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
-import com.epam.ta.reportportal.ws.model.ItemAttributeResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.Formatter;
@@ -41,7 +36,7 @@ import rp.com.google.common.base.Suppliers;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.epam.reportportal.cucumber.Utils.extractTags;
+import static com.epam.reportportal.cucumber.Utils.extractAttributes;
 
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
@@ -59,7 +54,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/* formatter context */
 	protected String currentFeatureUri;
 
-	protected Maybe<Long> currentFeatureId;
+	protected Maybe<String> currentFeatureId;
 	protected StartTestItemRQ startFeatureRq;
 	protected ScenarioContext currentScenario;
 	protected String stepPrefix;
@@ -84,11 +79,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setName(parameters.getLaunchName());
 			rq.setStartTime(startTime);
 			rq.setMode(parameters.getLaunchRunningMode());
-			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributeResource>() : parameters.getAttributes());
+			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributesRQ>() : parameters.getAttributes());
 			rq.setDescription(parameters.getDescription());
 
-			final Boolean skippedAnIssue = parameters.getSkippedAnIssue();
-			final ItemAttributeResource skippedIssueAttr = new ItemAttributeResource();
+			Boolean skippedAnIssue = parameters.getSkippedAnIssue();
+			ItemAttributesRQ skippedIssueAttr = new ItemAttributesRQ();
 			skippedIssueAttr.setKey(SKIPPED_ISSUE_KEY);
 			skippedIssueAttr.setValue(skippedAnIssue == null ? "true" : skippedAnIssue.toString());
 			skippedIssueAttr.setSystem(true);
@@ -135,7 +130,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		startFeatureRq.setDescription(Utils.
 				buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
 		startFeatureRq.setName(currentFeatureUri);
-		startFeatureRq.setAttributes(extractTags(feature.getTags()));
+		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
 		startFeatureRq.setType(getFeatureTestItemType());
 	}
 
@@ -160,7 +155,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		// By this reason, it cannot be started in #beforeFeature method,
 		// because it will be executed even if all Scenarios in the Feature are excluded.
 		if (null == currentFeatureId) {
-			Maybe<Long> root = getRootItemId();
+			Maybe<String> root = getRootItemId();
 			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
 			if (null == root) {
 				currentFeatureId = RP.get().startTestItem(startFeatureRq);
@@ -168,7 +163,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				currentFeatureId = RP.get().startTestItem(root, startFeatureRq);
 			}
 		}
-		Maybe<Long> id = Utils.startNonLeafNode(
+		Maybe<String> id = Utils.startNonLeafNode(
 				RP.get(),
 				currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
@@ -385,20 +380,20 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		afterFeature();
 	}
 
-	protected abstract Maybe<Long> getRootItemId();
+	protected abstract Maybe<String> getRootItemId();
 
 	public static class ScenarioContext {
-		private Maybe<Long> id;
+		private Maybe<String> id;
 		private Queue<Step> steps;
 		private String status;
 
-		public ScenarioContext(Maybe<Long> newId) {
+		public ScenarioContext(Maybe<String> newId) {
 			id = newId;
 			steps = new ArrayDeque<Step>();
 			status = Statuses.PASSED;
 		}
 
-		public Maybe<Long> getId() {
+		public Maybe<String> getId() {
 			return id;
 		}
 
