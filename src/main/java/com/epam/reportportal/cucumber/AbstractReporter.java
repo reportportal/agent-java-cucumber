@@ -21,6 +21,7 @@ import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.Formatter;
@@ -35,7 +36,7 @@ import rp.com.google.common.base.Suppliers;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.epam.reportportal.cucumber.Utils.extractTags;
+import static com.epam.reportportal.cucumber.Utils.extractAttributes;
 
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
@@ -47,6 +48,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 
 	protected static final String COLON_INFIX = ": ";
+
+	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
 
 	/* formatter context */
 	protected String currentFeatureUri;
@@ -76,11 +79,17 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setName(parameters.getLaunchName());
 			rq.setStartTime(startTime);
 			rq.setMode(parameters.getLaunchRunningMode());
-			rq.setTags(parameters.getTags());
+			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributesRQ>() : parameters.getAttributes());
 			rq.setDescription(parameters.getDescription());
 
-			Launch launch = reportPortal.newLaunch(rq);
+			Boolean skippedAnIssue = parameters.getSkippedAnIssue();
+			ItemAttributesRQ skippedIssueAttr = new ItemAttributesRQ();
+			skippedIssueAttr.setKey(SKIPPED_ISSUE_KEY);
+			skippedIssueAttr.setValue(skippedAnIssue == null ? "true" : skippedAnIssue.toString());
+			skippedIssueAttr.setSystem(true);
+			rq.getAttributes().add(skippedIssueAttr);
 
+			Launch launch = reportPortal.newLaunch(rq);
 			finished = new AtomicBoolean(false);
 			return launch;
 		}
@@ -121,7 +130,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		startFeatureRq.setDescription(Utils.
 				buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
 		startFeatureRq.setName(currentFeatureUri);
-		startFeatureRq.setTags(extractTags(feature.getTags()));
+		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
 		startFeatureRq.setType(getFeatureTestItemType());
 	}
 
@@ -129,7 +138,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Finish Cucumber feature
 	 */
 	protected void afterFeature() {
-		if (null != currentFeatureId){
+		if (null != currentFeatureId) {
 			Utils.finishTestItem(RP.get(), currentFeatureId);
 			currentFeatureId = null;
 		}

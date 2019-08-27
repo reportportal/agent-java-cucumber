@@ -20,6 +20,7 @@ import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
+import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.model.*;
@@ -73,7 +74,7 @@ public class Utils {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setDescription(description);
 		rq.setName(name);
-		rq.setTags(extractTags(tags));
+		rq.setAttributes(extractAttributes(tags));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(type);
 
@@ -86,7 +87,7 @@ public class Utils {
 			public SaveLogRQ apply(String item) {
 				SaveLogRQ rq = new SaveLogRQ();
 				rq.setMessage(message);
-				rq.setTestItemId(item);
+				rq.setItemUuid(item);
 				rq.setLevel(level);
 				rq.setLogTime(Calendar.getInstance().getTime());
 				if (file != null) {
@@ -103,12 +104,12 @@ public class Utils {
 	 * @param tags - Cucumber tags
 	 * @return set of tags
 	 */
-	public static Set<String> extractTags(List<Tag> tags) {
-		Set<String> returnTags = new HashSet<String>();
+	public static Set<ItemAttributesRQ> extractAttributes(List<Tag> tags) {
+		Set<ItemAttributesRQ> result = new HashSet<ItemAttributesRQ>();
 		for (Tag tag : tags) {
-			returnTags.add(tag.getName());
+			result.add(new ItemAttributesRQ(null, tag.getName()));
 		}
-		return returnTags;
+		return result;
 	}
 
 	/**
