@@ -6,8 +6,31 @@
 [![UserVoice](https://img.shields.io/badge/uservoice-vote%20ideas-orange.svg?style=flat)](https://rpp.uservoice.com/forums/247117-report-portal)
 [![Build with Love](https://img.shields.io/badge/build%20with-❤%EF%B8%8F%E2%80%8D-lightgrey.svg)](http://reportportal.io?style=flat)
 
+---
+- [Compatibility matrix](https://github.com/reportportal/agent-java-cucumber#compatibility-matrix-for-cucumber-agents)
+- [Dependencies](https://github.com/reportportal/agent-java-cucumber#installation)
+- [Install Reporter](https://github.com/reportportal/agent-java-cucumber#install-reporter)
+   - [Scenario Reporter](https://github.com/reportportal/agent-java-cucumber#scenario-reporter)
+   - [Step reporter](https://github.com/reportportal/agent-java-cucumber#step-reporter)
+   - [reportportal.properties](https://github.com/reportportal/agent-java-cucumber#reportportal.properties)
+   - [Parameters](https://github.com/reportportal/agent-java-cucumber#parameters)
+   - [Proxy Configuration](https://github.com/reportportal/agent-java-cucumber#proxy-configuration)
+   - [How to provide parameters](https://github.com/reportportal/agent-java-cucumber#how-to-privde-parameters)
+   - [Parameters loading order](https://github.com/reportportal/agent-java-cucumber#prameters-oading-rder)
+- [Configuration](https://github.com/reportportal/agent-java-cucumber#configuration)
+- [Events](https://github.com/reportportal/agent-java-cucumber#events)
+---
 
-### Installation
+## Compatibility matrix for cucumber agents
+
+| Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Tested version of cucumber agent | Link to agent's repo | Link to agent's github |
+| - | - | - | - | - |
+| 1.2.5  | 2.12.2  | 4.0.2 | [bintray/cucumber1](https://bintray.com/epam/reportportal/agent-java-cucumber) | [github/cucumber1](https://github.com/reportportal/agent-java-cucumber) |
+| 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | 4.0.0 | [bintray/cucumber2](https://bintray.com/epam/reportportal/agent-java-cucumber2) | [github/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
+| 3x | _ | 0.0.1-beta | [bintray/cucumber3](https://bintray.com/epam/reportportal/agent-java-cucumber3) | [github/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
+| 4.0.0 - 4.2.6  | 3.2.0 - 5.1.0 | 4.0.0 | [bintray/cucumber4](https://bintray.com/epam/reportportal/agent-java-cucumber4) | [github/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
+
+## Installation
 
 Add to POM.xml
 
@@ -34,7 +57,7 @@ Add to POM.xml
 </dependency>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-### Install Reporter
+## Install Reporter
 
 As Cucumber runs your features, it calls out to any number of listener objects to let them know 
 how it’s progressing. These listeners are notified at various points throughout the run of features. 
@@ -43,8 +66,9 @@ ReportPortal supports two kinds of Reporters.
 Both of them allow you to report your execution progress to ReportPortal, 
 but there are some differences in report structure.  
 
-* **Scenario Reporter** 
-* **Step Reporter**
+## Scenario Reporter
+
+## Step Reporter
 Step Reporter propagates the most traditional for ReportPortal test structure 
 keeping your scenarios and steps inside as separate entities. In opposite, Scenario Reporter 
 use scenario as the base point and does not separate step from each other which is sometimes more
@@ -67,7 +91,7 @@ public class RunCukesTest {
 ```
 
 
-### Configuration
+## Configuration
 
 Copy you configuration from UI of Report Portal at [User Profile](<#user-profile>) section
 
@@ -76,12 +100,12 @@ or
 In order to start using of agent, user should configure property file
 "reportportal.properties" in such format:
 
-**reportportal.properties**
+### reportportal.properties
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-rp.endpoint = https://rp.epam.com/
+rp.endpoint = https://web.demo.reportportal.io
 rp.username = default
-rp.uuid = 8967de3b-fec7-47bb-9dbc-2aa4ceab8b1e
+rp.uuid = 5145b879-83d9-4692-8b07-928cc4b2af7a
 rp.launch = default_TEST_EXAMPLE
 rp.project = default_project
 
@@ -94,7 +118,7 @@ rp.batch.size.logs = 5
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-**Parameters**
+### Parameters
 
 User should provide next parameters to agent.
 
@@ -124,7 +148,7 @@ Launch \#2" etc.
 >   If mandatory properties are missed client throw exception
 >   IllegalArgumentException.
 
-**Proxy configuration**
+### Proxy configuration
 
 The client uses standard java proxy mechanism. If you are new try [Java networking and proxies](<http://docs.oracle.com/javase/8/docs/technotes/guides/net/proxies.html>) page.
 
@@ -133,7 +157,7 @@ Ways to set up properties:
 a. reportportal.properties file
 b. command line properties (-Dhttps.proxyHost=localhost)
 
-**How to provide parameters**
+### How to provide parameters
 
 There are two way to load parameters.
 
@@ -148,7 +172,7 @@ user can create his own “reportportal.properties” file and put in class path
 
 - Use system variables
 
-**Parameters loading order**
+### Parameters loading order
 
 Client loads properties in the next order. Every next level overrides previous:
 
@@ -163,7 +187,7 @@ c.  JVM variables. If JVM variables with names specified in the
     "Input Parameters" section exist, client overrides existing ones from
     JVM variables.
 
-#### Events
+### Events
 
 * URI - saves story URI to be sent to ReportPortal afterwards
 * Feature - notifies ReportPortal that some feature has started
