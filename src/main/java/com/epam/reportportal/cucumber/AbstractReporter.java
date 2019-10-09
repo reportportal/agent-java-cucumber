@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.epam.reportportal.cucumber.Utils.extractAttributes;
+import static rp.com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
@@ -81,6 +82,10 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setMode(parameters.getLaunchRunningMode());
 			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributesRQ>() : parameters.getAttributes());
 			rq.setDescription(parameters.getDescription());
+			rq.setRerun(parameters.isRerun());
+			if (!isNullOrEmpty(parameters.getRerunOf())) {
+				rq.setRerunOf(parameters.getRerunOf());
+			}
 
 			Boolean skippedAnIssue = parameters.getSkippedAnIssue();
 			ItemAttributesRQ skippedIssueAttr = new ItemAttributesRQ();
