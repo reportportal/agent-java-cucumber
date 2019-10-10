@@ -205,56 +205,39 @@ public class Utils {
 	@Nullable
 	public static String getCodeRef(Match match) {
 
-		Field definitionMatchField = getDefinitionMatchField(match);
-
-		if (definitionMatchField != null) {
-
-			try {
-				Object stepDefinitionMatch = definitionMatchField.get(match);
-				Field stepDefinitionField = stepDefinitionMatch.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
-				stepDefinitionField.setAccessible(true);
-				Object javaStepDefinition = stepDefinitionField.get(stepDefinitionMatch);
-				Method getLocationMethod = javaStepDefinition.getClass().getDeclaredMethod(GET_LOCATION_METHOD_NAME, boolean.class);
-				getLocationMethod.setAccessible(true);
-				String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
-				return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
-			} catch (NoSuchFieldException e) {
-				return null;
-			} catch (NoSuchMethodException e) {
-				return null;
-			} catch (IllegalAccessException e) {
-				return null;
-			} catch (InvocationTargetException e) {
-				return null;
-			}
-
-		} else {
+		try {
+			Field stepDefinitionField = match.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
+			stepDefinitionField.setAccessible(true);
+			Object javaStepDefinition = stepDefinitionField.get(match);
+			Method getLocationMethod = javaStepDefinition.getClass().getDeclaredMethod(GET_LOCATION_METHOD_NAME, boolean.class);
+			getLocationMethod.setAccessible(true);
+			String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
+			return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
+		} catch (NoSuchFieldException e) {
+			return null;
+		} catch (NoSuchMethodException e) {
+			return null;
+		} catch (IllegalAccessException e) {
+			return null;
+		} catch (InvocationTargetException e) {
 			return null;
 		}
 
 	}
 
 	public static int getTestCaseId(Match match, String codeRef) {
-		Field definitionMatchField = getDefinitionMatchField(match);
-		if (definitionMatchField != null) {
-			try {
-				Object stepDefinitionMatch = definitionMatchField.get(match);
-				Field stepDefinitionField = stepDefinitionMatch.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
-				stepDefinitionField.setAccessible(true);
-				Object javaStepDefinition = stepDefinitionField.get(stepDefinitionMatch);
-				Field methodField = javaStepDefinition.getClass().getDeclaredField(METHOD_FIELD_NAME);
-				methodField.setAccessible(true);
-				Method method = (Method) methodField.get(javaStepDefinition);
-				TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
-				return testCaseIdAnnotation != null ?
-						testCaseIdAnnotation.value() :
-						getTestCaseId(codeRef, match.getArguments());
-			} catch (NoSuchFieldException e) {
-				return getTestCaseId(codeRef, match.getArguments());
-			} catch (IllegalAccessException e) {
-				return getTestCaseId(codeRef, match.getArguments());
-			}
-		} else {
+		try {
+			Field stepDefinitionField = match.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
+			stepDefinitionField.setAccessible(true);
+			Object javaStepDefinition = stepDefinitionField.get(match);
+			Field methodField = javaStepDefinition.getClass().getDeclaredField(METHOD_FIELD_NAME);
+			methodField.setAccessible(true);
+			Method method = (Method) methodField.get(javaStepDefinition);
+			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
+			return testCaseIdAnnotation != null ? testCaseIdAnnotation.value() : getTestCaseId(codeRef, match.getArguments());
+		} catch (NoSuchFieldException e) {
+			return getTestCaseId(codeRef, match.getArguments());
+		} catch (IllegalAccessException e) {
 			return getTestCaseId(codeRef, match.getArguments());
 		}
 	}
@@ -265,28 +248,5 @@ public class Utils {
 			values.add(argument.getVal());
 		}
 		return Arrays.deepHashCode(new Object[] { codeRef, values });
-	}
-
-	@Nullable
-	private static Field getDefinitionMatchField(Match testStep) {
-
-		Class<?> clazz = testStep.getClass();
-
-		try {
-			return clazz.getField(DEFINITION_MATCH_FIELD_NAME);
-		} catch (NoSuchFieldException e) {
-			do {
-				try {
-					Field definitionMatchField = clazz.getDeclaredField(DEFINITION_MATCH_FIELD_NAME);
-					definitionMatchField.setAccessible(true);
-					return definitionMatchField;
-				} catch (NoSuchFieldException ignore) {
-				}
-
-				clazz = clazz.getSuperclass();
-			} while (clazz != null);
-
-			return null;
-		}
 	}
 }
