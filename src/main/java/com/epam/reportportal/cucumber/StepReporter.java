@@ -54,19 +54,21 @@ public class StepReporter extends AbstractReporter {
 		hookStatus = null;
 	}
 
-
 	@Override
 	protected Maybe<String> getRootItemId() {
 		return null;
 	}
 
 	@Override
-	protected void beforeStep(Step step) {
+	protected void beforeStep(Step step, Match match) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
+		String codeRef = Utils.getCodeRef(match);
+		rq.setCodeRef(codeRef);
+		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef));
 		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}
 

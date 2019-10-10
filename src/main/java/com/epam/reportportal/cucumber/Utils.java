@@ -15,6 +15,7 @@
  */
 package com.epam.reportportal.cucumber;
 
+import com.epam.reportportal.annotations.TestCaseId;
 import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
@@ -23,20 +24,30 @@ import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
+import gherkin.formatter.Argument;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
+import io.reactivex.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
+	private static final String DEFINITION_MATCH_FIELD_NAME = "definitionMatch";
+	private static final String STEP_DEFINITION_FIELD_NAME = "stepDefinition";
+	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
+	private static final String METHOD_OPENING_BRACKET = "(";
+	private static final String METHOD_FIELD_NAME = "method";
 
 	//@formatter:off
 	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
@@ -189,5 +200,93 @@ public class Utils {
 			marg.append(DOCSTRING_DECORATOR).append(ds.getValue()).append(DOCSTRING_DECORATOR);
 		}
 		return marg.toString();
+	}
+
+	@Nullable
+	public static String getCodeRef(Match match) {
+
+		Field definitionMatchField = getDefinitionMatchField(match);
+
+		if (definitionMatchField != null) {
+
+			try {
+				Object stepDefinitionMatch = definitionMatchField.get(match);
+				Field stepDefinitionField = stepDefinitionMatch.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
+				stepDefinitionField.setAccessible(true);
+				Object javaStepDefinition = stepDefinitionField.get(stepDefinitionMatch);
+				Method getLocationMethod = javaStepDefinition.getClass().getDeclaredMethod(GET_LOCATION_METHOD_NAME, boolean.class);
+				getLocationMethod.setAccessible(true);
+				String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
+				return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
+			} catch (NoSuchFieldException e) {
+				return null;
+			} catch (NoSuchMethodException e) {
+				return null;
+			} catch (IllegalAccessException e) {
+				return null;
+			} catch (InvocationTargetException e) {
+				return null;
+			}
+
+		} else {
+			return null;
+		}
+
+	}
+
+	public static int getTestCaseId(Match match, String codeRef) {
+		Field definitionMatchField = getDefinitionMatchField(match);
+		if (definitionMatchField != null) {
+			try {
+				Object stepDefinitionMatch = definitionMatchField.get(match);
+				Field stepDefinitionField = stepDefinitionMatch.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
+				stepDefinitionField.setAccessible(true);
+				Object javaStepDefinition = stepDefinitionField.get(stepDefinitionMatch);
+				Field methodField = javaStepDefinition.getClass().getDeclaredField(METHOD_FIELD_NAME);
+				methodField.setAccessible(true);
+				Method method = (Method) methodField.get(javaStepDefinition);
+				TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
+				return testCaseIdAnnotation != null ?
+						testCaseIdAnnotation.value() :
+						getTestCaseId(codeRef, match.getArguments());
+			} catch (NoSuchFieldException e) {
+				return getTestCaseId(codeRef, match.getArguments());
+			} catch (IllegalAccessException e) {
+				return getTestCaseId(codeRef, match.getArguments());
+			}
+		} else {
+			return getTestCaseId(codeRef, match.getArguments());
+		}
+	}
+
+	private static int getTestCaseId(String codeRef, List<Argument> arguments) {
+		List<String> values = new ArrayList<String>(arguments.size());
+		for (Argument argument : arguments) {
+			values.add(argument.getVal());
+		}
+		return Arrays.deepHashCode(new Object[] { codeRef, values });
+	}
+
+	@Nullable
+	private static Field getDefinitionMatchField(Match testStep) {
+
+		Class<?> clazz = testStep.getClass();
+
+		try {
+			return clazz.getField(DEFINITION_MATCH_FIELD_NAME);
+		} catch (NoSuchFieldException e) {
+			do {
+				try {
+					Field definitionMatchField = clazz.getDeclaredField(DEFINITION_MATCH_FIELD_NAME);
+					definitionMatchField.setAccessible(true);
+					return definitionMatchField;
+				} catch (NoSuchFieldException ignore) {
+				}
+
+				clazz = clazz.getSuperclass();
+			} while (clazz != null);
+
+			return null;
+		}
 	}
 }

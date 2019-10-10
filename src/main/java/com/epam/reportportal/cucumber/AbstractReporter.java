@@ -192,7 +192,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 *
 	 * @param step Step object
 	 */
-	protected abstract void beforeStep(Step step);
+	protected abstract void beforeStep(Step step, Match match);
 
 	/**
 	 * Finish Cucumber step
@@ -284,7 +284,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void match(Match match) {
-		beforeStep(currentScenario.getNextStep());
+		beforeStep(currentScenario.getNextStep(), match);
 	}
 
 	@Override
