@@ -19,6 +19,7 @@ import com.epam.reportportal.annotations.TestCaseId;
 import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
+import com.epam.reportportal.utils.TestCaseIdUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
@@ -235,7 +236,7 @@ public class Utils {
 			Method method = (Method) methodField.get(javaStepDefinition);
 			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
 			return testCaseIdAnnotation != null ?
-					getTestCaseId(testCaseIdAnnotation, match.getArguments()) :
+					getTestCaseId(testCaseIdAnnotation, method, match.getArguments()) :
 					getTestCaseId(codeRef, match.getArguments());
 		} catch (NoSuchFieldException e) {
 			return getTestCaseId(codeRef, match.getArguments());
@@ -244,13 +245,13 @@ public class Utils {
 		}
 	}
 
-	private static int getTestCaseId(TestCaseId testCaseId, List<Argument> arguments) {
+	private static int getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
 		if (testCaseId.isParameterized()) {
 			List<String> values = new ArrayList<String>(arguments.size());
 			for (Argument argument : arguments) {
 				values.add(argument.getVal());
 			}
-			return Arrays.deepHashCode(new Object[] { testCaseId.value(), values });
+			return TestCaseIdUtils.getTestCaseId(testCaseId, method, values.toArray());
 		} else {
 			return testCaseId.value();
 		}
@@ -261,6 +262,6 @@ public class Utils {
 		for (Argument argument : arguments) {
 			values.add(argument.getVal());
 		}
-		return Arrays.deepHashCode(new Object[] { codeRef, values });
+		return Arrays.deepHashCode(new Object[] { codeRef, values.toArray() });
 	}
 }
