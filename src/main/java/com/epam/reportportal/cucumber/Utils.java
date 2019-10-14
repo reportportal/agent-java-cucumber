@@ -234,11 +234,25 @@ public class Utils {
 			methodField.setAccessible(true);
 			Method method = (Method) methodField.get(javaStepDefinition);
 			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
-			return testCaseIdAnnotation != null ? testCaseIdAnnotation.value() : getTestCaseId(codeRef, match.getArguments());
+			return testCaseIdAnnotation != null ?
+					getTestCaseId(testCaseIdAnnotation, match.getArguments()) :
+					getTestCaseId(codeRef, match.getArguments());
 		} catch (NoSuchFieldException e) {
 			return getTestCaseId(codeRef, match.getArguments());
 		} catch (IllegalAccessException e) {
 			return getTestCaseId(codeRef, match.getArguments());
+		}
+	}
+
+	private static int getTestCaseId(TestCaseId testCaseId, List<Argument> arguments) {
+		if (testCaseId.isParameterized()) {
+			List<String> values = new ArrayList<String>(arguments.size());
+			for (Argument argument : arguments) {
+				values.add(argument.getVal());
+			}
+			return Arrays.deepHashCode(new Object[] { testCaseId.value(), values });
+		} else {
+			return testCaseId.value();
 		}
 	}
 
