@@ -226,7 +226,8 @@ public class Utils {
 
 	}
 
-	public static int getTestCaseId(Match match, String codeRef) {
+	@Nullable
+	public static Integer getTestCaseId(Match match, String codeRef) {
 		try {
 			Field stepDefinitionField = match.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
 			stepDefinitionField.setAccessible(true);
@@ -245,7 +246,8 @@ public class Utils {
 		}
 	}
 
-	private static int getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
+	@Nullable
+	private static Integer getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
 		if (testCaseId.isParameterized()) {
 			List<String> values = new ArrayList<String>(arguments.size());
 			for (Argument argument : arguments) {
