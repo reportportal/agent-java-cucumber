@@ -253,7 +253,7 @@ public class Utils {
 			for (Argument argument : arguments) {
 				values.add(argument.getVal());
 			}
-			return TestCaseIdUtils.getTestCaseId(testCaseId, method, values.toArray());
+			return TestCaseIdUtils.getParameterizedTestCaseId(method, values.toArray());
 		} else {
 			return testCaseId.value();
 		}
