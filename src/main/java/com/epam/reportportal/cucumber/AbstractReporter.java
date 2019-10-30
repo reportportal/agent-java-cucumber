@@ -168,8 +168,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				currentFeatureId = RP.get().startTestItem(root, startFeatureRq);
 			}
 		}
-		Maybe<String> id = Utils.startNonLeafNode(
-				RP.get(),
+		Maybe<String> id = Utils.startNonLeafNode(RP.get(),
 				currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
 				currentFeatureUri + ":" + scenario.getLine(),
