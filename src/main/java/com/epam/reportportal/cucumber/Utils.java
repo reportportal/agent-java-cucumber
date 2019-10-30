@@ -44,7 +44,6 @@ public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
-	private static final String DEFINITION_MATCH_FIELD_NAME = "definitionMatch";
 	private static final String STEP_DEFINITION_FIELD_NAME = "stepDefinition";
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
