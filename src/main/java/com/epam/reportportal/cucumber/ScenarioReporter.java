@@ -62,7 +62,7 @@ public class ScenarioReporter extends AbstractReporter {
 	});
 
 	@Override
-	protected void beforeStep(Step step) {
+	protected void beforeStep(Step step, Match match) {
 		String decoratedStepName = decorateMessage(Utils.buildStatementName(step, stepPrefix, " ", null));
 		String multilineArg = Utils.buildMultilineArgument(step);
 		if (!multilineArg.isEmpty()) {

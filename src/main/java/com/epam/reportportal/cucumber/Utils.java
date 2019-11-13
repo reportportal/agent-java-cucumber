@@ -15,28 +15,39 @@
  */
 package com.epam.reportportal.cucumber;
 
+import com.epam.reportportal.annotations.TestCaseId;
 import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
+import com.epam.reportportal.utils.TestCaseIdUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
+import gherkin.formatter.Argument;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
+import io.reactivex.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
+	private static final String STEP_DEFINITION_FIELD_NAME = "stepDefinition";
+	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
+	private static final String METHOD_OPENING_BRACKET = "(";
+	private static final String METHOD_FIELD_NAME = "method";
 
 	//@formatter:off
 	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
@@ -189,5 +200,69 @@ public class Utils {
 			marg.append(DOCSTRING_DECORATOR).append(ds.getValue()).append(DOCSTRING_DECORATOR);
 		}
 		return marg.toString();
+	}
+
+	@Nullable
+	public static String getCodeRef(Match match) {
+
+		try {
+			Field stepDefinitionField = match.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
+			stepDefinitionField.setAccessible(true);
+			Object javaStepDefinition = stepDefinitionField.get(match);
+			Method getLocationMethod = javaStepDefinition.getClass().getDeclaredMethod(GET_LOCATION_METHOD_NAME, boolean.class);
+			getLocationMethod.setAccessible(true);
+			String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
+			return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
+		} catch (NoSuchFieldException e) {
+			return null;
+		} catch (NoSuchMethodException e) {
+			return null;
+		} catch (IllegalAccessException e) {
+			return null;
+		} catch (InvocationTargetException e) {
+			return null;
+		}
+
+	}
+
+	@Nullable
+	public static Integer getTestCaseId(Match match, String codeRef) {
+		try {
+			Field stepDefinitionField = match.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
+			stepDefinitionField.setAccessible(true);
+			Object javaStepDefinition = stepDefinitionField.get(match);
+			Field methodField = javaStepDefinition.getClass().getDeclaredField(METHOD_FIELD_NAME);
+			methodField.setAccessible(true);
+			Method method = (Method) methodField.get(javaStepDefinition);
+			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
+			return testCaseIdAnnotation != null ?
+					getTestCaseId(testCaseIdAnnotation, method, match.getArguments()) :
+					getTestCaseId(codeRef, match.getArguments());
+		} catch (NoSuchFieldException e) {
+			return getTestCaseId(codeRef, match.getArguments());
+		} catch (IllegalAccessException e) {
+			return getTestCaseId(codeRef, match.getArguments());
+		}
+	}
+
+	@Nullable
+	private static Integer getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
+		if (testCaseId.isParameterized()) {
+			List<String> values = new ArrayList<String>(arguments.size());
+			for (Argument argument : arguments) {
+				values.add(argument.getVal());
+			}
+			return TestCaseIdUtils.getParameterizedTestCaseId(method, values.toArray());
+		} else {
+			return testCaseId.value();
+		}
+	}
+
+	private static int getTestCaseId(String codeRef, List<Argument> arguments) {
+		List<String> values = new ArrayList<String>(arguments.size());
+		for (Argument argument : arguments) {
+			values.add(argument.getVal());
+		}
+		return Arrays.deepHashCode(new Object[] { codeRef, values.toArray() });
 	}
 }
