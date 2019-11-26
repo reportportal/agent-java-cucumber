@@ -247,7 +247,7 @@ public class Utils {
 
 	@Nullable
 	private static Integer getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
-		if (testCaseId.isParameterized()) {
+		if (testCaseId.parametrized()) {
 			List<String> values = new ArrayList<String>(arguments.size());
 			for (Argument argument : arguments) {
 				values.add(argument.getVal());
