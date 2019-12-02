@@ -70,8 +70,10 @@ public class StepReporter extends AbstractReporter {
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);
 		TestCaseIdEntry testCaseIdEntry = Utils.getTestCaseId(match, codeRef);
-		rq.setTestCaseId(testCaseIdEntry.getId());
-		rq.setTestCaseHash(testCaseIdEntry.getHash());
+		if (testCaseIdEntry != null) {
+			rq.setTestCaseId(testCaseIdEntry.getId());
+			rq.setTestCaseHash(testCaseIdEntry.getHash());
+		}
 		rq.setAttributes(Utils.getAttributes(match));
 		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}
