@@ -3,7 +3,9 @@ language: java
 script: ./gradlew build
 
 jdk:
-  - oraclejdk8
+  - openjdk8
+before_install:
+  - JAVA_HOME=$(jdk_switcher home openjdk8) ./gradlew
 
 notifications:
   slack: reportportal:fl6xWHVQp1jvsMmCJxYW9YKP
