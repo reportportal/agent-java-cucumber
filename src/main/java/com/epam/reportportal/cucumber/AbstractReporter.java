@@ -134,7 +134,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		startFeatureRq = new StartTestItemRQ();
 		startFeatureRq.setDescription(Utils.
 				buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
-		startFeatureRq.setName(currentFeatureUri);
+		startFeatureRq.setName(feature.getName());
 		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
 		startFeatureRq.setType(getFeatureTestItemType());
 	}
