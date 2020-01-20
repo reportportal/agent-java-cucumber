@@ -54,7 +54,6 @@ public class StepReporter extends AbstractReporter {
 		hookStatus = null;
 	}
 
-
 	@Override
 	protected Maybe<String> getRootItemId() {
 		return null;
@@ -66,7 +65,7 @@ public class StepReporter extends AbstractReporter {
 		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("STEP");
+		rq.setType(stepPrefix.equals("BACKGROUND: ") ? "BEFORE_TEST" : "STEP");
 		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}
 
