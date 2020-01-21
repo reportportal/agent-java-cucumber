@@ -66,7 +66,7 @@ public class StepReporter extends AbstractReporter {
 		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("STEP");
+		rq.setType(stepPrefix.equals("BACKGROUND: ") ? "BEFORE_TEST" : "STEP");
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);
 		TestCaseIdEntry testCaseIdEntry = Utils.getTestCaseId(match, codeRef);
