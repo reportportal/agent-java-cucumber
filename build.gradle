@@ -1,18 +1,17 @@
 apply plugin: 'java'
-apply from: 'quality.gradle'
-apply from: 'https://raw.githubusercontent.com/reportportal/gradle-scripts/master/release-commons.gradle'
+
+project.ext.releaseMode = project.hasProperty('releaseMode')
+
+def branch = releaseMode ? '5.0.0' : 'develop'
+apply from: "https://raw.githubusercontent.com/reportportal/gradle-scripts/$branch/build-quality.gradle"
+apply from: "https://raw.githubusercontent.com/reportportal/gradle-scripts/$branch/release-commons.gradle"
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
-project.ext {
-    releaseMode = project.hasProperty('releaseMode')
-}
-
 repositories {
     jcenter()
-    maven { url "http://dl.bintray.com/epam/reportportal" }
-    maven { url "https://jitpack.io" }
+    releaseMode ? maven { url "http://dl.bintray.com/epam/reportportal" } : maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -30,3 +29,4 @@ wrapper {
     gradleVersion = '5.4.1'
 }
 
+afterReleaseBuild.dependsOn bintrayUpload
