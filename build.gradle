@@ -19,7 +19,7 @@ dependencies {
         compile 'com.epam.reportportal:client-java:5.0.0-BETA-8'
         compile 'com.epam.reportportal:commons-model:5.0.0'
     } else {
-        compile 'com.github.reportportal:client-java:20f5674'
+        compile 'com.github.reportportal:client-java:e6c4b526'
         compile 'com.github.reportportal:commons-model:feec39f3'
     }
     compileOnly 'info.cukes:gherkin:2.12.2'
