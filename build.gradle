@@ -31,8 +31,8 @@ wrapper {
 
 task writeAgentProperties(type: WriteProperties) {
     outputFile = file("${project.projectDir}/src/main/resources/agent.properties")
-    property('agent.name', project.rootProject.name)
-    property('agent.version', project.rootProject.version)
+    property('agent.name', project.name)
+    property('agent.version', project.version)
 }
 
 compileJava.dependsOn writeAgentProperties
