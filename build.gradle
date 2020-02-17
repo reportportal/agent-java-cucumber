@@ -22,7 +22,10 @@ dependencies {
         compile 'com.github.reportportal:client-java:a560df17'
         compile 'com.github.reportportal:commons-model:feec39f3'
     }
-    compileOnly 'info.cukes:gherkin:2.12.2'
+    compile 'info.cukes:gherkin:2.12.2'
+    testCompile 'org.hamcrest:hamcrest-all:1.3'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-all:2.0.2-beta'
 }
 
 wrapper {
