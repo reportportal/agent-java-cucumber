@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import rp.com.google.common.collect.Lists;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author <a href="mailto:ivan_budayeu@epam.com">Ivan Budayeu</a>
@@ -64,20 +65,21 @@ public class LaunchSystemAttributesTest {
 
 	@Test
 	public void shouldRetrieveSystemAttributes() {
-		final StartLaunchRQ[] startLaunchRequest = new StartLaunchRQ[1];
-		when(reportPortalClient.startLaunch(any(StartLaunchRQ.class))).then(t -> {
-			startLaunchRequest[0] = t.getArgumentAt(0, StartLaunchRQ.class);
-			return Maybe.create(emitter -> {
-				emitter.onSuccess("launchId");
-				emitter.onComplete();
-			}).cache();
-		});
+		when(reportPortalClient.startLaunch(any(StartLaunchRQ.class))).then(t -> Maybe.create(emitter -> {
+			emitter.onSuccess("launchId");
+			emitter.onComplete();
+		}).cache());
 
 		stepReporter.RP.get().start().blockingGet();
 
-		Assert.assertNotNull(startLaunchRequest[0].getAttributes());
+		ArgumentCaptor<StartLaunchRQ> launchRQArgumentCaptor = ArgumentCaptor.forClass(StartLaunchRQ.class);
+		verify(reportPortalClient, times(1)).startLaunch(launchRQArgumentCaptor.capture());
 
-		List<ItemAttributesRQ> attributes = Lists.newArrayList(startLaunchRequest[0].getAttributes());
+		StartLaunchRQ startLaunchRequest = launchRQArgumentCaptor.getValue();
+
+		Assert.assertNotNull(startLaunchRequest.getAttributes());
+
+		List<ItemAttributesRQ> attributes = Lists.newArrayList(startLaunchRequest.getAttributes());
 		attributes.removeIf(attribute -> attribute.getKey().equals(SKIPPED_ISSUE_KEY));
 
 		Assert.assertEquals(3, attributes.size());
