@@ -2,8 +2,7 @@ package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.ReportPortal;
-import com.epam.reportportal.service.TestLaunch;
-import com.epam.reportportal.utils.properties.SystemAttributesExtractor;
+import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import io.reactivex.Maybe;
@@ -11,18 +10,19 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import rp.com.google.common.base.Suppliers;
+import rp.com.google.common.collect.Lists;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author <a href="mailto:ivan_budayeu@epam.com">Ivan Budayeu</a>
@@ -31,13 +31,15 @@ public class LaunchSystemAttributesTest {
 
 	private static final Map<String, Pattern> properties = new HashMap<>();
 
-	private final StepReporter stepReporter = new StepReporter();
+	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
+
+	private StepReporter stepReporter;
 
 	@Mock
-	private ReportPortal reportPortal;
+	private ReportPortalClient reportPortalClient;
 
 	@Mock
-	private Maybe<String> launchId;
+	private ListenerParameters listenerParameters;
 
 	@BeforeClass
 	public static void initKeys() {
@@ -49,29 +51,40 @@ public class LaunchSystemAttributesTest {
 	@Before
 	public void initLaunch() {
 		MockitoAnnotations.initMocks(this);
-		stepReporter.RP = Suppliers.memoize(() -> {
-
-			when(reportPortal.getParameters()).thenReturn(new ListenerParameters());
-			ListenerParameters parameters = reportPortal.getParameters();
-
-			StartLaunchRQ rq = new StartLaunchRQ();
-			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<>() : parameters.getAttributes());
-			rq.getAttributes().addAll(SystemAttributesExtractor.extract("agent.properties"));
-
-			when(reportPortal.newLaunch(any(StartLaunchRQ.class))).thenReturn(new TestLaunch(parameters, rq, launchId));
-			return reportPortal.newLaunch(rq);
-		});
+		when(listenerParameters.getEnable()).thenReturn(true);
+		when(listenerParameters.getBaseUrl()).thenReturn("http://example.com");
+		when(listenerParameters.getIoPoolSize()).thenReturn(10);
+		when(listenerParameters.getBatchLogsSize()).thenReturn(5);
+		stepReporter = new StepReporter() {
+			@Override
+			protected ReportPortal buildReportPortal() {
+				return ReportPortal.create(reportPortalClient, listenerParameters);
+			}
+		};
 	}
 
 	@Test
 	public void shouldRetrieveSystemAttributes() {
-		TestLaunch testLaunch = (TestLaunch) stepReporter.RP.get();
-		StartLaunchRQ startLaunchRequest = testLaunch.getStartLaunchRQ();
+		when(reportPortalClient.startLaunch(any(StartLaunchRQ.class))).then(t -> Maybe.create(emitter -> {
+			emitter.onSuccess("launchId");
+			emitter.onComplete();
+		}).cache());
+
+		stepReporter.RP.get().start().blockingGet();
+
+		ArgumentCaptor<StartLaunchRQ> launchRQArgumentCaptor = ArgumentCaptor.forClass(StartLaunchRQ.class);
+		verify(reportPortalClient, times(1)).startLaunch(launchRQArgumentCaptor.capture());
+
+		StartLaunchRQ startLaunchRequest = launchRQArgumentCaptor.getValue();
 
 		Assert.assertNotNull(startLaunchRequest.getAttributes());
-		Assert.assertEquals(3, startLaunchRequest.getAttributes().size());
 
-		startLaunchRequest.getAttributes().forEach(attribute -> {
+		List<ItemAttributesRQ> attributes = Lists.newArrayList(startLaunchRequest.getAttributes());
+		attributes.removeIf(attribute -> attribute.getKey().equals(SKIPPED_ISSUE_KEY));
+
+		Assert.assertEquals(3, attributes.size());
+
+		attributes.forEach(attribute -> {
 			Assert.assertTrue(attribute.isSystem());
 
 			Pattern pattern = getPattern(attribute);
