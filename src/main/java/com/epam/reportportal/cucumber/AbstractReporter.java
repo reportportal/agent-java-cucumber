@@ -84,7 +84,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setStartTime(startTime);
 			rq.setMode(parameters.getLaunchRunningMode());
 			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributesRQ>() : parameters.getAttributes());
-			rq.getAttributes().addAll(SystemAttributesExtractor.extract(AGENT_PROPERTIES_FILE));
+			rq.getAttributes().addAll(SystemAttributesExtractor.extract(AGENT_PROPERTIES_FILE, AbstractReporter.class.getClassLoader()));
 			rq.setDescription(parameters.getDescription());
 			rq.setRerun(parameters.isRerun());
 			if (!isNullOrEmpty(parameters.getRerunOf())) {
