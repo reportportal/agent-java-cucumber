@@ -24,6 +24,7 @@ import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.utils.AttributeParser;
 import com.epam.reportportal.utils.TestCaseIdUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
+import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
@@ -43,6 +44,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
@@ -52,6 +54,7 @@ public class Utils {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String METHOD_FIELD_NAME = "method";
+	private static final String MATCHED_COLUMNS_FIELD_NAME = "matchedColumns";
 
 	//@formatter:off
 	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
@@ -257,6 +260,26 @@ public class Utils {
 			return getTestCaseId(codeRef, match.getArguments());
 		} catch (IllegalAccessException e) {
 			return getTestCaseId(codeRef, match.getArguments());
+		}
+	}
+
+	static List<ParameterResource> getParameters(Step step, Match match, Map<Integer, String> columnParameterMapping) {
+		try {
+			Field matchedColumnsField = step.getClass().getDeclaredField(MATCHED_COLUMNS_FIELD_NAME);
+			matchedColumnsField.setAccessible(true);
+			Set<Integer> columns = (Set<Integer>) matchedColumnsField.get(step);
+
+			return columns.stream().flatMap(it -> {
+				String parameterName = columnParameterMapping.get(it);
+				return match.getArguments().stream().map(arg -> {
+					ParameterResource parameterResource = new ParameterResource();
+					parameterResource.setKey(parameterName);
+					parameterResource.setValue(arg.getVal());
+					return parameterResource;
+				});
+			}).collect(Collectors.toList());
+		} catch (IllegalAccessException | NoSuchFieldException e) {
+			return Collections.emptyList();
 		}
 	}
 
