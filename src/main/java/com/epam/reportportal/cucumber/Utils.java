@@ -57,7 +57,7 @@ public class Utils {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String METHOD_FIELD_NAME = "method";
-	private static final String MATCHED_COLUMNS_FIELD_NAME = "matchedColumns";
+	private static final String PARAMETER_TYPE_REGEX = "\\(.+\\)$";
 
 	//@formatter:off
 	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
@@ -258,9 +258,10 @@ public class Utils {
 
 	static List<ParameterResource> getParameters(Match match) {
 		List<ParameterResource> parameters = Lists.newArrayList();
-		String text = match.getLocation();
-		Matcher matcher = Pattern.compile("\\(.+\\)$").matcher(text);
 		Optional<String> parameterType = Optional.empty();
+
+		String text = match.getLocation();
+		Matcher matcher = Pattern.compile(PARAMETER_TYPE_REGEX).matcher(text);
 		if (matcher.find()) {
 			parameterType = Optional.of(text.substring(matcher.start() + 1, matcher.end() - 1));
 		}
