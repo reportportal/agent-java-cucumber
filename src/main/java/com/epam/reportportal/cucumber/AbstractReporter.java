@@ -31,7 +31,6 @@ import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
-import rp.com.google.common.collect.Maps;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,7 +60,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected String stepPrefix;
 
 	protected Queue<String> outlineIterations;
-	protected Map<Integer, String> columnParameterMapping;
 	private Boolean inBackground;
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
@@ -104,7 +102,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	protected AbstractReporter() {
 		outlineIterations = new ArrayDeque<>();
-		columnParameterMapping = Maps.newHashMap();
 		stepPrefix = "";
 		inBackground = false;
 	}
@@ -326,12 +323,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void examples(Examples examples) {
-		List<ExamplesTableRow> rows = examples.getRows();
-		List<String> headerCells = rows.get(0).getCells();
-		// get table headers mapping
-		IntStream.range(0, headerCells.size()).forEach(it -> columnParameterMapping.put(it, headerCells.get(it)));
 		// examples always have headers; therefore up to num - 1
-		IntStream.range(1, rows.size()).forEach(it -> outlineIterations.add(String.format("[%d]", it)));
+		IntStream.range(1, examples.getRows().size()).forEach(it -> outlineIterations.add(String.format("[%d]", it)));
 	}
 
 	@Override

@@ -39,11 +39,14 @@ import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
+import rp.com.google.common.collect.Lists;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Utils {
@@ -217,9 +220,7 @@ public class Utils {
 			if (attributesAnnotation != null) {
 				return AttributeParser.retrieveAttributes(attributesAnnotation);
 			}
-		} catch (NoSuchFieldException e) {
-			return null;
-		} catch (IllegalAccessException e) {
+		} catch (NoSuchFieldException | IllegalAccessException e) {
 			return null;
 		}
 		return null;
@@ -236,13 +237,7 @@ public class Utils {
 			getLocationMethod.setAccessible(true);
 			String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
 			return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
-		} catch (NoSuchFieldException e) {
-			return null;
-		} catch (NoSuchMethodException e) {
-			return null;
-		} catch (IllegalAccessException e) {
-			return null;
-		} catch (InvocationTargetException e) {
+		} catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 			return null;
 		}
 
@@ -256,31 +251,26 @@ public class Utils {
 			return testCaseIdAnnotation != null ?
 					getTestCaseId(testCaseIdAnnotation, method, match.getArguments()) :
 					getTestCaseId(codeRef, match.getArguments());
-		} catch (NoSuchFieldException e) {
-			return getTestCaseId(codeRef, match.getArguments());
-		} catch (IllegalAccessException e) {
+		} catch (NoSuchFieldException | IllegalAccessException e) {
 			return getTestCaseId(codeRef, match.getArguments());
 		}
 	}
 
-	static List<ParameterResource> getParameters(Step step, Match match, Map<Integer, String> columnParameterMapping) {
-		try {
-			Field matchedColumnsField = step.getClass().getDeclaredField(MATCHED_COLUMNS_FIELD_NAME);
-			matchedColumnsField.setAccessible(true);
-			Set<Integer> columns = (Set<Integer>) matchedColumnsField.get(step);
-
-			return columns.stream().flatMap(it -> {
-				String parameterName = columnParameterMapping.get(it);
-				return match.getArguments().stream().map(arg -> {
-					ParameterResource parameterResource = new ParameterResource();
-					parameterResource.setKey(parameterName);
-					parameterResource.setValue(arg.getVal());
-					return parameterResource;
-				});
-			}).collect(Collectors.toList());
-		} catch (IllegalAccessException | NoSuchFieldException e) {
-			return Collections.emptyList();
+	static List<ParameterResource> getParameters(Match match) {
+		List<ParameterResource> parameters = Lists.newArrayList();
+		String text = match.getLocation();
+		Matcher matcher = Pattern.compile("\\(.+\\)$").matcher(text);
+		Optional<String> parameterType = Optional.empty();
+		if (matcher.find()) {
+			parameterType = Optional.of(text.substring(matcher.start() + 1, matcher.end() - 1));
 		}
+		parameterType.ifPresent(it -> parameters.addAll(match.getArguments().stream().map(arg -> {
+			ParameterResource parameterResource = new ParameterResource();
+			parameterResource.setKey(it);
+			parameterResource.setValue(arg.getVal());
+			return parameterResource;
+		}).collect(Collectors.toList())));
+		return parameters;
 	}
 
 	private static Method retrieveMethod(Match match) throws NoSuchFieldException, IllegalAccessException {
