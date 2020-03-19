@@ -47,7 +47,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
@@ -258,19 +258,23 @@ public class Utils {
 
 	static List<ParameterResource> getParameters(Match match) {
 		List<ParameterResource> parameters = Lists.newArrayList();
-		Optional<String> parameterType = Optional.empty();
 
 		String text = match.getLocation();
 		Matcher matcher = Pattern.compile(PARAMETER_TYPE_REGEX).matcher(text);
 		if (matcher.find()) {
-			parameterType = Optional.of(text.substring(matcher.start() + 1, matcher.end() - 1));
+			String methodParameters = text.substring(matcher.start() + 1, matcher.end() - 1);
+			String[] parameterTypes = methodParameters.split(",");
+			IntStream.range(0, parameterTypes.length).forEach(index -> {
+				String parameterType = parameterTypes[index];
+				if (index < match.getArguments().size()) {
+					String value = match.getArguments().get(index).getVal();
+					ParameterResource parameterResource = new ParameterResource();
+					parameterResource.setKey(parameterType);
+					parameterResource.setValue(value);
+					parameters.add(parameterResource);
+				}
+			});
 		}
-		parameterType.ifPresent(it -> parameters.addAll(match.getArguments().stream().map(arg -> {
-			ParameterResource parameterResource = new ParameterResource();
-			parameterResource.setKey(it);
-			parameterResource.setValue(arg.getVal());
-			return parameterResource;
-		}).collect(Collectors.toList())));
 		return parameters;
 	}
 
