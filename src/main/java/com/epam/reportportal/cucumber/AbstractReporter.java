@@ -29,13 +29,12 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.IntStream;
 
 import static com.epam.reportportal.cucumber.Utils.extractAttributes;
 import static rp.com.google.common.base.Strings.isNullOrEmpty;
@@ -47,12 +46,9 @@ import static rp.com.google.common.base.Strings.isNullOrEmpty;
  * @author Andrei Varabyeu
  */
 public abstract class AbstractReporter implements Formatter, Reporter {
-	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
-
 	protected static final String COLON_INFIX = ": ";
-
 	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
 
 	/* formatter context */
@@ -63,7 +59,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected ScenarioContext currentScenario;
 	protected String stepPrefix;
 
-	private Queue<String> outlineIterations;
+	protected Queue<String> outlineIterations;
 	private Boolean inBackground;
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
@@ -105,7 +101,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	});
 
 	protected AbstractReporter() {
-		outlineIterations = new ArrayDeque<String>();
+		outlineIterations = new ArrayDeque<>();
 		stepPrefix = "";
 		inBackground = false;
 	}
@@ -172,7 +168,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				currentFeatureId = RP.get().startTestItem(root, startFeatureRq);
 			}
 		}
-		Maybe<String> id = Utils.startNonLeafNode(RP.get(),
+		Maybe<String> id = Utils.startNonLeafNode(
+				RP.get(),
 				currentFeatureId,
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
 				currentFeatureUri + ":" + scenario.getLine(),
@@ -326,11 +323,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void examples(Examples examples) {
-		int num = examples.getRows().size();
 		// examples always have headers; therefore up to num - 1
-		for (int i = 1; i < num; i++) {
-			outlineIterations.add(" [" + i + "]");
-		}
+		IntStream.range(1, examples.getRows().size()).forEach(it -> outlineIterations.add(String.format("[%d]", it)));
 	}
 
 	@Override
