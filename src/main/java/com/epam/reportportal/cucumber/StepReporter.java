@@ -25,6 +25,8 @@ import io.reactivex.Maybe;
 
 import java.util.Calendar;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * Cucumber reporter for ReportPortal that reports individual steps as test
  * methods.
@@ -70,11 +72,7 @@ public class StepReporter extends AbstractReporter {
 		rq.setParameters(Utils.getParameters(match));
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);
-		TestCaseIdEntry testCaseIdEntry = Utils.getTestCaseId(match, codeRef);
-		if (testCaseIdEntry != null) {
-			rq.setTestCaseId(testCaseIdEntry.getId());
-			rq.setTestCaseHash(testCaseIdEntry.getHash());
-		}
+		ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).ifPresent(rq::setTestCaseId);
 		rq.setAttributes(Utils.getAttributes(match));
 		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}

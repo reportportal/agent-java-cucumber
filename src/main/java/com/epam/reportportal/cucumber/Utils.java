@@ -33,7 +33,6 @@ import gherkin.formatter.Argument;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
 import io.reactivex.annotations.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Function;
@@ -47,6 +46,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Utils {
@@ -296,17 +296,17 @@ public class Utils {
 			}
 			return TestCaseIdUtils.getParameterizedTestCaseId(method, values.toArray());
 		} else {
-			return new TestCaseIdEntry(testCaseId.value(), testCaseId.hashCode());
+			return new TestCaseIdEntry(testCaseId.value());
 		}
 	}
 
 	private static TestCaseIdEntry getTestCaseId(String codeRef, List<Argument> arguments) {
-		List<String> values = new ArrayList<String>(arguments.size());
-		for (Argument argument : arguments) {
-			values.add(argument.getVal());
-		}
-		return new TestCaseIdEntry(StringUtils.join(codeRef, values.toArray()),
-				Arrays.deepHashCode(new Object[] { codeRef, values.toArray() })
-		);
+		boolean isParametersPresent = Objects.nonNull(arguments) && !arguments.isEmpty();
+		String caseId = isParametersPresent ? codeRef + TRANSFORM_PARAMETERS.apply(arguments) : codeRef;
+		return new TestCaseIdEntry(caseId);
 	}
+
+	private static final Function<List<Argument>, String> TRANSFORM_PARAMETERS = it -> "[" + it.stream()
+			.map(Argument::getVal)
+			.collect(Collectors.joining(",")) + "]";
 }
