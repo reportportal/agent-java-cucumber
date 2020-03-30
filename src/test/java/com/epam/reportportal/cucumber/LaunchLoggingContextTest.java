@@ -15,7 +15,7 @@ import static org.mockito.Mockito.*;
  * @author <a href="mailto:ihar_kahadouski@epam.com">Ihar Kahadouski</a>
  */
 @RunWith(MockitoJUnitRunner.class)
-public class LaunchLoggingContexTest {
+public class LaunchLoggingContextTest {
 
 	@Mock
 	private ReportPortal reportPortal;
@@ -27,7 +27,7 @@ public class LaunchLoggingContexTest {
 	private Launch launch;
 
 	@Test
-	public void verifyLaunchStartsBeforeFeature() {
+	public void verifyLaunchStartsBeforeFeatureStepReporter() {
 		StepReporter stepReporter = new StepReporter() {
 			@Override
 			protected ReportPortal buildReportPortal() {
@@ -38,6 +38,22 @@ public class LaunchLoggingContexTest {
 		when(reportPortal.getParameters()).thenReturn(listenerParameters);
 		when(reportPortal.newLaunch(any())).thenReturn(launch);
 		stepReporter.uri("url");
+
+		verify(launch, times(1)).start();
+	}
+
+	@Test
+	public void verifyLaunchStartsBeforeFeatureScenarioReporter() {
+		ScenarioReporter scenarioReporter = new ScenarioReporter() {
+			@Override
+			protected ReportPortal buildReportPortal() {
+				return reportPortal;
+			}
+		};
+
+		when(reportPortal.getParameters()).thenReturn(listenerParameters);
+		when(reportPortal.newLaunch(any())).thenReturn(launch);
+		scenarioReporter.uri("url");
 
 		verify(launch, times(1)).start();
 	}
