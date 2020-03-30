@@ -309,6 +309,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void uri(String uri) {
 		currentFeatureUri = uri;
+		RP.get().start();
 	}
 
 	@Override
