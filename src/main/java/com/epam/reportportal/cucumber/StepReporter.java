@@ -16,7 +16,6 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.Statuses;
-import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -24,8 +23,6 @@ import gherkin.formatter.model.Step;
 import io.reactivex.Maybe;
 
 import java.util.Calendar;
-
-import static java.util.Optional.ofNullable;
 
 /**
  * Cucumber reporter for ReportPortal that reports individual steps as test
@@ -72,7 +69,7 @@ public class StepReporter extends AbstractReporter {
 		rq.setParameters(Utils.getParameters(match));
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);
-		ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).ifPresent(rq::setTestCaseId);
+		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
 		rq.setAttributes(Utils.getAttributes(match));
 		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}

@@ -49,6 +49,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.Optional.ofNullable;
+
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
 	private static final String TABLE_SEPARATOR = "|";
@@ -243,14 +245,14 @@ public class Utils {
 
 	}
 
-	@Nullable
 	public static TestCaseIdEntry getTestCaseId(Match match, String codeRef) {
 		try {
 			Method method = retrieveMethod(match);
 			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
-			return testCaseIdAnnotation != null ?
-					getTestCaseId(testCaseIdAnnotation, method, match.getArguments()) :
-					getTestCaseId(codeRef, match.getArguments());
+			return ofNullable(testCaseIdAnnotation).flatMap(annotation -> ofNullable(getTestCaseId(annotation,
+					method,
+					match.getArguments()
+			))).orElseGet(() -> getTestCaseId(codeRef, match.getArguments()));
 		} catch (NoSuchFieldException | IllegalAccessException e) {
 			return getTestCaseId(codeRef, match.getArguments());
 		}
@@ -290,7 +292,7 @@ public class Utils {
 	@Nullable
 	private static TestCaseIdEntry getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
 		if (testCaseId.parametrized()) {
-			List<String> values = new ArrayList<String>(arguments.size());
+			List<String> values = new ArrayList<>(arguments.size());
 			for (Argument argument : arguments) {
 				values.add(argument.getVal());
 			}
