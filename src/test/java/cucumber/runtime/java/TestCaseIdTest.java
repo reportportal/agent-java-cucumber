@@ -175,7 +175,7 @@ public class TestCaseIdTest {
 		StartTestItemRQ request = startTestItemRQArgumentCaptor.getValue();
 		assertNotNull(request);
 		assertNotNull(request.getTestCaseId());
-		assertEquals("cucumber.runtime.java.CodeRefTest.testCaseIdParametrizedMethodWithoutKey[123,Parametrized Case Id]",
+		assertEquals("cucumber.runtime.java.TestCaseIdTest.testCaseIdParametrizedMethodWithoutKey[123,Parametrized Case Id]",
 				request.getTestCaseId()
 		);
 	}
