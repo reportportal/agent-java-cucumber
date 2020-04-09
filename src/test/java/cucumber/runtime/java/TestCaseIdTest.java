@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static cucumber.runtime.java.CodeRefTest.StepReporterExtension.*;
+import static cucumber.runtime.java.TestCaseIdTest.StepReporterExtension.LAUNCH;
+import static cucumber.runtime.java.TestCaseIdTest.StepReporterExtension.STEP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.*;
 /**
  * @author <a href="mailto:ivan_budayeu@epam.com">Ivan Budayeu</a>
  */
-public class CodeRefTest {
+public class TestCaseIdTest {
 
 	private StepReporter stepReporter;
 
