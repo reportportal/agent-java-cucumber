@@ -303,9 +303,9 @@ public class Utils {
 	}
 
 	private static TestCaseIdEntry getTestCaseId(String codeRef, List<Argument> arguments) {
-		boolean isParametersPresent = Objects.nonNull(arguments) && !arguments.isEmpty();
-		String caseId = isParametersPresent ? codeRef + TRANSFORM_PARAMETERS.apply(arguments) : codeRef;
-		return new TestCaseIdEntry(caseId);
+		return ofNullable(arguments).filter(args -> !args.isEmpty())
+				.map(args -> new TestCaseIdEntry(codeRef + TRANSFORM_PARAMETERS.apply(args)))
+				.orElseGet(() -> new TestCaseIdEntry(codeRef));
 	}
 
 	private static final Function<List<Argument>, String> TRANSFORM_PARAMETERS = it -> "[" + it.stream()
