@@ -16,7 +16,6 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.Statuses;
-import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -67,13 +66,10 @@ public class StepReporter extends AbstractReporter {
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
+		rq.setParameters(Utils.getParameters(match));
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);
-		TestCaseIdEntry testCaseIdEntry = Utils.getTestCaseId(match, codeRef);
-		if (testCaseIdEntry != null) {
-			rq.setTestCaseId(testCaseIdEntry.getId());
-			rq.setTestCaseHash(testCaseIdEntry.getHash());
-		}
+		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
 		rq.setAttributes(Utils.getAttributes(match));
 		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
 	}

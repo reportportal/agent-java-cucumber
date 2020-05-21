@@ -24,6 +24,7 @@ import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.utils.AttributeParser;
 import com.epam.reportportal.utils.TestCaseIdUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
+import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
@@ -32,17 +33,23 @@ import gherkin.formatter.Argument;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
 import io.reactivex.annotations.Nullable;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
+import rp.com.google.common.collect.Lists;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static java.util.Optional.ofNullable;
 
 public class Utils {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
@@ -52,6 +59,7 @@ public class Utils {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String METHOD_FIELD_NAME = "method";
+	private static final String PARAMETER_TYPE_REGEX = "\\(.+\\)$";
 
 	//@formatter:off
 	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
@@ -214,9 +222,7 @@ public class Utils {
 			if (attributesAnnotation != null) {
 				return AttributeParser.retrieveAttributes(attributesAnnotation);
 			}
-		} catch (NoSuchFieldException e) {
-			return null;
-		} catch (IllegalAccessException e) {
+		} catch (NoSuchFieldException | IllegalAccessException e) {
 			return null;
 		}
 		return null;
@@ -233,31 +239,45 @@ public class Utils {
 			getLocationMethod.setAccessible(true);
 			String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
 			return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
-		} catch (NoSuchFieldException e) {
-			return null;
-		} catch (NoSuchMethodException e) {
-			return null;
-		} catch (IllegalAccessException e) {
-			return null;
-		} catch (InvocationTargetException e) {
+		} catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
 			return null;
 		}
 
 	}
 
-	@Nullable
 	public static TestCaseIdEntry getTestCaseId(Match match, String codeRef) {
 		try {
 			Method method = retrieveMethod(match);
 			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
-			return testCaseIdAnnotation != null ?
-					getTestCaseId(testCaseIdAnnotation, method, match.getArguments()) :
-					getTestCaseId(codeRef, match.getArguments());
-		} catch (NoSuchFieldException e) {
-			return getTestCaseId(codeRef, match.getArguments());
-		} catch (IllegalAccessException e) {
+			return ofNullable(testCaseIdAnnotation).flatMap(annotation -> ofNullable(getTestCaseId(annotation,
+					method,
+					match.getArguments()
+			))).orElseGet(() -> getTestCaseId(codeRef, match.getArguments()));
+		} catch (NoSuchFieldException | IllegalAccessException e) {
 			return getTestCaseId(codeRef, match.getArguments());
 		}
+	}
+
+	static List<ParameterResource> getParameters(Match match) {
+		List<ParameterResource> parameters = Lists.newArrayList();
+
+		String text = match.getLocation();
+		Matcher matcher = Pattern.compile(PARAMETER_TYPE_REGEX).matcher(text);
+		if (matcher.find()) {
+			String methodParameters = text.substring(matcher.start() + 1, matcher.end() - 1);
+			String[] parameterTypes = methodParameters.split(",");
+			IntStream.range(0, parameterTypes.length).forEach(index -> {
+				String parameterType = parameterTypes[index];
+				if (index < match.getArguments().size()) {
+					String value = match.getArguments().get(index).getVal();
+					ParameterResource parameterResource = new ParameterResource();
+					parameterResource.setKey(parameterType);
+					parameterResource.setValue(value);
+					parameters.add(parameterResource);
+				}
+			});
+		}
+		return parameters;
 	}
 
 	private static Method retrieveMethod(Match match) throws NoSuchFieldException, IllegalAccessException {
@@ -272,23 +292,23 @@ public class Utils {
 	@Nullable
 	private static TestCaseIdEntry getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
 		if (testCaseId.parametrized()) {
-			List<String> values = new ArrayList<String>(arguments.size());
+			List<String> values = new ArrayList<>(arguments.size());
 			for (Argument argument : arguments) {
 				values.add(argument.getVal());
 			}
 			return TestCaseIdUtils.getParameterizedTestCaseId(method, values.toArray());
 		} else {
-			return new TestCaseIdEntry(testCaseId.value(), testCaseId.hashCode());
+			return new TestCaseIdEntry(testCaseId.value());
 		}
 	}
 
 	private static TestCaseIdEntry getTestCaseId(String codeRef, List<Argument> arguments) {
-		List<String> values = new ArrayList<String>(arguments.size());
-		for (Argument argument : arguments) {
-			values.add(argument.getVal());
-		}
-		return new TestCaseIdEntry(StringUtils.join(codeRef, values.toArray()),
-				Arrays.deepHashCode(new Object[] { codeRef, values.toArray() })
-		);
+		return ofNullable(arguments).filter(args -> !args.isEmpty())
+				.map(args -> new TestCaseIdEntry(codeRef + TRANSFORM_PARAMETERS.apply(args)))
+				.orElseGet(() -> new TestCaseIdEntry(codeRef));
 	}
+
+	private static final Function<List<Argument>, String> TRANSFORM_PARAMETERS = it -> "[" + it.stream()
+			.map(Argument::getVal)
+			.collect(Collectors.joining(",")) + "]";
 }
