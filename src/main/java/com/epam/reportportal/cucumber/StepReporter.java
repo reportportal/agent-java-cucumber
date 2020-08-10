@@ -15,7 +15,7 @@
  */
 package com.epam.reportportal.cucumber;
 
-import com.epam.reportportal.listeners.Statuses;
+import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -45,7 +45,7 @@ import java.util.Calendar;
 public class StepReporter extends AbstractReporter {
 	protected Maybe<String> currentStepId;
 	protected Maybe<String> hookStepId;
-	protected String hookStatus;
+	protected ItemStatus hookStatus;
 
 	public StepReporter() {
 		super();
@@ -71,13 +71,13 @@ public class StepReporter extends AbstractReporter {
 		rq.setCodeRef(codeRef);
 		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
 		rq.setAttributes(Utils.getAttributes(match));
-		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
+		currentStepId = launch.get().startTestItem(currentScenario.getId(), rq);
 	}
 
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		Utils.finishTestItem(RP.get(), currentStepId, Utils.mapStatus(result.getStatus()));
+		Utils.finishTestItem(launch.get(), currentStepId, Utils.mapStatus(result.getStatus()));
 		currentStepId = null;
 	}
 
@@ -89,14 +89,14 @@ public class StepReporter extends AbstractReporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
 
-		hookStepId = RP.get().startTestItem(currentScenario.getId(), rq);
+		hookStepId = launch.get().startTestItem(currentScenario.getId(), rq);
 
-		hookStatus = Statuses.PASSED;
+		hookStatus = ItemStatus.PASSED;
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		Utils.finishTestItem(RP.get(), hookStepId, hookStatus);
+		Utils.finishTestItem(launch.get(), hookStepId, hookStatus);
 		hookStepId = null;
 	}
 
@@ -104,7 +104,7 @@ public class StepReporter extends AbstractReporter {
 	protected void hookFinished(Match match, Result result, Boolean isBefore) {
 		reportResult(result, (isBefore ? "Before" : "After") + " hook: " + match.getLocation());
 		if (result.getStatus().equals("failed")) {
-			hookStatus = Statuses.FAILED;
+			hookStatus = ItemStatus.FAILED;
 		}
 	}
 

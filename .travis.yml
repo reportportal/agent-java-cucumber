@@ -1,9 +1,0 @@
-language: java
-
-script: ./gradlew build
-
-jdk:
-  - openjdk8
-
-notifications:
-  slack: reportportal:fl6xWHVQp1jvsMmCJxYW9YKP

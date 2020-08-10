@@ -16,7 +16,6 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.ListenerParameters;
-import com.epam.reportportal.listeners.Statuses;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.utils.properties.SystemAttributesExtractor;
@@ -29,14 +28,17 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
+import org.apache.commons.lang3.tuple.Pair;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 import static com.epam.reportportal.cucumber.Utils.extractAttributes;
+import static com.epam.reportportal.cucumber.Utils.getCodeRef;
 import static rp.com.google.common.base.Strings.isNullOrEmpty;
 
 /**
@@ -52,21 +54,27 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
 
 	/* formatter context */
-	protected String currentFeatureUri;
-
-	protected Maybe<String> currentFeatureId;
-	protected StartTestItemRQ startFeatureRq;
-	protected ScenarioContext currentScenario;
+	protected ThreadLocal<String> currentFeatureUri = new ThreadLocal<>();
+	protected RunningContext.ScenarioContext currentScenario;
 	protected String stepPrefix;
 
 	protected Queue<String> outlineIterations;
 	private Boolean inBackground;
 
+	private final Map<String, RunningContext.FeatureContext> currentFeatureContextMap = new ConcurrentHashMap<>();
+	private final Map<Pair<String, String>, RunningContext.ScenarioContext> currentScenarioContextMap = new ConcurrentHashMap<>();
+	private final Map<Long, RunningContext.ScenarioContext> threadCurrentScenarioContextMap = new ConcurrentHashMap<>();
+
+	// There is no event for recognizing end of feature in Cucumber.
+	// This map is used to record the last scenario time and its feature uri.
+	// End of feature occurs once launch is finished.
+	private final Map<String, Date> featureEndTime = new ConcurrentHashMap<>();
+
 	private AtomicBoolean finished = new AtomicBoolean(false);
 
-	protected Supplier<Launch> RP = Suppliers.memoize(new Supplier<Launch>() {
+	protected final Supplier<Launch> launch = Suppliers.memoize(new Supplier<Launch>() {
 
-		/* should no be lazy */
+		/* should not be lazy */
 		private final Date startTime = Calendar.getInstance().getTime();
 
 		@Override
@@ -79,7 +87,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setName(parameters.getLaunchName());
 			rq.setStartTime(startTime);
 			rq.setMode(parameters.getLaunchRunningMode());
-			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<ItemAttributesRQ>() : parameters.getAttributes());
+			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<>() : parameters.getAttributes());
 			rq.getAttributes().addAll(SystemAttributesExtractor.extract(AGENT_PROPERTIES_FILE, AbstractReporter.class.getClassLoader()));
 			rq.setDescription(parameters.getDescription());
 			rq.setRerun(parameters.isRerun());
@@ -121,7 +129,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void afterLaunch() {
 		FinishExecutionRQ finishLaunchRq = new FinishExecutionRQ();
 		finishLaunchRq.setEndTime(Calendar.getInstance().getTime());
-		RP.get().finish(finishLaunchRq);
+		launch.get().finish(finishLaunchRq);
 	}
 
 	/**
@@ -131,21 +139,27 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void beforeFeature(Feature feature) {
 		//define start feature RQ in this method, because only here we can receive Feature details
-		startFeatureRq = new StartTestItemRQ();
-		startFeatureRq.setDescription(Utils.
-				buildStatementName(feature, null, AbstractReporter.COLON_INFIX, null));
-		startFeatureRq.setName(feature.getName());
-		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
-		startFeatureRq.setType(getFeatureTestItemType());
+		currentFeatureContextMap.computeIfAbsent(currentFeatureUri.get(), u -> {
+			String featureKeyword = feature.getKeyword();
+			String featureName = feature.getName();
+			StartTestItemRQ startFeatureRq = new StartTestItemRQ();
+			startFeatureRq.setDescription(Utils.getDescription(u));
+			startFeatureRq.setCodeRef(getCodeRef(u, 0));
+			startFeatureRq.setName(Utils.buildNodeName(featureKeyword, AbstractReporter.COLON_INFIX, featureName, null));
+			startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
+			startFeatureRq.setType(getFeatureTestItemType());
+			return new RunningContext.FeatureContext(startFeatureRq);
+		});
 	}
 
 	/**
 	 * Finish Cucumber feature
 	 */
 	protected void afterFeature() {
-		if (null != currentFeatureId) {
-			Utils.finishTestItem(RP.get(), currentFeatureId);
-			currentFeatureId = null;
+		String uri = currentFeatureUri.get();
+		RunningContext.FeatureContext currentFeature = currentFeatureContextMap.remove(uri);
+		if (null != currentFeature && null != currentFeature.getId()) {
+			Utils.finishTestItem(launch.get(), currentFeature.getId());
 		}
 	}
 
@@ -159,31 +173,36 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		// start Feature here, because it should be started only if at least one Scenario is included.
 		// By this reason, it cannot be started in #beforeFeature method,
 		// because it will be executed even if all Scenarios in the Feature are excluded.
-		if (null == currentFeatureId) {
+		String uri = currentFeatureUri.get();
+		RunningContext.FeatureContext currentFeature = currentFeatureContextMap.get(uri);
+		if (null == currentFeature.getId()) {
+			StartTestItemRQ startFeatureRq = currentFeature.getItemRq();
 			Maybe<String> root = getRootItemId();
 			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
+			Maybe<String> currentFeatureId;
 			if (null == root) {
-				currentFeatureId = RP.get().startTestItem(startFeatureRq);
+				currentFeatureId = launch.get().startTestItem(startFeatureRq);
 			} else {
-				currentFeatureId = RP.get().startTestItem(root, startFeatureRq);
+				currentFeatureId = launch.get().startTestItem(root, startFeatureRq);
 			}
+			currentFeature.setId(currentFeatureId);
 		}
 		Maybe<String> id = Utils.startNonLeafNode(
-				RP.get(),
-				currentFeatureId,
+				launch.get(),
+				currentFeature.getId(),
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
-				currentFeatureUri + ":" + scenario.getLine(),
+				currentFeatureUri.get() + ":" + scenario.getLine(),
 				scenario.getTags(),
 				getScenarioTestItemType()
 		);
-		currentScenario = new ScenarioContext(id);
+		currentScenario = new RunningContext.ScenarioContext(id);
 	}
 
 	/**
 	 * Finish Cucumber scenario
 	 */
 	protected void afterScenario() {
-		Utils.finishTestItem(RP.get(), currentScenario.getId(), currentScenario.getStatus());
+		Utils.finishTestItem(launch.get(), currentScenario.getId(), currentScenario.getStatus());
 		currentScenario = null;
 	}
 
@@ -308,8 +327,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void uri(String uri) {
-		currentFeatureUri = uri;
-		RP.get().start();
+		currentFeatureUri.set(uri);
+		launch.get().start();
 	}
 
 	@Override
@@ -384,48 +403,5 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	protected abstract Maybe<String> getRootItemId();
-
-	public static class ScenarioContext {
-		private Maybe<String> id;
-		private Queue<Step> steps;
-		private String status;
-
-		public ScenarioContext(Maybe<String> newId) {
-			id = newId;
-			steps = new ArrayDeque<Step>();
-			status = Statuses.PASSED;
-		}
-
-		public Maybe<String> getId() {
-			return id;
-		}
-
-		public void addStep(Step step) {
-			steps.add(step);
-		}
-
-		public Step getNextStep() {
-			return steps.poll();
-		}
-
-		public boolean noMoreSteps() {
-			return steps.isEmpty();
-		}
-
-		public void updateStatus(String newStatus) {
-			if (!newStatus.equals(status)) {
-				if (Statuses.FAILED.equals(status) || Statuses.FAILED.equals(newStatus)) {
-					status = Statuses.FAILED;
-				} else {
-					status = Statuses.SKIPPED;
-				}
-			}
-		}
-
-		public String getStatus() {
-			return status;
-		}
-
-	}
 
 }

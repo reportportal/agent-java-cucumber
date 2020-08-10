@@ -6,10 +6,9 @@ import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import io.reactivex.Maybe;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -21,7 +20,9 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import static java.util.Optional.ofNullable;
-import static org.mockito.Matchers.any;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -41,18 +42,17 @@ public class LaunchSystemAttributesTest {
 	@Mock
 	private ListenerParameters listenerParameters;
 
-	@BeforeClass
+	@BeforeAll
 	public static void initKeys() {
 		properties.put("os", Pattern.compile("^.+\\|.+\\|.+$"));
 		properties.put("jvm", Pattern.compile("^.+\\|.+\\|.+$"));
 		properties.put("agent", Pattern.compile("^test-agent\\|test-1\\.0$"));
 	}
 
-	@Before
+	@BeforeEach
 	public void initLaunch() {
 		MockitoAnnotations.initMocks(this);
 		when(listenerParameters.getEnable()).thenReturn(true);
-		when(listenerParameters.getBaseUrl()).thenReturn("http://example.com");
 		when(listenerParameters.getIoPoolSize()).thenReturn(10);
 		when(listenerParameters.getBatchLogsSize()).thenReturn(5);
 		stepReporter = new StepReporter() {
@@ -70,28 +70,25 @@ public class LaunchSystemAttributesTest {
 			emitter.onComplete();
 		}).cache());
 
-		stepReporter.RP.get().start().blockingGet();
+		stepReporter.launch.get().start().blockingGet();
 
 		ArgumentCaptor<StartLaunchRQ> launchRQArgumentCaptor = ArgumentCaptor.forClass(StartLaunchRQ.class);
 		verify(reportPortalClient, times(1)).startLaunch(launchRQArgumentCaptor.capture());
 
 		StartLaunchRQ startLaunchRequest = launchRQArgumentCaptor.getValue();
 
-		Assert.assertNotNull(startLaunchRequest.getAttributes());
+		assertThat(startLaunchRequest.getAttributes(), notNullValue());
 
 		List<ItemAttributesRQ> attributes = Lists.newArrayList(startLaunchRequest.getAttributes());
 		attributes.removeIf(attribute -> attribute.getKey().equals(SKIPPED_ISSUE_KEY));
 
-		Assert.assertEquals(3, attributes.size());
-
-		attributes.forEach(attribute -> {
-			Assert.assertTrue(attribute.isSystem());
-
-			Pattern pattern = getPattern(attribute);
-			Assert.assertNotNull(pattern);
-			Assert.assertTrue(pattern.matcher(attribute.getValue()).matches());
+		assertThat(attributes, hasSize(3));
+		attributes.forEach(attr -> {
+			assertThat(attr.isSystem(), equalTo(Boolean.TRUE));
+			Pattern pattern = LaunchSystemAttributesTest.this.getPattern(attr);
+			assertThat(pattern, notNullValue());
+			assertThat(attr.getValue(), allOf(notNullValue(), matchesPattern(pattern)));
 		});
-
 	}
 
 	private Pattern getPattern(ItemAttributesRQ attribute) {
