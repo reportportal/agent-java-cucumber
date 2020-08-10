@@ -28,7 +28,6 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
-import org.apache.commons.lang3.tuple.Pair;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 
@@ -53,17 +52,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected static final String COLON_INFIX = ": ";
 	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
 
-	/* formatter context */
-	protected ThreadLocal<String> currentFeatureUri = new ThreadLocal<>();
-	protected RunningContext.ScenarioContext currentScenario;
 	protected String stepPrefix;
 
 	protected Queue<String> outlineIterations;
 	private Boolean inBackground;
 
-	private final Map<String, RunningContext.FeatureContext> currentFeatureContextMap = new ConcurrentHashMap<>();
-	private final Map<Pair<String, String>, RunningContext.ScenarioContext> currentScenarioContextMap = new ConcurrentHashMap<>();
-	private final Map<Long, RunningContext.ScenarioContext> threadCurrentScenarioContextMap = new ConcurrentHashMap<>();
+	protected final ThreadLocal<String> currentFeatureUri = new ThreadLocal<>();
+	protected final ThreadLocal<RunningContext.FeatureContext> currentFeatureContext = new ThreadLocal<>();
+	protected final ThreadLocal<RunningContext.ScenarioContext> currentScenarioContext = new ThreadLocal<>();
 
 	// There is no event for recognizing end of feature in Cucumber.
 	// This map is used to record the last scenario time and its feature uri.
@@ -139,25 +135,24 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void beforeFeature(Feature feature) {
 		//define start feature RQ in this method, because only here we can receive Feature details
-		currentFeatureContextMap.computeIfAbsent(currentFeatureUri.get(), u -> {
-			String featureKeyword = feature.getKeyword();
-			String featureName = feature.getName();
-			StartTestItemRQ startFeatureRq = new StartTestItemRQ();
-			startFeatureRq.setDescription(Utils.getDescription(u));
-			startFeatureRq.setCodeRef(getCodeRef(u, 0));
-			startFeatureRq.setName(Utils.buildNodeName(featureKeyword, AbstractReporter.COLON_INFIX, featureName, null));
-			startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
-			startFeatureRq.setType(getFeatureTestItemType());
-			return new RunningContext.FeatureContext(startFeatureRq);
-		});
+		String uri = currentFeatureUri.get();
+		String featureKeyword = feature.getKeyword();
+		String featureName = feature.getName();
+		StartTestItemRQ startFeatureRq = new StartTestItemRQ();
+		startFeatureRq.setDescription(Utils.getDescription(uri));
+		startFeatureRq.setCodeRef(getCodeRef(uri, 0));
+		startFeatureRq.setName(Utils.buildNodeName(featureKeyword, AbstractReporter.COLON_INFIX, featureName, null));
+		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
+		startFeatureRq.setType(getFeatureTestItemType());
+		currentFeatureContext.set(new RunningContext.FeatureContext(startFeatureRq));
 	}
 
 	/**
 	 * Finish Cucumber feature
 	 */
 	protected void afterFeature() {
-		String uri = currentFeatureUri.get();
-		RunningContext.FeatureContext currentFeature = currentFeatureContextMap.remove(uri);
+		RunningContext.FeatureContext currentFeature = currentFeatureContext.get();
+		currentFeatureContext.remove();
 		if (null != currentFeature && null != currentFeature.getId()) {
 			Utils.finishTestItem(launch.get(), currentFeature.getId());
 		}
@@ -173,8 +168,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		// start Feature here, because it should be started only if at least one Scenario is included.
 		// By this reason, it cannot be started in #beforeFeature method,
 		// because it will be executed even if all Scenarios in the Feature are excluded.
-		String uri = currentFeatureUri.get();
-		RunningContext.FeatureContext currentFeature = currentFeatureContextMap.get(uri);
+		RunningContext.FeatureContext currentFeature = currentFeatureContext.get();
 		if (null == currentFeature.getId()) {
 			StartTestItemRQ startFeatureRq = currentFeature.getItemRq();
 			Maybe<String> root = getRootItemId();
@@ -187,23 +181,23 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			}
 			currentFeature.setId(currentFeatureId);
 		}
-		Maybe<String> id = Utils.startNonLeafNode(
-				launch.get(),
+		String scenarioDescription = currentFeatureUri.get() + ":" + scenario.getLine();
+		Maybe<String> id = Utils.startNonLeafNode(launch.get(),
 				currentFeature.getId(),
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
-				currentFeatureUri.get() + ":" + scenario.getLine(),
+				scenarioDescription,
 				scenario.getTags(),
 				getScenarioTestItemType()
 		);
-		currentScenario = new RunningContext.ScenarioContext(id);
+		currentScenarioContext.set(new RunningContext.ScenarioContext(id));
 	}
 
 	/**
 	 * Finish Cucumber scenario
 	 */
 	protected void afterScenario() {
-		Utils.finishTestItem(launch.get(), currentScenario.getId(), currentScenario.getStatus());
-		currentScenario = null;
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		Utils.finishTestItem(launch.get(), context.getId(), context.getStatus());
 	}
 
 	/**
@@ -260,7 +254,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		if (message != null) {
 			Utils.sendLog(message, level, null);
 		}
-
+		RunningContext.ScenarioContext currentScenario = currentScenarioContext.get();
 		if (currentScenario != null) {
 			currentScenario.updateStatus(Utils.mapStatus(result.getStatus()));
 		}
@@ -291,7 +285,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void result(Result result) {
 		afterStep(result);
-		if (!inBackground && currentScenario.noMoreSteps()) {
+		if (!inBackground && currentScenarioContext.get().noMoreSteps()) {
 			beforeHooks(false);
 		}
 	}
@@ -303,7 +297,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void match(Match match) {
-		beforeStep(currentScenario.getNextStep(), match);
+		beforeStep(currentScenarioContext.get().getNextStep(), match);
 	}
 
 	@Override
@@ -373,6 +367,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void step(Step step) {
+		RunningContext.ScenarioContext currentScenario = currentScenarioContext.get();
 		if (currentScenario != null) {
 			currentScenario.addStep(step);
 		}

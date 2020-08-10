@@ -71,7 +71,7 @@ public class StepReporter extends AbstractReporter {
 		rq.setCodeRef(codeRef);
 		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
 		rq.setAttributes(Utils.getAttributes(match));
-		currentStepId = launch.get().startTestItem(currentScenario.getId(), rq);
+		currentStepId = launch.get().startTestItem(currentScenarioContext.get().getId(), rq);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class StepReporter extends AbstractReporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
 
-		hookStepId = launch.get().startTestItem(currentScenario.getId(), rq);
+		hookStepId = launch.get().startTestItem(currentScenarioContext.get().getId(), rq);
 
 		hookStatus = ItemStatus.PASSED;
 	}

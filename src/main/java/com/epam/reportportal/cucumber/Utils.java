@@ -85,7 +85,7 @@ public class Utils {
 		}
 
 		FinishTestItemRQ rq = new FinishTestItemRQ();
-		rq.setStatus(status.name());
+		ofNullable(status).ifPresent(s -> rq.setStatus(s.name()));
 		rq.setEndTime(Calendar.getInstance().getTime());
 
 		rp.finishTestItem(itemId, rq);
