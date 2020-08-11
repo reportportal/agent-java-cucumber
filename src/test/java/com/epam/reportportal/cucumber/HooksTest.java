@@ -71,7 +71,7 @@ public class HooksTest {
 		verify(client, times(1)).startTestItem(any());
 		verify(client, times(1)).startTestItem(same(suiteId), any());
 		verify(client, times(4)).startTestItem(same(testId), any());
-		verify(client, times(4)).log(any(MultiPartRequest.class));
+		verify(client, times(6)).log(any(MultiPartRequest.class));
 	}
 
 	@Test
