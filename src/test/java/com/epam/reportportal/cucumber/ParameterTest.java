@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -106,12 +107,17 @@ public class ParameterTest {
 
 		verify(client, times(1)).startTestItem(any());
 		verify(client, times(3)).startTestItem(same(suiteId), any());
-		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor.capture());
-		verify(client, times(5)).startTestItem(same(testIds.get(1)), captor.capture());
-		verify(client, times(5)).startTestItem(same(testIds.get(2)), captor.capture());
+		ArgumentCaptor<StartTestItemRQ> captor1 = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor1.capture());
+		ArgumentCaptor<StartTestItemRQ> captor2 = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(5)).startTestItem(same(testIds.get(1)), captor2.capture());
+		ArgumentCaptor<StartTestItemRQ> captor3 = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(5)).startTestItem(same(testIds.get(2)), captor3.capture());
 
-		List<StartTestItemRQ> items = captor.getAllValues();
+		List<StartTestItemRQ> items = new ArrayList<>();
+		items.addAll(captor1.getAllValues());
+		items.addAll(captor2.getAllValues());
+		items.addAll(captor3.getAllValues());
 		List<StartTestItemRQ> twoParameterItems = IntStream.range(0, items.size())
 				.filter(i -> i % 5 == 1)
 				.mapToObj(items::get)
