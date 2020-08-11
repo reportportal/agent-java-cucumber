@@ -181,11 +181,13 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			}
 			currentFeature.setId(currentFeatureId);
 		}
-		String scenarioDescription = currentFeatureUri.get() + ":" + scenario.getLine();
-		Maybe<String> id = Utils.startNonLeafNode(launch.get(),
+		String codeRef = currentFeatureUri.get() + ":" + scenario.getLine();
+		Maybe<String> id = Utils.startNonLeafNode(
+				launch.get(),
 				currentFeature.getId(),
 				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
-				scenarioDescription,
+				currentFeatureUri.get(),
+				codeRef,
 				scenario.getTags(),
 				getScenarioTestItemType()
 		);

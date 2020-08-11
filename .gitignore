@@ -18,4 +18,5 @@ hs_err_pid*
 build/
 .idea/
 out/
+test-output/
 *iml

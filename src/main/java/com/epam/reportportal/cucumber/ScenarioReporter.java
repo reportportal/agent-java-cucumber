@@ -106,7 +106,7 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void afterLaunch() {
-		if (currentFeatureUri == null) {
+		if (currentFeatureUri.get() == null) {
 			LOGGER.debug("There is no scenarios in the launch");
 			return;
 		}

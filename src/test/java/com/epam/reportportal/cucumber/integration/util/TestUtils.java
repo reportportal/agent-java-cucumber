@@ -80,8 +80,10 @@ public class TestUtils {
 		Maybe<ItemCreatedRS> suiteMaybe = createMaybe(new ItemCreatedRS(suiteUuid, suiteUuid));
 		when(client.startTestItem(any())).thenReturn(suiteMaybe);
 
-		List<Maybe<ItemCreatedRS>> testResponses = testSteps.stream().map(Pair::getKey)
-				.map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid))).collect(Collectors.toList());
+		List<Maybe<ItemCreatedRS>> testResponses = testSteps.stream()
+				.map(Pair::getKey)
+				.map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid)))
+				.collect(Collectors.toList());
 
 		Maybe<ItemCreatedRS> first = testResponses.get(0);
 		Maybe<ItemCreatedRS>[] other = testResponses.subList(1, testResponses.size()).toArray(new Maybe[0]);
@@ -89,8 +91,10 @@ public class TestUtils {
 
 		testSteps.forEach(test -> {
 			String testClassUuid = test.getKey();
-			List<Maybe<ItemCreatedRS>> stepResponses =
-					test.getValue().stream().map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid))).collect(Collectors.toList());
+			List<Maybe<ItemCreatedRS>> stepResponses = test.getValue()
+					.stream()
+					.map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid)))
+					.collect(Collectors.toList());
 
 			Maybe<ItemCreatedRS> myFirst = stepResponses.get(0);
 			Maybe<ItemCreatedRS>[] myOther = stepResponses.subList(1, stepResponses.size()).toArray(new Maybe[0]);

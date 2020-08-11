@@ -33,6 +33,10 @@ public class RunningContext {
 
 	public static class ScenarioContext {
 
+		private Maybe<String> currentStepId;
+		private Maybe<String> hookStepId;
+		private ItemStatus hookStatus;
+
 		private final Maybe<String> id;
 		private final Queue<Step> steps;
 		private ItemStatus status;
@@ -41,6 +45,30 @@ public class RunningContext {
 			id = newId;
 			steps = new ArrayDeque<>();
 			status = ItemStatus.PASSED;
+		}
+
+		public Maybe<String> getCurrentStepId() {
+			return currentStepId;
+		}
+
+		public void setCurrentStepId(Maybe<String> currentStepId) {
+			this.currentStepId = currentStepId;
+		}
+
+		public Maybe<String> getHookStepId() {
+			return hookStepId;
+		}
+
+		public void setHookStepId(Maybe<String> hookStepId) {
+			this.hookStepId = hookStepId;
+		}
+
+		public ItemStatus getHookStatus() {
+			return hookStatus;
+		}
+
+		public void setHookStatus(ItemStatus hookStatus) {
+			this.hookStatus = hookStatus;
 		}
 
 		public Maybe<String> getId() {
