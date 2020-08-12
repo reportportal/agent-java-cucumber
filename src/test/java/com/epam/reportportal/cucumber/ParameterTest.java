@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -57,8 +56,8 @@ public class ParameterTest {
 			.map(id -> Pair.of(id, Stream.generate(() -> CommonUtils.namedId("step_")).limit(3).collect(Collectors.toList())))
 			.collect(Collectors.toList());
 
-	private final ListenerParameters parameters = TestUtils.standardParameters();
 	private final ReportPortalClient client = mock(ReportPortalClient.class);
+	private final ListenerParameters parameters = TestUtils.standardParameters();
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 	private final ReportPortal reportPortal = ReportPortal.create(client, parameters, executorService);
 
@@ -69,10 +68,12 @@ public class ParameterTest {
 		TestStepReporter.RP.set(reportPortal);
 	}
 
-	public static final List<Pair<String, Object>> PARAMETERS = Arrays.asList(
-			Pair.of("String", "first"), Pair.of("int", 123),
-			Pair.of("String", "second"), Pair.of("int", 12345),
-			Pair.of("String", "third"), Pair.of("int", 12345678)
+	public static final List<Pair<String, Object>> PARAMETERS = Arrays.asList(Pair.of("String", "first"),
+			Pair.of("int", 123),
+			Pair.of("String", "second"),
+			Pair.of("int", 12345),
+			Pair.of("String", "third"),
+			Pair.of("int", 12345678)
 	);
 
 	@Test
@@ -107,24 +108,17 @@ public class ParameterTest {
 
 		verify(client, times(1)).startTestItem(any());
 		verify(client, times(3)).startTestItem(same(suiteId), any());
-		ArgumentCaptor<StartTestItemRQ> captor1 = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor1.capture());
-		ArgumentCaptor<StartTestItemRQ> captor2 = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(5)).startTestItem(same(testIds.get(1)), captor2.capture());
-		ArgumentCaptor<StartTestItemRQ> captor3 = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(5)).startTestItem(same(testIds.get(2)), captor3.capture());
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor.capture());
+		verify(client, times(5)).startTestItem(same(testIds.get(1)), captor.capture());
+		verify(client, times(5)).startTestItem(same(testIds.get(2)), captor.capture());
 
-		List<StartTestItemRQ> items = new ArrayList<>();
-		items.addAll(captor1.getAllValues());
-		items.addAll(captor2.getAllValues());
-		items.addAll(captor3.getAllValues());
-		List<StartTestItemRQ> twoParameterItems = IntStream.range(0, items.size())
-				.filter(i -> i % 5 == 1)
-				.mapToObj(items::get)
+		List<StartTestItemRQ> items = captor.getAllValues();
+		List<StartTestItemRQ> twoParameterItems = items.stream()
+				.filter(i -> "STEP".equals(i.getType()) && i.getName().startsWith("Given"))
 				.collect(Collectors.toList());
-		List<StartTestItemRQ> oneParameterItems = IntStream.range(0, items.size())
-				.filter(i -> i % 5 == 3)
-				.mapToObj(items::get)
+		List<StartTestItemRQ> oneParameterItems = items.stream()
+				.filter(i -> "STEP".equals(i.getType()) && i.getName().startsWith("Then"))
 				.collect(Collectors.toList());
 		twoParameterItems.forEach(i -> assertThat(i.getParameters(), allOf(notNullValue(), hasSize(2))));
 		oneParameterItems.forEach(i -> assertThat(i.getParameters(), allOf(notNullValue(), hasSize(1))));
