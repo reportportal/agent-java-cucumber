@@ -32,7 +32,6 @@ import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
@@ -60,11 +59,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected final ThreadLocal<String> currentFeatureUri = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.FeatureContext> currentFeatureContext = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.ScenarioContext> currentScenarioContext = new ThreadLocal<>();
-
-	// There is no event for recognizing end of feature in Cucumber.
-	// This map is used to record the last scenario time and its feature uri.
-	// End of feature occurs once launch is finished.
-	private final Map<String, Date> featureEndTime = new ConcurrentHashMap<>();
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
 
