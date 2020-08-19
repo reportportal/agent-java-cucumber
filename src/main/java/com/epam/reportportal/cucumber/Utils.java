@@ -305,15 +305,7 @@ public class Utils {
 
 	@Nullable
 	private static TestCaseIdEntry getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
-		if (testCaseId.parametrized()) {
-			List<String> values = new ArrayList<>(arguments.size());
-			for (Argument argument : arguments) {
-				values.add(argument.getVal());
-			}
-			return TestCaseIdUtils.getParameterizedTestCaseId(method, values.toArray());
-		} else {
-			return new TestCaseIdEntry(testCaseId.value());
-		}
+		return TestCaseIdUtils.getTestCaseId(testCaseId, method, arguments.stream().map(Argument::getVal).collect(Collectors.toList()));
 	}
 
 	private static final Function<List<Argument>, String> TRANSFORM_PARAMETERS = args -> ofNullable(args).map(a -> a.stream()
