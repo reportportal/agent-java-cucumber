@@ -33,7 +33,7 @@ publishing {
 }
 
 dependencies {
-    api 'com.epam.reportportal:client-java:5.0.2'
+    api 'com.epam.reportportal:client-java:5.0.6'
     api 'com.epam.reportportal:commons-model:5.0.0'
     api 'com.google.code.findbugs:jsr305:3.0.2'
 
@@ -44,9 +44,7 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest-core:2.2'
     testImplementation 'org.mockito:mockito-core:3.3.3'
     testImplementation 'ch.qos.logback:logback-classic:1.2.3'
-    testImplementation ('com.epam.reportportal:logger-java-logback:5.0.2') {
-        exclude module: 'client-java'
-    }
+    testImplementation 'com.epam.reportportal:logger-java-logback:5.0.3'
 
     testImplementation ('org.junit.platform:junit-platform-runner:1.6.2') {
         exclude module: 'junit'
