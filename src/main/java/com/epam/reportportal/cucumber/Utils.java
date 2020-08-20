@@ -35,7 +35,6 @@ import io.reactivex.Maybe;
 import io.reactivex.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
 import rp.com.google.common.collect.Lists;
@@ -45,6 +44,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -109,7 +109,7 @@ public class Utils {
 	}
 
 	public static void sendLog(final String message, final String level, final File file) {
-		ReportPortal.emitLog((Function<String, SaveLogRQ>) item -> {
+		ReportPortal.emitLog(item -> {
 			SaveLogRQ rq = new SaveLogRQ();
 			rq.setMessage(message);
 			rq.setItemUuid(item);
@@ -262,19 +262,6 @@ public class Utils {
 		return (prefix == null ? "" : prefix) + infix + argument + (suffix == null ? "" : suffix);
 	}
 
-	public static TestCaseIdEntry getTestCaseId(Match match, String codeRef) {
-		try {
-			Method method = retrieveMethod(match);
-			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
-			return ofNullable(testCaseIdAnnotation).flatMap(annotation -> ofNullable(getTestCaseId(annotation,
-					method,
-					match.getArguments()
-			))).orElseGet(() -> getTestCaseId(codeRef, match.getArguments()));
-		} catch (NoSuchFieldException | IllegalAccessException e) {
-			return getTestCaseId(codeRef, match.getArguments());
-		}
-	}
-
 	static List<ParameterResource> getParameters(Match match) {
 		List<ParameterResource> parameters = Lists.newArrayList();
 
@@ -306,19 +293,28 @@ public class Utils {
 		return (Method) methodField.get(javaStepDefinition);
 	}
 
-	@Nullable
-	private static TestCaseIdEntry getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
-		return TestCaseIdUtils.getTestCaseId(testCaseId, method, arguments.stream().map(Argument::getVal).collect(Collectors.toList()));
+	private static final Function<List<Argument>, List<?>> ARGUMENTS_TRANSFORM = arguments -> ofNullable(arguments).map(args -> args.stream()
+			.map(Argument::getVal)
+			.collect(Collectors.toList())).orElse(null);
+
+	@SuppressWarnings("unchecked")
+	public static TestCaseIdEntry getTestCaseId(Match match, String codeRef) {
+		try {
+			Method method = retrieveMethod(match);
+			return TestCaseIdUtils.getTestCaseId(
+					method.getAnnotation(TestCaseId.class),
+					method,
+					codeRef,
+					(List<Object>) ARGUMENTS_TRANSFORM.apply(match.getArguments())
+			);
+		} catch (NoSuchFieldException | IllegalAccessException e) {
+			return getTestCaseId(codeRef, match.getArguments());
+		}
 	}
 
-	private static final Function<List<Argument>, String> TRANSFORM_PARAMETERS = args -> ofNullable(args).map(a -> a.stream()
-			.map(Argument::getVal)
-			.collect(Collectors.joining(",", "[", "]"))).orElse("");
-
+	@SuppressWarnings("unchecked")
 	private static TestCaseIdEntry getTestCaseId(String codeRef, List<Argument> arguments) {
-		return ofNullable(arguments).filter(args -> !args.isEmpty())
-				.map(args -> new TestCaseIdEntry(codeRef + TRANSFORM_PARAMETERS.apply(args)))
-				.orElseGet(() -> new TestCaseIdEntry(codeRef));
+		return TestCaseIdUtils.getTestCaseId(codeRef, (List<Object>) ARGUMENTS_TRANSFORM.apply(arguments));
 	}
 
 	@Nonnull

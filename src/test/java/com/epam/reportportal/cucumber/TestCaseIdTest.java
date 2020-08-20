@@ -95,7 +95,7 @@ public class TestCaseIdTest {
 		);
 		assertThat(steps.get(1).getTestCaseId(), equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_wait[1]"));
 		assertThat(steps.get(2).getTestCaseId(),
-				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.my_belly_should_growl")
+				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.my_belly_should_growl[]")
 		);
 	}
 }
