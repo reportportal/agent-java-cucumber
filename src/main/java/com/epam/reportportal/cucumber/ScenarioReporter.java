@@ -60,18 +60,17 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		String decoratedStepName = decorateMessage(Utils.buildStatementName(step, stepPrefix, " ", null));
-		String multilineArg = Utils.buildMultilineArgument(step);
-		if (!multilineArg.isEmpty()) {
-			Utils.sendLog("!!!MARKDOWN_MODE!!!\r\n" + decoratedStepName + "\r\n" + multilineArg, "INFO", null);
-		} else {
-			Utils.sendLog(decoratedStepName, "INFO", null);
-		}
+		StartTestItemRQ rq = Utils.buildStartStepRequest(currentFeatureContext.get().getStepPrefix(), step, match);
+		rq.setHasStats(false);
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		context.setCurrentStepId(launch.get().startTestItem(context.getId(), rq));
 	}
 
 	@Override
 	protected void afterStep(Result result) {
-		reportResult(result, decorateMessage("STEP " + result.getStatus().toUpperCase()));
+		reportResult(result, null);
+		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		currentScenarioContext.get().setCurrentStepId(null);
 	}
 
 	@Override

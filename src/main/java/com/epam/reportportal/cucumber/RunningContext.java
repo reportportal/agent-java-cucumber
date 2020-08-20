@@ -11,11 +11,36 @@ import java.util.Queue;
 public class RunningContext {
 
 	public static class FeatureContext {
+		private boolean inBackground;
+		private String stepPrefix;
 		private Maybe<String> id;
 		private final StartTestItemRQ itemRq;
+		private final Queue<String> outlineIterations;
 
 		public FeatureContext(StartTestItemRQ startRq) {
 			itemRq = startRq;
+			stepPrefix = "";
+			outlineIterations = new ArrayDeque<>();
+		}
+
+		public Queue<String> getOutlineIterations() {
+			return outlineIterations;
+		}
+
+		public boolean isInBackground() {
+			return inBackground;
+		}
+
+		public void setInBackground(boolean inBackground) {
+			this.inBackground = inBackground;
+		}
+
+		public String getStepPrefix() {
+			return stepPrefix;
+		}
+
+		public void setStepPrefix(String prefix) {
+			stepPrefix = prefix;
 		}
 
 		public void setId(Maybe<String> newId) {

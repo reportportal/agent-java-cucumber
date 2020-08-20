@@ -326,4 +326,19 @@ public class Utils {
 	public static String getCodeRef(@Nonnull String uri, int line) {
 		return uri + ":" + line;
 	}
+
+	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match) {
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
+		rq.setDescription(Utils.buildMultilineArgument(step));
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType("STEP");
+		rq.setHasStats(false);
+		rq.setParameters(Utils.getParameters(match));
+		String codeRef = Utils.getCodeRef(match);
+		rq.setCodeRef(codeRef);
+		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
+		rq.setAttributes(Utils.getAttributes(match));
+		return rq;
+	}
 }

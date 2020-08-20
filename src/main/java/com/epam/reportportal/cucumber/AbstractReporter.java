@@ -51,11 +51,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected static final String COLON_INFIX = ": ";
 	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
 
-	protected String stepPrefix;
-
-	protected Queue<String> outlineIterations;
-	private Boolean inBackground;
-
 	protected final ThreadLocal<String> currentFeatureUri = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.FeatureContext> currentFeatureContext = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.ScenarioContext> currentScenarioContext = new ThreadLocal<>();
@@ -97,12 +92,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			return launch;
 		}
 	});
-
-	protected AbstractReporter() {
-		outlineIterations = new ArrayDeque<>();
-		stepPrefix = "";
-		inBackground = false;
-	}
 
 	/**
 	 * Extension point to customize ReportPortal instance
@@ -281,7 +270,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void result(Result result) {
 		afterStep(result);
-		if (!inBackground && currentScenarioContext.get().noMoreSteps()) {
+		if (!currentFeatureContext.get().isInBackground() && currentScenarioContext.get().noMoreSteps()) {
 			beforeHooks(false);
 		}
 	}
@@ -334,31 +323,35 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void examples(Examples examples) {
 		// examples always have headers; therefore up to num - 1
-		IntStream.range(1, examples.getRows().size()).forEach(it -> outlineIterations.add(String.format("[%d]", it)));
+		IntStream.range(1, examples.getRows().size())
+				.forEach(it -> currentFeatureContext.get().getOutlineIterations().add(String.format("[%d]", it)));
 	}
 
 	@Override
 	public void startOfScenarioLifeCycle(Scenario scenario) {
-		inBackground = false;
-		beforeScenario(scenario, outlineIterations.poll());
+		RunningContext.FeatureContext context = currentFeatureContext.get();
+		context.setInBackground(false);
+		beforeScenario(scenario, context.getOutlineIterations().poll());
 		beforeHooks(true);
 	}
 
 	@Override
 	public void background(Background background) {
 		afterHooks(true);
-		inBackground = true;
-		stepPrefix = background.getKeyword().toUpperCase() + AbstractReporter.COLON_INFIX;
+		RunningContext.FeatureContext context = currentFeatureContext.get();
+		context.setInBackground(true);
+		context.setStepPrefix(background.getKeyword().toUpperCase() + AbstractReporter.COLON_INFIX);
 	}
 
 	@Override
 	public void scenario(Scenario scenario) {
-		if (!inBackground) { // if there was no background
+		RunningContext.FeatureContext context = currentFeatureContext.get();
+		if (!context.isInBackground()) { // if there was no background
 			afterHooks(true);
 		} else {
-			inBackground = false;
+			context.setInBackground(false);
 		}
-		stepPrefix = "";
+		context.setStepPrefix("");
 	}
 
 	@Override

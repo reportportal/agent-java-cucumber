@@ -55,17 +55,9 @@ public class StepReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
-		rq.setDescription(Utils.buildMultilineArgument(step));
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("STEP");
-		rq.setParameters(Utils.getParameters(match));
-		String codeRef = Utils.getCodeRef(match);
-		rq.setCodeRef(codeRef);
-		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
-		rq.setAttributes(Utils.getAttributes(match));
-		currentScenarioContext.get().setCurrentStepId(launch.get().startTestItem(currentScenarioContext.get().getId(), rq));
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		context.setCurrentStepId(launch.get()
+				.startTestItem(context.getId(), Utils.buildStartStepRequest(currentFeatureContext.get().getStepPrefix(), step, match)));
 	}
 
 	@Override
