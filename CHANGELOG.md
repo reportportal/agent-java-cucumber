@@ -11,9 +11,8 @@
 
 ## [3.0.0]
 ### New Features 
-* Migrate to 3x client generation
-* Asynchronous reporting
-
+- Migrate to 3x client generation
+- Asynchronous reporting
 
 ## [2.6.1]
 ### Changed 
