@@ -68,7 +68,8 @@ public class ParameterTest {
 		TestStepReporter.RP.set(reportPortal);
 	}
 
-	public static final List<Pair<String, Object>> PARAMETERS = Arrays.asList(Pair.of("String", "first"),
+	public static final List<Pair<String, Object>> PARAMETERS = Arrays.asList(
+			Pair.of("String", "first"),
 			Pair.of("int", 123),
 			Pair.of("String", "second"),
 			Pair.of("int", 12345),
@@ -88,11 +89,10 @@ public class ParameterTest {
 		verify(client, times(5)).startTestItem(same(testIds.get(2)), captor.capture());
 
 		List<StartTestItemRQ> items = captor.getAllValues();
-		List<StartTestItemRQ> filteredItems = IntStream.range(0, items.size())
-				.filter(i -> i % 5 == 2 || i % 5 == 3)
-				.mapToObj(items::get)
+		List<StartTestItemRQ> filteredItems = items.stream()
+				.filter(i -> "STEP".equals(i.getType()) && !i.getName().startsWith("Given"))
 				.collect(Collectors.toList());
-		IntStream.range(0, filteredItems.size()).mapToObj(i -> Pair.of(i, filteredItems.get(i))).forEach(e -> {
+		IntStream.range(1, filteredItems.size()).mapToObj(i -> Pair.of(i, filteredItems.get(i))).forEach(e -> {
 			assertThat(e.getValue().getParameters(), allOf(notNullValue(), hasSize(1)));
 			ParameterResource param = e.getValue().getParameters().get(0);
 			Pair<String, Object> expectedParam = PARAMETERS.get(e.getKey());
