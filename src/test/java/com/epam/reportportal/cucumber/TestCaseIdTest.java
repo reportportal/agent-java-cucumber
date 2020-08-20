@@ -25,9 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.*;
 
-/**
- * TODO: finish the test
- */
 public class TestCaseIdTest {
 
 	@CucumberOptions(features = "src/test/resources/features/belly.feature", glue = {
