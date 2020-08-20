@@ -4,7 +4,7 @@ import com.epam.ta.reportportal.ws.model.ParameterResource;
 import gherkin.formatter.Argument;
 import gherkin.formatter.model.Match;
 import org.apache.commons.lang3.RandomUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import rp.com.google.common.collect.Lists;
 
 import java.util.Collections;
@@ -12,7 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  * @author <a href="mailto:ihar_kahadouski@epam.com">Ihar Kahadouski</a>
@@ -23,16 +24,14 @@ public class UtilsTest {
 	public void retrieveParamsFromMatchWithoutArgumentsTest() {
 		Match match = new Match(Collections.emptyList(), "com.epam.test.testMethod()");
 		List<ParameterResource> parameters = Utils.getParameters(match);
-		assertNotNull(parameters);
-		assertTrue(parameters.isEmpty());
+		assertThat(parameters, allOf(notNullValue(), empty()));
 	}
 
 	@Test
 	public void retrieveParamsFromMatchWithoutArgumentFromParametrizedMethodTest() {
 		Match match = new Match(Collections.emptyList(), "com.epam.test.testMethod(String)");
 		List<ParameterResource> parameters = Utils.getParameters(match);
-		assertNotNull(parameters);
-		assertTrue(parameters.isEmpty());
+		assertThat(parameters, allOf(notNullValue(), empty()));
 	}
 
 	@Test
@@ -43,11 +42,10 @@ public class UtilsTest {
 				String.format("com.epam.test.testMethod(%s)", parameterType)
 		);
 		List<ParameterResource> parameters = Utils.getParameters(match);
-		assertNotNull(parameters);
-		assertEquals(1, parameters.size());
+		assertThat(parameters, allOf(notNullValue(), hasSize(1)));
 		parameters.forEach(it -> {
-			assertEquals(parameterType, it.getKey());
-			assertEquals(parameterValue, it.getValue());
+			assertThat(it.getKey(), equalTo(parameterType));
+			assertThat(it.getValue(), equalTo(parameterValue));
 		});
 	}
 
@@ -59,11 +57,10 @@ public class UtilsTest {
 				String.format("com.epam.test.testMethod(%s)", String.join(",", parameterTypes))
 		);
 		List<ParameterResource> parameters = Utils.getParameters(match);
-		assertNotNull(parameters);
-		assertEquals(2, parameters.size());
+		assertThat(parameters, allOf(notNullValue(), hasSize(2)));
 		IntStream.range(0, parameters.size()).forEach(index -> {
-			assertEquals(parameterTypes.get(index), parameters.get(index).getKey());
-			assertEquals(parameterValues.get(index), parameters.get(index).getValue());
+			assertThat(parameters.get(index).getKey(), equalTo(parameterTypes.get(index)));
+			assertThat(parameters.get(index).getValue(), equalTo(parameterValues.get(index)));
 		});
 	}
 }

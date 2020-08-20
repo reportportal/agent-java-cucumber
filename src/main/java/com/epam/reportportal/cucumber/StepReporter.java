@@ -15,7 +15,7 @@
  */
 package com.epam.reportportal.cucumber;
 
-import com.epam.reportportal.listeners.Statuses;
+import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -43,15 +43,9 @@ import java.util.Calendar;
  * @author Sergey_Gvozdyukevich
  */
 public class StepReporter extends AbstractReporter {
-	protected Maybe<String> currentStepId;
-	protected Maybe<String> hookStepId;
-	protected String hookStatus;
 
 	public StepReporter() {
 		super();
-		currentStepId = null;
-		hookStepId = null;
-		hookStatus = null;
 	}
 
 	@Override
@@ -71,14 +65,14 @@ public class StepReporter extends AbstractReporter {
 		rq.setCodeRef(codeRef);
 		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
 		rq.setAttributes(Utils.getAttributes(match));
-		currentStepId = RP.get().startTestItem(currentScenario.getId(), rq);
+		currentScenarioContext.get().setCurrentStepId(launch.get().startTestItem(currentScenarioContext.get().getId(), rq));
 	}
 
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		Utils.finishTestItem(RP.get(), currentStepId, Utils.mapStatus(result.getStatus()));
-		currentStepId = null;
+		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		currentScenarioContext.get().setCurrentStepId(null);
 	}
 
 	@Override
@@ -89,22 +83,21 @@ public class StepReporter extends AbstractReporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
 
-		hookStepId = RP.get().startTestItem(currentScenario.getId(), rq);
-
-		hookStatus = Statuses.PASSED;
+		currentScenarioContext.get().setHookStepId(launch.get().startTestItem(currentScenarioContext.get().getId(), rq));
+		currentScenarioContext.get().setHookStatus(ItemStatus.PASSED);
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		Utils.finishTestItem(RP.get(), hookStepId, hookStatus);
-		hookStepId = null;
+		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getHookStepId(), currentScenarioContext.get().getHookStatus());
+		currentScenarioContext.get().setHookStepId(null);
 	}
 
 	@Override
 	protected void hookFinished(Match match, Result result, Boolean isBefore) {
 		reportResult(result, (isBefore ? "Before" : "After") + " hook: " + match.getLocation());
 		if (result.getStatus().equals("failed")) {
-			hookStatus = Statuses.FAILED;
+			currentScenarioContext.get().setHookStatus(ItemStatus.FAILED);
 		}
 	}
 

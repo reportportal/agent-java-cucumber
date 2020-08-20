@@ -50,15 +50,12 @@ public class ScenarioReporter extends AbstractReporter {
 	private static final String SEPARATOR = "-------------------------";
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioReporter.class);
 
-	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(new Supplier<Maybe<String>>() {
-		@Override
-		public Maybe<String> get() {
-			StartTestItemRQ rq = new StartTestItemRQ();
-			rq.setName("Root User Story");
-			rq.setStartTime(Calendar.getInstance().getTime());
-			rq.setType("STORY");
-			return RP.get().startTestItem(rq);
-		}
+	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(() -> {
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setName("Root User Story");
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType("STORY");
+		return launch.get().startTestItem(rq);
 	});
 
 	@Override
@@ -109,11 +106,11 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void afterLaunch() {
-		if (currentFeatureUri == null) {
+		if (currentFeatureUri.get() == null) {
 			LOGGER.debug("There is no scenarios in the launch");
 			return;
 		}
-		Utils.finishTestItem(RP.get(), rootSuiteId.get());
+		Utils.finishTestItem(launch.get(), rootSuiteId.get());
 		rootSuiteId = null;
 		super.afterLaunch();
 	}

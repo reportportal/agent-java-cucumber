@@ -17,7 +17,7 @@ package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.annotations.TestCaseId;
 import com.epam.reportportal.annotations.attribute.Attributes;
-import com.epam.reportportal.listeners.Statuses;
+import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.item.TestCaseIdEntry;
@@ -35,15 +35,16 @@ import io.reactivex.Maybe;
 import io.reactivex.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rp.com.google.common.base.Function;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
 import rp.com.google.common.collect.Lists;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -62,62 +63,62 @@ public class Utils {
 	private static final String PARAMETER_TYPE_REGEX = "\\(.+\\)$";
 
 	//@formatter:off
-	private static final Map<String, String> STATUS_MAPPING = ImmutableMap.<String, String>builder()
-			.put("passed", Statuses.PASSED)
-			.put("skipped", Statuses.SKIPPED)
-			.put("pending", Statuses.SKIPPED)
-			//TODO replace with NOT_IMPLEMENTED in future
-			.put("undefined", Statuses.SKIPPED).build();
+	private static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
+			.put("passed", ItemStatus.PASSED)
+			.put("failed", ItemStatus.FAILED)
+			.put("skipped", ItemStatus.SKIPPED)
+			.put("pending", ItemStatus.SKIPPED)
+			.put("undefined", ItemStatus.SKIPPED).build();
 	//@formatter:on
 
 	private Utils() {
-
 	}
 
 	public static void finishTestItem(Launch rp, Maybe<String> itemId) {
 		finishTestItem(rp, itemId, null);
 	}
 
-	public static void finishTestItem(Launch rp, Maybe<String> itemId, String status) {
+	public static void finishTestItem(Launch rp, Maybe<String> itemId, ItemStatus status) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
 		}
 
 		FinishTestItemRQ rq = new FinishTestItemRQ();
-		rq.setStatus(status);
+		ofNullable(status).ifPresent(s -> rq.setStatus(s.name()));
 		rq.setEndTime(Calendar.getInstance().getTime());
 
 		rp.finishTestItem(itemId, rq);
 
 	}
 
-	public static Maybe<String> startNonLeafNode(Launch rp, Maybe<String> rootItemId, String name, String description, List<Tag> tags,
-			String type) {
+	public static Maybe<String> startNonLeafNode(Launch rp, Maybe<String> rootItemId, String name, String description, String codeRef,
+			List<Tag> tags, String type) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setDescription(description);
+		rq.setCodeRef(codeRef);
 		rq.setName(name);
 		rq.setAttributes(extractAttributes(tags));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(type);
+		if ("STEP".equals(type)) {
+			rq.setTestCaseId(TestCaseIdUtils.getTestCaseId(codeRef, null).getId());
+		}
 
 		return rp.startTestItem(rootItemId, rq);
 	}
 
 	public static void sendLog(final String message, final String level, final File file) {
-		ReportPortal.emitLog(new Function<String, SaveLogRQ>() {
-			@Override
-			public SaveLogRQ apply(String item) {
-				SaveLogRQ rq = new SaveLogRQ();
-				rq.setMessage(message);
-				rq.setItemUuid(item);
-				rq.setLevel(level);
-				rq.setLogTime(Calendar.getInstance().getTime());
-				if (file != null) {
-					rq.setFile(file);
-				}
-				return rq;
+		ReportPortal.emitLog(item -> {
+			SaveLogRQ rq = new SaveLogRQ();
+			rq.setMessage(message);
+			rq.setItemUuid(item);
+			rq.setLevel(level);
+			rq.setLogTime(Calendar.getInstance().getTime());
+			if (file != null) {
+				rq.setFile(file);
 			}
+			return rq;
 		});
 	}
 
@@ -128,7 +129,7 @@ public class Utils {
 	 * @return set of tags
 	 */
 	public static Set<ItemAttributesRQ> extractAttributes(List<Tag> tags) {
-		Set<ItemAttributesRQ> result = new HashSet<ItemAttributesRQ>();
+		Set<ItemAttributesRQ> result = new HashSet<>();
 		for (Tag tag : tags) {
 			result.add(new ItemAttributesRQ(null, tag.getName()));
 		}
@@ -142,15 +143,13 @@ public class Utils {
 	 * @return regular log level
 	 */
 	public static String mapLevel(String cukesStatus) {
-		String mapped = null;
 		if (cukesStatus.equalsIgnoreCase("passed")) {
-			mapped = "INFO";
+			return "INFO";
 		} else if (cukesStatus.equalsIgnoreCase("skipped")) {
-			mapped = "WARN";
+			return "WARN";
 		} else {
-			mapped = "ERROR";
+			return "ERROR";
 		}
-		return mapped;
 	}
 
 	/**
@@ -159,12 +158,12 @@ public class Utils {
 	 * @param cukesStatus - Cucumber status
 	 * @return regular status
 	 */
-	public static String mapStatus(String cukesStatus) {
+	public static ItemStatus mapStatus(String cukesStatus) {
 		if (Strings.isNullOrEmpty(cukesStatus)) {
-			return Statuses.FAILED;
+			return ItemStatus.FAILED;
 		}
-		String status = STATUS_MAPPING.get(cukesStatus.toLowerCase());
-		return null == status ? Statuses.FAILED : status;
+		ItemStatus status = STATUS_MAPPING.get(cukesStatus.toLowerCase());
+		return null == status ? ItemStatus.FAILED : status;
 	}
 
 	/**
@@ -245,17 +244,22 @@ public class Utils {
 
 	}
 
-	public static TestCaseIdEntry getTestCaseId(Match match, String codeRef) {
-		try {
-			Method method = retrieveMethod(match);
-			TestCaseId testCaseIdAnnotation = method.getAnnotation(TestCaseId.class);
-			return ofNullable(testCaseIdAnnotation).flatMap(annotation -> ofNullable(getTestCaseId(annotation,
-					method,
-					match.getArguments()
-			))).orElseGet(() -> getTestCaseId(codeRef, match.getArguments()));
-		} catch (NoSuchFieldException | IllegalAccessException e) {
-			return getTestCaseId(codeRef, match.getArguments());
-		}
+	/**
+	 * Generate name representation
+	 *
+	 * @param prefix   - substring to be prepended at the beginning (optional)
+	 * @param infix    - substring to be inserted between keyword and name
+	 * @param argument - main text to process
+	 * @param suffix   - substring to be appended at the end (optional)
+	 * @return transformed string
+	 */
+	//TODO: pass Node as argument, not test event
+	public static String buildNodeName(String prefix, String infix, String argument, String suffix) {
+		return buildName(prefix, infix, argument, suffix);
+	}
+
+	private static String buildName(String prefix, String infix, String argument, String suffix) {
+		return (prefix == null ? "" : prefix) + infix + argument + (suffix == null ? "" : suffix);
 	}
 
 	static List<ParameterResource> getParameters(Match match) {
@@ -289,26 +293,37 @@ public class Utils {
 		return (Method) methodField.get(javaStepDefinition);
 	}
 
-	@Nullable
-	private static TestCaseIdEntry getTestCaseId(TestCaseId testCaseId, Method method, List<Argument> arguments) {
-		if (testCaseId.parametrized()) {
-			List<String> values = new ArrayList<>(arguments.size());
-			for (Argument argument : arguments) {
-				values.add(argument.getVal());
-			}
-			return TestCaseIdUtils.getParameterizedTestCaseId(method, values.toArray());
-		} else {
-			return new TestCaseIdEntry(testCaseId.value());
+	private static final Function<List<Argument>, List<?>> ARGUMENTS_TRANSFORM = arguments -> ofNullable(arguments).map(args -> args.stream()
+			.map(Argument::getVal)
+			.collect(Collectors.toList())).orElse(null);
+
+	@SuppressWarnings("unchecked")
+	public static TestCaseIdEntry getTestCaseId(Match match, String codeRef) {
+		try {
+			Method method = retrieveMethod(match);
+			return TestCaseIdUtils.getTestCaseId(
+					method.getAnnotation(TestCaseId.class),
+					method,
+					codeRef,
+					(List<Object>) ARGUMENTS_TRANSFORM.apply(match.getArguments())
+			);
+		} catch (NoSuchFieldException | IllegalAccessException e) {
+			return getTestCaseId(codeRef, match.getArguments());
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private static TestCaseIdEntry getTestCaseId(String codeRef, List<Argument> arguments) {
-		return ofNullable(arguments).filter(args -> !args.isEmpty())
-				.map(args -> new TestCaseIdEntry(codeRef + TRANSFORM_PARAMETERS.apply(args)))
-				.orElseGet(() -> new TestCaseIdEntry(codeRef));
+		return TestCaseIdUtils.getTestCaseId(codeRef, (List<Object>) ARGUMENTS_TRANSFORM.apply(arguments));
 	}
 
-	private static final Function<List<Argument>, String> TRANSFORM_PARAMETERS = it -> "[" + it.stream()
-			.map(Argument::getVal)
-			.collect(Collectors.joining(",")) + "]";
+	@Nonnull
+	public static String getDescription(@Nonnull String uri) {
+		return uri;
+	}
+
+	@Nonnull
+	public static String getCodeRef(@Nonnull String uri, int line) {
+		return uri + ":" + line;
+	}
 }
