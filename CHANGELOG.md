@@ -1,6 +1,6 @@
 # Changelog
 
-[Unreleased]
+## [Unreleased]
 
 ## [5.0.0-BETA-12]
 ### Added
