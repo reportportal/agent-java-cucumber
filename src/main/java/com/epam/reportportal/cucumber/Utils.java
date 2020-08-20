@@ -101,6 +101,9 @@ public class Utils {
 		rq.setAttributes(extractAttributes(tags));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(type);
+		if ("STEP".equals(type)) {
+			rq.setTestCaseId(TestCaseIdUtils.getTestCaseId(codeRef, null).getId());
+		}
 
 		return rp.startTestItem(rootItemId, rq);
 	}
