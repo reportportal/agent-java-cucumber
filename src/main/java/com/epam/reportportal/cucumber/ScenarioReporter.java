@@ -47,7 +47,6 @@ import java.util.Calendar;
  * @author Sergey_Gvozdyukevich
  */
 public class ScenarioReporter extends AbstractReporter {
-	private static final String SEPARATOR = "-------------------------";
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioReporter.class);
 
 	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(() -> {
@@ -60,9 +59,9 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		StartTestItemRQ rq = Utils.buildStartStepRequest(currentFeatureContext.get().getStepPrefix(), step, match);
-		rq.setHasStats(false);
 		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		StartTestItemRQ rq = Utils.buildStartStepRequest(context.getStepPrefix(), step, match);
+		rq.setHasStats(false);
 		context.setCurrentStepId(launch.get().startTestItem(context.getId(), rq));
 	}
 
@@ -112,15 +111,5 @@ public class ScenarioReporter extends AbstractReporter {
 		Utils.finishTestItem(launch.get(), rootSuiteId.get());
 		rootSuiteId = null;
 		super.afterLaunch();
-	}
-
-	/**
-	 * Add separators to log item to distinguish from real log messages
-	 *
-	 * @param message to decorate
-	 * @return decorated message
-	 */
-	private String decorateMessage(String message) {
-		return ScenarioReporter.SEPARATOR + message + ScenarioReporter.SEPARATOR;
 	}
 }

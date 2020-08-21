@@ -5,42 +5,18 @@ import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Step;
 import io.reactivex.Maybe;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
 public class RunningContext {
 
 	public static class FeatureContext {
-		private boolean inBackground;
-		private String stepPrefix;
 		private Maybe<String> id;
 		private final StartTestItemRQ itemRq;
-		private final Queue<String> outlineIterations;
 
 		public FeatureContext(StartTestItemRQ startRq) {
 			itemRq = startRq;
-			stepPrefix = "";
-			outlineIterations = new ArrayDeque<>();
-		}
-
-		public Queue<String> getOutlineIterations() {
-			return outlineIterations;
-		}
-
-		public boolean isInBackground() {
-			return inBackground;
-		}
-
-		public void setInBackground(boolean inBackground) {
-			this.inBackground = inBackground;
-		}
-
-		public String getStepPrefix() {
-			return stepPrefix;
-		}
-
-		public void setStepPrefix(String prefix) {
-			stepPrefix = prefix;
 		}
 
 		public void setId(Maybe<String> newId) {
@@ -58,18 +34,53 @@ public class RunningContext {
 
 	public static class ScenarioContext {
 
+		private boolean inBackground;
+		private String stepPrefix;
 		private Maybe<String> currentStepId;
 		private Maybe<String> hookStepId;
 		private ItemStatus hookStatus;
 
-		private final Maybe<String> id;
 		private final Queue<Step> steps;
+		private final Queue<String> outlineIterations;
+
+		private Maybe<String> id;
 		private ItemStatus status;
 
-		public ScenarioContext(Maybe<String> newId) {
-			id = newId;
+		public ScenarioContext() {
+			stepPrefix = "";
 			steps = new ArrayDeque<>();
+			outlineIterations = new ArrayDeque<>();
 			status = ItemStatus.PASSED;
+		}
+
+		public ScenarioContext(Maybe<String> newId) {
+			this();
+			id = newId;
+		}
+
+		@Nonnull
+		public Queue<String> getOutlineIterations() {
+			return outlineIterations;
+		}
+
+		public void setId(Maybe<String> id) {
+			this.id = id;
+		}
+
+		public boolean isInBackground() {
+			return inBackground;
+		}
+
+		public void setInBackground(boolean inBackground) {
+			this.inBackground = inBackground;
+		}
+
+		public String getStepPrefix() {
+			return stepPrefix;
+		}
+
+		public void setStepPrefix(String prefix) {
+			stepPrefix = prefix;
 		}
 
 		public Maybe<String> getCurrentStepId() {

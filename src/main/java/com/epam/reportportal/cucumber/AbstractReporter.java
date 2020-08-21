@@ -174,7 +174,13 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				scenario.getTags(),
 				getScenarioTestItemType()
 		);
-		currentScenarioContext.set(new RunningContext.ScenarioContext(id));
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		if (context == null) {
+			context = new RunningContext.ScenarioContext(id);
+			currentScenarioContext.set(context);
+		} else {
+			context.setId(id);
+		}
 	}
 
 	/**
@@ -270,7 +276,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void result(Result result) {
 		afterStep(result);
-		if (!currentFeatureContext.get().isInBackground() && currentScenarioContext.get().noMoreSteps()) {
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		if (!context.isInBackground() && context.noMoreSteps()) {
 			beforeHooks(false);
 		}
 	}
@@ -323,29 +330,42 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void examples(Examples examples) {
 		// examples always have headers; therefore up to num - 1
-		IntStream.range(1, examples.getRows().size())
-				.forEach(it -> currentFeatureContext.get().getOutlineIterations().add(String.format("[%d]", it)));
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		if (context == null) {
+			context = new RunningContext.ScenarioContext();
+			currentScenarioContext.set(context);
+		}
+		Queue<String> iterations = context.getOutlineIterations();
+		IntStream.range(1, examples.getRows().size()).forEach(it -> iterations.add(String.format("[%d]", it)));
 	}
 
 	@Override
 	public void startOfScenarioLifeCycle(Scenario scenario) {
-		RunningContext.FeatureContext context = currentFeatureContext.get();
-		context.setInBackground(false);
-		beforeScenario(scenario, context.getOutlineIterations().poll());
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		String iteration = null;
+		if (context != null) {
+			context.setInBackground(false);
+			iteration = context.getOutlineIterations().poll();
+		}
+		beforeScenario(scenario, iteration);
 		beforeHooks(true);
 	}
 
 	@Override
 	public void background(Background background) {
 		afterHooks(true);
-		RunningContext.FeatureContext context = currentFeatureContext.get();
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		if (context == null) {
+			context = new RunningContext.ScenarioContext();
+			currentScenarioContext.set(context);
+		}
 		context.setInBackground(true);
 		context.setStepPrefix(background.getKeyword().toUpperCase() + AbstractReporter.COLON_INFIX);
 	}
 
 	@Override
 	public void scenario(Scenario scenario) {
-		RunningContext.FeatureContext context = currentFeatureContext.get();
+		RunningContext.ScenarioContext context = currentScenarioContext.get();
 		if (!context.isInBackground()) { // if there was no background
 			afterHooks(true);
 		} else {
