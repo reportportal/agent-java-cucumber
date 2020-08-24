@@ -15,6 +15,7 @@
  */
 package com.epam.reportportal.cucumber;
 
+import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -59,7 +60,7 @@ public class ScenarioReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		RunningContext.ScenarioContext context = getScenarioContext();
 		StartTestItemRQ rq = Utils.buildStartStepRequest(context.getStepPrefix(), step, match);
 		rq.setHasStats(false);
 		context.setCurrentStepId(launch.get().startTestItem(context.getId(), rq));
@@ -68,23 +69,37 @@ public class ScenarioReporter extends AbstractReporter {
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
-		currentScenarioContext.get().setCurrentStepId(null);
+		Utils.finishTestItem(launch.get(), getScenarioContext().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		//		currentScenarioContext.get().setCurrentStepId(null);
 	}
 
 	@Override
 	protected void beforeHooks(Boolean isBefore) {
-		// noop
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setHasStats(false);
+
+		rq.setName(isBefore ? "Before hooks" : "After hooks");
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
+
+		RunningContext.ScenarioContext context = getScenarioContext();
+		context.setHookStepId(launch.get().startTestItem(context.getId(), rq));
+		context.setHookStatus(ItemStatus.PASSED);
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		// noop
+		RunningContext.ScenarioContext context = getScenarioContext();
+		Utils.finishTestItem(launch.get(), context.getHookStepId(), context.getHookStatus());
+		context.setHookStepId(null);
 	}
 
 	@Override
 	protected void hookFinished(Match match, Result result, Boolean isBefore) {
 		reportResult(result, null);
+		if (result.getStatus().equals("failed")) {
+			getScenarioContext().setHookStatus(ItemStatus.FAILED);
+		}
 	}
 
 	@Override

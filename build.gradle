@@ -69,11 +69,17 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.6.2'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
     testImplementation 'org.mockito:mockito-junit-jupiter:3.3.3'
+    testImplementation "org.aspectj:aspectjweaver:1.9.2"
     testImplementation('com.github.reportportal:agent-java-test-utils:ddcf50ee20')
 }
 
 test {
+    outputs.upToDateWhen { return false }
     useJUnitPlatform()
+    doFirst {
+        def weaver = configurations.testRuntimeClasspath.find { it.name.contains("aspectjweaver") }
+        jvmArgs += "-javaagent:$weaver"
+    }
 }
 
 wrapper {

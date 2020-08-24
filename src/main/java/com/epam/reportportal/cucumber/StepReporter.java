@@ -55,7 +55,7 @@ public class StepReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		RunningContext.ScenarioContext context = currentScenarioContext.get();
+		RunningContext.ScenarioContext context = getScenarioContext();
 		context.setCurrentStepId(launch.get()
 				.startTestItem(context.getId(), Utils.buildStartStepRequest(context.getStepPrefix(), step, match)));
 	}
@@ -63,8 +63,9 @@ public class StepReporter extends AbstractReporter {
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
-		currentScenarioContext.get().setCurrentStepId(null);
+		RunningContext.ScenarioContext context = getScenarioContext();
+		Utils.finishTestItem(launch.get(), context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		context.setCurrentStepId(null);
 	}
 
 	@Override
@@ -75,21 +76,23 @@ public class StepReporter extends AbstractReporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
 
-		currentScenarioContext.get().setHookStepId(launch.get().startTestItem(currentScenarioContext.get().getId(), rq));
-		currentScenarioContext.get().setHookStatus(ItemStatus.PASSED);
+		RunningContext.ScenarioContext context = getScenarioContext();
+		context.setHookStepId(launch.get().startTestItem(context.getId(), rq));
+		context.setHookStatus(ItemStatus.PASSED);
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getHookStepId(), currentScenarioContext.get().getHookStatus());
-		currentScenarioContext.get().setHookStepId(null);
+		RunningContext.ScenarioContext context = getScenarioContext();
+		Utils.finishTestItem(launch.get(), context.getHookStepId(), context.getHookStatus());
+		context.setHookStepId(null);
 	}
 
 	@Override
 	protected void hookFinished(Match match, Result result, Boolean isBefore) {
 		reportResult(result, (isBefore ? "Before" : "After") + " hook: " + match.getLocation());
 		if (result.getStatus().equals("failed")) {
-			currentScenarioContext.get().setHookStatus(ItemStatus.FAILED);
+			getScenarioContext().setHookStatus(ItemStatus.FAILED);
 		}
 	}
 
