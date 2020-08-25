@@ -69,8 +69,9 @@ public class ScenarioReporter extends AbstractReporter {
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		Utils.finishTestItem(launch.get(), getCurrentScenarioContext().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
-		//		currentScenarioContext.get().setCurrentStepId(null);
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		Utils.finishTestItem(launch.get(), context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		context.setCurrentStepId(null);
 	}
 
 	@Override
