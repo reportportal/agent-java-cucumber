@@ -55,7 +55,7 @@ public class StepReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		context.setCurrentStepId(launch.get()
 				.startTestItem(context.getId(), Utils.buildStartStepRequest(context.getStepPrefix(), step, match, true)));
 	}
@@ -63,7 +63,7 @@ public class StepReporter extends AbstractReporter {
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		Utils.finishTestItem(launch.get(), context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
 		context.setCurrentStepId(null);
 	}
@@ -76,14 +76,14 @@ public class StepReporter extends AbstractReporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
 
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		context.setHookStepId(launch.get().startTestItem(context.getId(), rq));
 		context.setHookStatus(ItemStatus.PASSED);
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		Utils.finishTestItem(launch.get(), context.getHookStepId(), context.getHookStatus());
 		context.setHookStepId(null);
 	}
@@ -92,7 +92,7 @@ public class StepReporter extends AbstractReporter {
 	protected void hookFinished(Match match, Result result, Boolean isBefore) {
 		reportResult(result, (isBefore ? "Before" : "After") + " hook: " + match.getLocation());
 		if (result.getStatus().equals("failed")) {
-			getScenarioContext().setHookStatus(ItemStatus.FAILED);
+			getCurrentScenarioContext().setHookStatus(ItemStatus.FAILED);
 		}
 	}
 

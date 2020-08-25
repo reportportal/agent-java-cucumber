@@ -141,7 +141,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		}
 	}
 
-	protected RunningContext.ScenarioContext getScenarioContext() {
+	protected RunningContext.ScenarioContext getCurrentScenarioContext() {
 		RunningContext.ScenarioContext context = currentScenarioContext.get();
 		if (context == null) {
 			context = new RunningContext.ScenarioContext();
@@ -183,7 +183,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				scenario.getTags(),
 				getScenarioTestItemType()
 		);
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		context.setId(id);
 	}
 
@@ -191,7 +191,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Finish Cucumber scenario
 	 */
 	protected void afterScenario() {
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		Utils.finishTestItem(launch.get(), context.getId(), context.getStatus());
 		currentScenarioContext.set(null);
 	}
@@ -251,7 +251,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		if (message != null) {
 			Utils.sendLog(message, level, null);
 		}
-		RunningContext.ScenarioContext currentScenario = getScenarioContext();
+		RunningContext.ScenarioContext currentScenario = getCurrentScenarioContext();
 		currentScenario.updateStatus(Utils.mapStatus(result.getStatus()));
 	}
 
@@ -280,7 +280,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void result(Result result) {
 		afterStep(result);
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		if (!context.isInBackground() && context.noMoreSteps()) {
 			beforeHooks(false);
 		}
@@ -293,7 +293,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void match(Match match) {
-		beforeStep(getScenarioContext().getNextStep(), match);
+		beforeStep(getCurrentScenarioContext().getNextStep(), match);
 	}
 
 	@Override
@@ -334,14 +334,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void examples(Examples examples) {
 		// examples always have headers; therefore up to num - 1
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		Queue<String> iterations = context.getOutlineIterations();
 		IntStream.range(1, examples.getRows().size()).forEach(it -> iterations.add(String.format("[%d]", it)));
 	}
 
 	@Override
 	public void startOfScenarioLifeCycle(Scenario scenario) {
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		String iteration = context.getOutlineIterations().poll();
 		context.setInBackground(false);
 		beforeScenario(scenario, iteration);
@@ -351,14 +351,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@Override
 	public void background(Background background) {
 		afterHooks(true);
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		context.setInBackground(true);
 		context.setStepPrefix(background.getKeyword().toUpperCase() + AbstractReporter.COLON_INFIX);
 	}
 
 	@Override
 	public void scenario(Scenario scenario) {
-		RunningContext.ScenarioContext context = getScenarioContext();
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		if (!context.isInBackground()) { // if there was no background
 			afterHooks(true);
 		} else {
