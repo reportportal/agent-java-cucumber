@@ -17,7 +17,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -83,33 +85,17 @@ public class NestedStepsStepReporterTest {
 		verify(client, times(1)).startTestItem(same(suiteId), any());
 		verify(client, times(4)).startTestItem(same(testId), any());
 
-		ArgumentCaptor<String> parentIdCapture = ArgumentCaptor.forClass(String.class);
-		ArgumentCaptor<StartTestItemRQ> itemRequestCapture = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(1 + 4 + 3 + 1)).startTestItem(parentIdCapture.capture(), itemRequestCapture.capture());
+		ArgumentCaptor<StartTestItemRQ> firstLevelCaptor1 = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(1)).startTestItem(same(stepIds.get(1)), firstLevelCaptor1.capture());
 
-		List<String> parentIdList = parentIdCapture.getAllValues();
-		List<StartTestItemRQ> itemRequestList = itemRequestCapture.getAllValues();
-
-		Map<String, List<StartTestItemRQ>> firstLevelRequests = IntStream.range(0, parentIdList.size())
-				.filter(i -> stepIds.contains(parentIdList.get(i)))
-				.mapToObj(i -> Pair.of(parentIdList.get(i), itemRequestList.get(i)))
-				.collect(Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList())));
-		assertThat(firstLevelRequests.keySet(), hasSize(2));
-		Iterator<Map.Entry<String, List<StartTestItemRQ>>> entryIterator = firstLevelRequests.entrySet().iterator();
-		Map.Entry<String, List<StartTestItemRQ>> firstPair = entryIterator.next();
-		Map.Entry<String, List<StartTestItemRQ>> secondPair = entryIterator.next();
-
-		if (firstPair.getValue().size() > secondPair.getValue().size()) {
-			Map.Entry<String, List<StartTestItemRQ>> tmp = firstPair;
-			firstPair = secondPair;
-			secondPair = tmp;
-		}
-
-		StartTestItemRQ firstLevelRq1 = firstPair.getValue().get(0);
+		StartTestItemRQ firstLevelRq1 = firstLevelCaptor1.getValue();
 		assertThat(firstLevelRq1.getName(), equalTo(FIRST_LEVEL_NAMES.get(0)));
 		assertThat(firstLevelRq1.isHasStats(), equalTo(Boolean.FALSE));
 
-		List<StartTestItemRQ> firstLevelRqs2 = secondPair.getValue();
+		ArgumentCaptor<StartTestItemRQ> firstLevelCaptor2 = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(2)).startTestItem(same(stepIds.get(2)), firstLevelCaptor2.capture());
+
+		List<StartTestItemRQ> firstLevelRqs2 = firstLevelCaptor2.getAllValues();
 		IntStream.range(1, FIRST_LEVEL_NAMES.size()).forEach(i -> {
 			assertThat(firstLevelRqs2.get(i - 1).getName(), equalTo(FIRST_LEVEL_NAMES.get(i)));
 			assertThat(firstLevelRqs2.get(i - 1).isHasStats(), equalTo(Boolean.FALSE));
@@ -130,15 +116,10 @@ public class NestedStepsStepReporterTest {
 		assertThat(tagList, hasSize(1));
 		assertThat(tagList.get(0).getValue(), equalTo("tag"));
 
-		Map<String, List<StartTestItemRQ>> secondLevelSteps = IntStream.range(0, parentIdList.size())
-				.filter(i -> nestedStepIds.contains(parentIdList.get(i)))
-				.mapToObj(i -> Pair.of(parentIdList.get(i), itemRequestList.get(i)))
-				.collect(Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList())));
-		assertThat(secondLevelSteps.entrySet(), hasSize(1));
-		List<StartTestItemRQ> secondLevelRqs = secondLevelSteps.values().iterator().next();
-		assertThat(secondLevelRqs, hasSize(1));
+		ArgumentCaptor<StartTestItemRQ> secondLevelCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(1)).startTestItem(same(nestedStepIds.get(0)), secondLevelCaptor.capture());
 
-		StartTestItemRQ secondLevelRq = secondLevelRqs.get(0);
+		StartTestItemRQ secondLevelRq = secondLevelCaptor.getValue();
 		assertThat(secondLevelRq.getName(), equalTo("A step inside nested step"));
 		assertThat(secondLevelRq.isHasStats(), equalTo(Boolean.FALSE));
 	}
