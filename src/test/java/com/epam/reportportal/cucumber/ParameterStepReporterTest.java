@@ -78,12 +78,12 @@ public class ParameterStepReporterTest {
 	);
 
 	public static final List<String> STEP_NAMES = Arrays.asList(
-			String.format("When  I have parameter %s", PARAMETERS.get(0).getValue()),
-			String.format("Then  I emit number %s on level info", PARAMETERS.get(1).getValue().toString()),
-			String.format("When  I have parameter %s", PARAMETERS.get(2).getValue()),
-			String.format("Then  I emit number %s on level info", PARAMETERS.get(3).getValue().toString()),
-			String.format("When  I have parameter %s", PARAMETERS.get(4).getValue()),
-			String.format("Then  I emit number %s on level info", PARAMETERS.get(5).getValue().toString())
+			String.format("When I have parameter %s", PARAMETERS.get(0).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(1).getValue().toString()),
+			String.format("When I have parameter %s", PARAMETERS.get(2).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(3).getValue().toString()),
+			String.format("When I have parameter %s", PARAMETERS.get(4).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(5).getValue().toString())
 	);
 
 	@Test

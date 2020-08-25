@@ -68,8 +68,8 @@ public class ParameterScenarioReporterTest {
 
 	public static final List<Pair<String, Object>> PARAMETERS = Arrays.asList(Pair.of("String", "first"), Pair.of("int", 123));
 
-	public static final List<String> STEP_NAMES = Arrays.asList(String.format("When  I have parameter %s", PARAMETERS.get(0).getValue()),
-			String.format("Then  I emit number %s on level info", PARAMETERS.get(1).getValue().toString())
+	public static final List<String> STEP_NAMES = Arrays.asList(String.format("When I have parameter %s", PARAMETERS.get(0).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(1).getValue().toString())
 	);
 
 	@Test

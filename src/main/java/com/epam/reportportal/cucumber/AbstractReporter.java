@@ -177,7 +177,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		Maybe<String> id = Utils.startNonLeafNode(
 				launch.get(),
 				currentFeature.getId(),
-				Utils.buildStatementName(scenario, null, AbstractReporter.COLON_INFIX, outlineIteration),
+				Utils.buildStatementName(scenario, null, outlineIteration),
 				currentFeatureUri.get(),
 				codeRef,
 				scenario.getTags(),
@@ -200,6 +200,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Start Cucumber step
 	 *
 	 * @param step Step object
+	 * @param match Match object
 	 */
 	protected abstract void beforeStep(Step step, Match match);
 
