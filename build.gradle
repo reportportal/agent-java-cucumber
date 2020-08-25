@@ -76,6 +76,7 @@ dependencies {
 test {
     outputs.upToDateWhen { return false }
     useJUnitPlatform()
+    maxParallelForks(5) // it's forks - separate JVMs, should not interfere each other
     doFirst {
         def weaver = configurations.testRuntimeClasspath.find { it.name.contains("aspectjweaver") }
         jvmArgs += "-javaagent:$weaver"
