@@ -199,7 +199,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Start Cucumber step
 	 *
-	 * @param step Step object
+	 * @param step  Step object
 	 * @param match Match object
 	 */
 	protected abstract void beforeStep(Step step, Match match);

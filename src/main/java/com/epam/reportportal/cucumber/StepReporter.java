@@ -57,7 +57,7 @@ public class StepReporter extends AbstractReporter {
 	protected void beforeStep(Step step, Match match) {
 		RunningContext.ScenarioContext context = getScenarioContext();
 		context.setCurrentStepId(launch.get()
-				.startTestItem(context.getId(), Utils.buildStartStepRequest(context.getStepPrefix(), step, match)));
+				.startTestItem(context.getId(), Utils.buildStartStepRequest(context.getStepPrefix(), step, match, true)));
 	}
 
 	@Override

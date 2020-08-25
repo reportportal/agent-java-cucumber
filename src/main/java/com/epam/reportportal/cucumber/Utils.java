@@ -326,13 +326,13 @@ public class Utils {
 		return uri + ":" + line;
 	}
 
-	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match) {
+	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match, boolean hasStats) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setName(Utils.buildStatementName(step, stepPrefix, null));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
-		rq.setHasStats(false);
+		rq.setHasStats(hasStats);
 		rq.setParameters(Utils.getParameters(match));
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);

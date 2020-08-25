@@ -61,7 +61,7 @@ public class ScenarioReporter extends AbstractReporter {
 	@Override
 	protected void beforeStep(Step step, Match match) {
 		RunningContext.ScenarioContext context = getScenarioContext();
-		StartTestItemRQ rq = Utils.buildStartStepRequest(context.getStepPrefix(), step, match);
+		StartTestItemRQ rq = Utils.buildStartStepRequest(context.getStepPrefix(), step, match, false);
 		rq.setHasStats(false);
 		context.setCurrentStepId(launch.get().startTestItem(context.getId(), rq));
 	}

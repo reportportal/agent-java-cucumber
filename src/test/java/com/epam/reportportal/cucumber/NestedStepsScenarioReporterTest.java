@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 public class NestedStepsScenarioReporterTest {
@@ -96,9 +95,13 @@ public class NestedStepsScenarioReporterTest {
 	public void test_scenario_reporter_nested_steps() {
 		TestUtils.runTests(NestedStepsScenarioReporter.class);
 
-		verify(client, times(1)).startTestItem(any());
-		verify(client, times(1)).startTestItem(same(suiteId), any());
-		verify(client, times(1)).startTestItem(same(testId), any());
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(1)).startTestItem(captor.capture());
+		verify(client, times(1)).startTestItem(same(suiteId), captor.capture());
+		verify(client, times(1)).startTestItem(same(testId), captor.capture());
+		List<StartTestItemRQ> parentItems = captor.getAllValues();
+		parentItems.forEach(i -> assertThat(i.isHasStats(), anyOf(equalTo(Boolean.TRUE))));
+
 		ArgumentCaptor<StartTestItemRQ> firstLevelCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(4)).startTestItem(same(stepId), firstLevelCaptor.capture());
 
