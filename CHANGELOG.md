@@ -1,8 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Incorrect item type settings
 ### Added
-- Nested step support
+- Nested steps support
 
 ## [5.0.0-BETA-12]
 ### Added
