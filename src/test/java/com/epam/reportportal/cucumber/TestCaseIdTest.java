@@ -2,6 +2,7 @@ package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.cucumber.integration.TestScenarioReporter;
 import com.epam.reportportal.cucumber.integration.TestStepReporter;
+import com.epam.reportportal.cucumber.integration.feature.TestCaseIdOnMethodSteps;
 import com.epam.reportportal.cucumber.integration.util.TestUtils;
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.ReportPortal;
@@ -38,6 +39,13 @@ public class TestCaseIdTest {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class RunBellyTestStepReporter extends AbstractTestNGCucumberTests {
+
+	}
+
+	@CucumberOptions(features = "src/test/resources/features/TestCaseIdOnAMethod.feature", glue = {
+			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
+			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
+	public static class StepDefStepReporter extends AbstractTestNGCucumberTests {
 
 	}
 
@@ -96,5 +104,15 @@ public class TestCaseIdTest {
 				steps.get(2).getTestCaseId(),
 				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.my_belly_should_growl[]")
 		);
+	}
+
+	@Test
+	public void verify_test_case_id_bypassed_through_annotation_on_a_stepdef() {
+		TestUtils.runTests(StepDefStepReporter.class);
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(3)).startTestItem(same(testId), captor.capture());
+
+		StartTestItemRQ step = captor.getAllValues().get(1);
+		assertThat(step.getTestCaseId(), equalTo(TestCaseIdOnMethodSteps.TEST_CASE_ID));
 	}
 }
