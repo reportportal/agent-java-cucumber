@@ -16,6 +16,7 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.ItemStatus;
+import com.epam.reportportal.service.Launch;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -74,8 +75,10 @@ public class ScenarioReporter extends AbstractReporter {
 	protected void afterStep(Result result) {
 		reportResult(result, null);
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		Utils.finishTestItem(launch.get(), context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		Launch myLaunch = launch.get();
+		Utils.finishTestItem(myLaunch, context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
 		context.setCurrentStepId(null);
+		myLaunch.getStepReporter().finishPreviousStep();
 	}
 
 	@Override
@@ -95,8 +98,10 @@ public class ScenarioReporter extends AbstractReporter {
 	@Override
 	protected void afterHooks(Boolean isBefore) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		Utils.finishTestItem(launch.get(), context.getHookStepId(), context.getHookStatus());
+		Launch myLaunch = launch.get();
+		Utils.finishTestItem(myLaunch, context.getHookStepId(), context.getHookStatus());
 		context.setHookStepId(null);
+		myLaunch.getStepReporter().finishPreviousStep();
 	}
 
 	@Override
