@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Fixed
+- A bug whe ambiguous item cases a Null Pointer Exception
 - Incorrect item type settings
 ### Added
 - Nested steps support

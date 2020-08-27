@@ -336,7 +336,7 @@ public class Utils {
 		rq.setParameters(Utils.getParameters(match));
 		String codeRef = Utils.getCodeRef(match);
 		rq.setCodeRef(codeRef);
-		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
+		rq.setTestCaseId(ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).orElse(null));
 		rq.setAttributes(Utils.getAttributes(match));
 		return rq;
 	}
