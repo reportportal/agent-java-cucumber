@@ -109,7 +109,7 @@ public class NestedStepsScenarioReporterTest {
 		IntStream.range(0, firstLevelRqs.size()).forEach(i -> {
 			StartTestItemRQ rq = firstLevelRqs.get(i);
 			assertThat(rq.isHasStats(), equalTo(Boolean.FALSE));
-			assertThat(rq.getName(), equalTo(FIRST_LEVEL_NAMES.get(i)));
+			assertThat(rq.getName(), in(FIRST_LEVEL_NAMES));
 		});
 
 		ArgumentCaptor<StartTestItemRQ> secondLevelCaptor1 = ArgumentCaptor.forClass(StartTestItemRQ.class);
