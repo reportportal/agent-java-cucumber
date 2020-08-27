@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -106,14 +107,18 @@ public class NestedStepsScenarioReporterTest {
 		verify(client, times(4)).startTestItem(same(stepId), firstLevelCaptor.capture());
 
 		List<StartTestItemRQ> firstLevelRqs = firstLevelCaptor.getAllValues();
-		IntStream.range(0, firstLevelRqs.size()).forEach(i -> {
-			StartTestItemRQ rq = firstLevelRqs.get(i);
+		firstLevelRqs.forEach(rq -> {
 			assertThat(rq.isHasStats(), equalTo(Boolean.FALSE));
 			assertThat(rq.getName(), in(FIRST_LEVEL_NAMES));
 		});
 
+		OptionalInt firstNestedStep = IntStream.range(0, firstLevelRqs.size())
+				.filter(i -> firstLevelRqs.get(i).getName().equals(FIRST_LEVEL_NAMES.get(1)))
+				.findAny();
+		assertThat(firstNestedStep.isPresent(), equalTo(Boolean.TRUE));
+
 		ArgumentCaptor<StartTestItemRQ> secondLevelCaptor1 = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(1)).startTestItem(same(nestedStepIds.get(1)), secondLevelCaptor1.capture());
+		verify(client, times(1)).startTestItem(same(nestedStepIds.get(firstNestedStep.getAsInt())), secondLevelCaptor1.capture());
 
 		StartTestItemRQ secondLevelRq1 = secondLevelCaptor1.getValue();
 		assertThat(secondLevelRq1.getName(), equalTo(SECOND_LEVEL_NAMES.get(0)));
