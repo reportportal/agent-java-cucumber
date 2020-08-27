@@ -24,6 +24,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 
 public class TestCaseIdTest {
@@ -112,7 +113,8 @@ public class TestCaseIdTest {
 		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(3)).startTestItem(same(testId), captor.capture());
 
-		StartTestItemRQ step = captor.getAllValues().get(1);
-		assertThat(step.getTestCaseId(), equalTo(TestCaseIdOnMethodSteps.TEST_CASE_ID));
+		List<StartTestItemRQ> steps = captor.getAllValues().stream().filter(s -> s.getType().equals("STEP")).collect(Collectors.toList());
+		assertThat(steps, hasSize(1));
+		assertThat(steps.get(0).getTestCaseId(), equalTo(TestCaseIdOnMethodSteps.TEST_CASE_ID));
 	}
 }
