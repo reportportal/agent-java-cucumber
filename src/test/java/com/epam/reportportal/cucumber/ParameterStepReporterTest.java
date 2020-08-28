@@ -94,9 +94,9 @@ public class ParameterStepReporterTest {
 		filteredItems.forEach(i -> assertThat(i.getParameters(), hasSize(1)));
 
 		List<String> itemNames = filteredItems.stream().map(StartTestItemRQ::getName).collect(Collectors.toList());
-		IntStream.range(0, itemNames.size()).filter(i -> i % 2 == 0).forEach(i ->
-				assertThat(itemNames.subList(i, i + 2), containsInAnyOrder(STEP_NAMES[i], STEP_NAMES[i + 1]))
-		);
+		IntStream.range(0, itemNames.size())
+				.filter(i -> i % 2 == 0)
+				.forEach(i -> assertThat(itemNames.subList(i, i + 2), containsInAnyOrder(STEP_NAMES[i], STEP_NAMES[i + 1])));
 
 		List<Pair<String, String>> params = filteredItems.stream()
 				.flatMap(i -> i.getParameters().stream())
