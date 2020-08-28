@@ -171,12 +171,11 @@ public class Utils {
 	 *
 	 * @param stmt   - Cucumber statement
 	 * @param prefix - substring to be prepended at the beginning (optional)
-	 * @param infix  - substring to be inserted between keyword and name
 	 * @param suffix - substring to be appended at the end (optional)
 	 * @return transformed string
 	 */
-	public static String buildStatementName(BasicStatement stmt, String prefix, String infix, String suffix) {
-		return (prefix == null ? "" : prefix) + stmt.getKeyword() + infix + stmt.getName() + (suffix == null ? "" : suffix);
+	public static String buildStatementName(BasicStatement stmt, String prefix, String suffix) {
+		return (prefix == null ? "" : prefix) + stmt.getKeyword() + stmt.getName() + (suffix == null ? "" : suffix);
 	}
 
 	/**
@@ -325,5 +324,20 @@ public class Utils {
 	@Nonnull
 	public static String getCodeRef(@Nonnull String uri, int line) {
 		return uri + ":" + line;
+	}
+
+	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match, boolean hasStats) {
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setName(Utils.buildStatementName(step, stepPrefix, null));
+		rq.setDescription(Utils.buildMultilineArgument(step));
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType("STEP");
+		rq.setHasStats(hasStats);
+		rq.setParameters(Utils.getParameters(match));
+		String codeRef = Utils.getCodeRef(match);
+		rq.setCodeRef(codeRef);
+		rq.setTestCaseId(ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).orElse(null));
+		rq.setAttributes(Utils.getAttributes(match));
+		return rq;
 	}
 }

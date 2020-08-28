@@ -48,12 +48,13 @@ publishing {
 }
 
 dependencies {
-    api 'com.epam.reportportal:client-java:5.0.6'
+    api 'com.epam.reportportal:client-java:5.0.7'
     api 'com.epam.reportportal:commons-model:5.0.0'
     api 'com.google.code.findbugs:jsr305:3.0.2'
 
     implementation 'info.cukes:gherkin:2.12.2'
 
+    testImplementation 'org.aspectj:aspectjweaver:1.9.2'
     testImplementation 'info.cukes:cucumber-java:1.2.6'
     testImplementation 'info.cukes:cucumber-testng:1.2.6'
     testImplementation 'org.hamcrest:hamcrest-core:2.2'
@@ -73,7 +74,17 @@ dependencies {
 }
 
 test {
+    outputs.upToDateWhen { return false }
     useJUnitPlatform()
+    maxParallelForks(5) // it's forks - separate JVMs, should not interfere each other
+    doFirst {
+        def weaver = configurations.testRuntimeClasspath.find { it.name.contains("aspectjweaver") }
+        jvmArgs += "-javaagent:$weaver"
+    }
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+    }
 }
 
 wrapper {

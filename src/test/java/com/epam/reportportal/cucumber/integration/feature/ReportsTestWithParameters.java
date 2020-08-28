@@ -20,6 +20,11 @@ public class ReportsTestWithParameters {
 		LOGGER.info("String parameter {}", str);
 	}
 
+	@When("I have a docstring parameter:")
+	public void iHaveParameterDocstring(String str) {
+		iHaveParameterStr(str);
+	}
+
 	@Then("I emit number (\\d+) on level info")
 	public void infoLevel(int parameters) {
 		LOGGER.info("Test with parameters: " + parameters);

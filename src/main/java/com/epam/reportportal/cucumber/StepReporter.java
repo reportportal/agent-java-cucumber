@@ -16,6 +16,7 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.ItemStatus;
+import com.epam.reportportal.service.Launch;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Result;
@@ -43,6 +44,8 @@ import java.util.Calendar;
  * @author Sergey_Gvozdyukevich
  */
 public class StepReporter extends AbstractReporter {
+	private static final String RP_STORY_TYPE = "STORY";
+	private static final String RP_TEST_TYPE = "SCENARIO";
 
 	public StepReporter() {
 		super();
@@ -55,24 +58,19 @@ public class StepReporter extends AbstractReporter {
 
 	@Override
 	protected void beforeStep(Step step, Match match) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(Utils.buildStatementName(step, stepPrefix, " ", null));
-		rq.setDescription(Utils.buildMultilineArgument(step));
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("STEP");
-		rq.setParameters(Utils.getParameters(match));
-		String codeRef = Utils.getCodeRef(match);
-		rq.setCodeRef(codeRef);
-		rq.setTestCaseId(Utils.getTestCaseId(match, codeRef).getId());
-		rq.setAttributes(Utils.getAttributes(match));
-		currentScenarioContext.get().setCurrentStepId(launch.get().startTestItem(currentScenarioContext.get().getId(), rq));
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		context.setCurrentStepId(launch.get()
+				.startTestItem(context.getId(), Utils.buildStartStepRequest(context.getStepPrefix(), step, match, true)));
 	}
 
 	@Override
 	protected void afterStep(Result result) {
 		reportResult(result, null);
-		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getCurrentStepId(), Utils.mapStatus(result.getStatus()));
-		currentScenarioContext.get().setCurrentStepId(null);
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		Launch myLaunch = launch.get();
+		Utils.finishTestItem(myLaunch, context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		context.setCurrentStepId(null);
+		myLaunch.getStepReporter().finishPreviousStep();
 	}
 
 	@Override
@@ -83,31 +81,35 @@ public class StepReporter extends AbstractReporter {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
 
-		currentScenarioContext.get().setHookStepId(launch.get().startTestItem(currentScenarioContext.get().getId(), rq));
-		currentScenarioContext.get().setHookStatus(ItemStatus.PASSED);
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		context.setHookStepId(launch.get().startTestItem(context.getId(), rq));
+		context.setHookStatus(ItemStatus.PASSED);
 	}
 
 	@Override
 	protected void afterHooks(Boolean isBefore) {
-		Utils.finishTestItem(launch.get(), currentScenarioContext.get().getHookStepId(), currentScenarioContext.get().getHookStatus());
-		currentScenarioContext.get().setHookStepId(null);
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		Launch myLaunch = launch.get();
+		Utils.finishTestItem(myLaunch, context.getHookStepId(), context.getHookStatus());
+		context.setHookStepId(null);
+		myLaunch.getStepReporter().finishPreviousStep();
 	}
 
 	@Override
 	protected void hookFinished(Match match, Result result, Boolean isBefore) {
 		reportResult(result, (isBefore ? "Before" : "After") + " hook: " + match.getLocation());
 		if (result.getStatus().equals("failed")) {
-			currentScenarioContext.get().setHookStatus(ItemStatus.FAILED);
+			getCurrentScenarioContext().setHookStatus(ItemStatus.FAILED);
 		}
 	}
 
 	@Override
 	protected String getFeatureTestItemType() {
-		return "SUITE";
+		return RP_STORY_TYPE;
 	}
 
 	@Override
 	protected String getScenarioTestItemType() {
-		return "SCENARIO";
+		return RP_TEST_TYPE;
 	}
 }

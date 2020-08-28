@@ -2,6 +2,7 @@ package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.cucumber.integration.TestScenarioReporter;
 import com.epam.reportportal.cucumber.integration.TestStepReporter;
+import com.epam.reportportal.cucumber.integration.feature.TestCaseIdOnMethodSteps;
 import com.epam.reportportal.cucumber.integration.util.TestUtils;
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.ReportPortal;
@@ -23,11 +24,9 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 
-/**
- * TODO: finish the test
- */
 public class TestCaseIdTest {
 
 	@CucumberOptions(features = "src/test/resources/features/belly.feature", glue = {
@@ -41,6 +40,13 @@ public class TestCaseIdTest {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class RunBellyTestStepReporter extends AbstractTestNGCucumberTests {
+
+	}
+
+	@CucumberOptions(features = "src/test/resources/features/TestCaseIdOnAMethod.feature", glue = {
+			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
+			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
+	public static class StepDefStepReporter extends AbstractTestNGCucumberTests {
 
 	}
 
@@ -90,12 +96,25 @@ public class TestCaseIdTest {
 
 		List<StartTestItemRQ> steps = captor.getAllValues().stream().skip(1).limit(3).collect(Collectors.toList());
 
-		assertThat(steps.get(0).getTestCaseId(),
+		assertThat(
+				steps.get(0).getTestCaseId(),
 				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_have_cukes_in_my_belly[42]")
 		);
 		assertThat(steps.get(1).getTestCaseId(), equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_wait[1]"));
-		assertThat(steps.get(2).getTestCaseId(),
+		assertThat(
+				steps.get(2).getTestCaseId(),
 				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.my_belly_should_growl[]")
 		);
+	}
+
+	@Test
+	public void verify_test_case_id_bypassed_through_annotation_on_a_stepdef() {
+		TestUtils.runTests(StepDefStepReporter.class);
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(3)).startTestItem(same(testId), captor.capture());
+
+		List<StartTestItemRQ> steps = captor.getAllValues().stream().filter(s -> s.getType().equals("STEP")).collect(Collectors.toList());
+		assertThat(steps, hasSize(1));
+		assertThat(steps.get(0).getTestCaseId(), equalTo(TestCaseIdOnMethodSteps.TEST_CASE_ID));
 	}
 }

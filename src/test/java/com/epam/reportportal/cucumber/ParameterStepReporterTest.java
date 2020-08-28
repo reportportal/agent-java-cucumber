@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 /**
  * @author <a href="mailto:ihar_kahadouski@epam.com">Ihar Kahadouski</a>
  */
-public class ParameterTest {
+public class ParameterStepReporterTest {
 
 	@CucumberOptions(features = "src/test/resources/features/BasicScenarioOutlineParameters.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
@@ -77,6 +77,15 @@ public class ParameterTest {
 			Pair.of("int", 12345678)
 	);
 
+	public static final List<String> STEP_NAMES = Arrays.asList(
+			String.format("When I have parameter %s", PARAMETERS.get(0).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(1).getValue().toString()),
+			String.format("When I have parameter %s", PARAMETERS.get(2).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(3).getValue().toString()),
+			String.format("When I have parameter %s", PARAMETERS.get(4).getValue()),
+			String.format("Then I emit number %s on level info", PARAMETERS.get(5).getValue().toString())
+	);
+
 	@Test
 	public void verify_agent_retrieves_parameters_from_request() {
 		TestUtils.runTests(RunOutlineParametersTestStepReporter.class);
@@ -93,7 +102,11 @@ public class ParameterTest {
 				.filter(i -> "STEP".equals(i.getType()) && !i.getName().startsWith("Given"))
 				.collect(Collectors.toList());
 		IntStream.range(1, filteredItems.size()).mapToObj(i -> Pair.of(i, filteredItems.get(i))).forEach(e -> {
-			assertThat(e.getValue().getParameters(), allOf(notNullValue(), hasSize(1)));
+			StartTestItemRQ step = e.getValue();
+			assertThat(step, notNullValue());
+			String expectedName = STEP_NAMES.get(e.getKey());
+			assertThat(step.getName(), equalTo(expectedName));
+			assertThat(step.getParameters(), allOf(notNullValue(), hasSize(1)));
 			ParameterResource param = e.getValue().getParameters().get(0);
 			Pair<String, Object> expectedParam = PARAMETERS.get(e.getKey());
 
