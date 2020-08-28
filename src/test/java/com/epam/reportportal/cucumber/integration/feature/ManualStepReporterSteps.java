@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 public class ManualStepReporterSteps {
-	private static final Logger LOGGER = LoggerFactory.getLogger(TestCaseIdOnMethodSteps.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ManualStepReporterSteps.class);
 	public static final String FIRST_NAME = "I am the first nested step";
 	public static final String SECOND_NAME = "I am the second nested step";
 	public static final String THIRD_NAME = "I am the third nested step";
