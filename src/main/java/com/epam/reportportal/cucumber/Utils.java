@@ -243,6 +243,11 @@ public class Utils {
 
 	}
 
+	@Nonnull
+	public static String getCodeRef(@Nonnull String uri, int line) {
+		return uri + ":" + line;
+	}
+
 	/**
 	 * Generate name representation
 	 *
@@ -319,11 +324,6 @@ public class Utils {
 	@Nonnull
 	public static String getDescription(@Nonnull String uri) {
 		return uri;
-	}
-
-	@Nonnull
-	public static String getCodeRef(@Nonnull String uri, int line) {
-		return uri + ":" + line;
 	}
 
 	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match, boolean hasStats) {
