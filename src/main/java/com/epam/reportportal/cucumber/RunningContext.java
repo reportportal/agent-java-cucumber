@@ -53,11 +53,6 @@ public class RunningContext {
 			status = ItemStatus.PASSED;
 		}
 
-		public ScenarioContext(Maybe<String> newId) {
-			this();
-			id = newId;
-		}
-
 		@Nonnull
 		public Queue<String> getOutlineIterations() {
 			return outlineIterations;
