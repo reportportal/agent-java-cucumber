@@ -158,6 +158,18 @@ public class ManualStepReporterTest {
 		assertThat(nestedStepFinishes.get(0).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(1).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(2).getStatus(), equalTo("FAILED"));
+
+		List<FinishTestItemRQ> stepFinishes = IntStream.range(0, finishIds.size())
+				.filter(i -> !stepNestedStepIds.contains(finishIds.get(i)))
+				.mapToObj(finishRqs::get)
+				.collect(Collectors.toList());
+
+		assertThat(stepFinishes.get(0).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(1).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(2).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(3).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(4).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(5).getStatus(), equalTo("FAILED"));
 	}
 
 	@Test
@@ -216,5 +228,18 @@ public class ManualStepReporterTest {
 		assertThat(nestedStepFinishes.get(0).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(1).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(2).getStatus(), equalTo("FAILED"));
+
+		List<FinishTestItemRQ> stepFinishes = IntStream.range(0, finishIds.size())
+				.filter(i -> !scenarioSecondNestedStepIds.contains(finishIds.get(i)))
+				.mapToObj(finishRqs::get)
+				.collect(Collectors.toList());
+
+		assertThat(stepFinishes.get(0).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(1).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(2).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(3).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(4).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(5).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(6).getStatus(), equalTo("FAILED"));
 	}
 }
