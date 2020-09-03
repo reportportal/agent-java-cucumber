@@ -5,6 +5,8 @@ import com.epam.reportportal.annotations.attribute.Attribute;
 import com.epam.reportportal.annotations.attribute.AttributeValue;
 import com.epam.reportportal.annotations.attribute.Attributes;
 import com.epam.reportportal.util.test.CommonUtils;
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.When;
 import org.slf4j.Logger;
@@ -16,6 +18,16 @@ public class NestedSteps {
 	public static final long PARAM1 = 7L;
 
 	public static final String PARAM2 = "second param";
+
+	@Before
+	public void beforePause() throws InterruptedException {
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
+	}
+
+	@After
+	public void afterPause() throws InterruptedException {
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
+	}
 
 	@Given("^I have a step$")
 	public void i_have_empty_step() throws InterruptedException {

@@ -4,6 +4,8 @@ import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.step.StepReporter;
 import com.epam.reportportal.util.test.CommonUtils;
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import org.slf4j.Logger;
@@ -20,6 +22,16 @@ public class ManualStepReporterSteps {
 	public static final String SECOND_NESTED_STEP_LOG = "Inside second nested step";
 	public static final String THIRD_NESTED_STEP_LOG = "Third error log of the second step";
 	public static final String DURING_SECOND_NESTED_STEP_LOG = "A log entry during the first nested step report";
+
+	@Before
+	public void beforePause() throws InterruptedException {
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
+	}
+
+	@After
+	public void afterPause() throws InterruptedException {
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
+	}
 
 	@Given("A step with a manual step")
 	public void i_have_a_step_with_a_manual_step() throws InterruptedException {

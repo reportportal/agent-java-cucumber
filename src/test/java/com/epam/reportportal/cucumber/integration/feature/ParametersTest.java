@@ -1,5 +1,8 @@
 package com.epam.reportportal.cucumber.integration.feature;
 
+import com.epam.reportportal.util.test.CommonUtils;
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -15,6 +18,16 @@ public class ParametersTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ParametersTest.class);
 	private int itemsCount;
+
+	@Before
+	public void beforePause() throws InterruptedException {
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
+	}
+
+	@After
+	public void afterPause() throws InterruptedException {
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
+	}
 
 	@Given("I have (\\d+) (\\w+) in my pocket")
 	public void iHaveNumberItemInMyPocket(int number, String item) {
