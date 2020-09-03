@@ -23,16 +23,6 @@ public class ManualStepReporterSteps {
 	public static final String THIRD_NESTED_STEP_LOG = "Third error log of the second step";
 	public static final String DURING_SECOND_NESTED_STEP_LOG = "A log entry during the first nested step report";
 
-	@Before
-	public void beforePause() throws InterruptedException {
-		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
-	}
-
-	@After
-	public void afterPause() throws InterruptedException {
-		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
-	}
-
 	@Given("A step with a manual step")
 	public void i_have_a_step_with_a_manual_step() throws InterruptedException {
 		StepReporter stepReporter = Launch.currentLaunch().getStepReporter();

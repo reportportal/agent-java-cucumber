@@ -19,16 +19,6 @@ public class NestedSteps {
 
 	public static final String PARAM2 = "second param";
 
-	@Before
-	public void beforePause() throws InterruptedException {
-		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
-	}
-
-	@After
-	public void afterPause() throws InterruptedException {
-		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
-	}
-
 	@Given("^I have a step$")
 	public void i_have_empty_step() throws InterruptedException {
 		LOGGER.info("Inside 'I have a step'");

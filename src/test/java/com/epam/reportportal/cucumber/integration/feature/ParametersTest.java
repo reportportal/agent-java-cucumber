@@ -19,16 +19,6 @@ public class ParametersTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ParametersTest.class);
 	private int itemsCount;
 
-	@Before
-	public void beforePause() throws InterruptedException {
-		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
-	}
-
-	@After
-	public void afterPause() throws InterruptedException {
-		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
-	}
-
 	@Given("I have (\\d+) (\\w+) in my pocket")
 	public void iHaveNumberItemInMyPocket(int number, String item) {
 		itemsCount = number;

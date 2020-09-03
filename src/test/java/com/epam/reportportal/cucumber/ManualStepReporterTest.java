@@ -111,13 +111,15 @@ public class ManualStepReporterTest {
 		ArgumentCaptor<StartTestItemRQ> firstStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(1)).startTestItem(same(stepIds.get(1)), firstStepCaptor.capture());
 		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(5)).log(logCaptor.capture());
+		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
 		List<SaveLogRQ> logs = logCaptor.getAllValues()
 				.stream()
+				.skip(1)
 				.flatMap(l -> l.getSerializedRQs().stream())
 				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
 				.collect(Collectors.toList());
+		logs = logs.subList(0, logs.size() - 1);
 		SaveLogRQ firstStepLog = logs.get(0);
 
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);
