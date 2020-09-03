@@ -6,6 +6,7 @@ import com.epam.reportportal.cucumber.integration.util.TestUtils;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
+import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import cucumber.api.CucumberOptions;
 import cucumber.api.testng.AbstractTestNGCucumberTests;
@@ -46,6 +47,13 @@ public class ParameterStepReporterTest {
 
 	}
 
+	@CucumberOptions(features = "src/test/resources/features/BasicInlineParameters.feature", glue = {
+			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
+			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
+	public static class InlineParametersTestStepReporter extends AbstractTestNGCucumberTests {
+
+	}
+
 	private final String launchId = CommonUtils.namedId("launch_");
 	private final String suiteId = CommonUtils.namedId("suite_");
 	private final List<String> testIds = Stream.generate(() -> CommonUtils.namedId("test_")).limit(3).collect(Collectors.toList());
@@ -65,8 +73,8 @@ public class ParameterStepReporterTest {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public static final Pair[] PARAMETERS = new Pair[] { Pair.of("String", "first"), Pair.of("int", String.valueOf(123)),
-			Pair.of("String", "second"), Pair.of("int", String.valueOf(12345)), Pair.of("String", "third"),
+	public static final Pair[] PARAMETERS = new Pair[] { Pair.of("java.lang.String", "first"), Pair.of("int", String.valueOf(123)),
+			Pair.of("java.lang.String", "second"), Pair.of("int", String.valueOf(12345)), Pair.of("java.lang.String", "third"),
 			Pair.of("int", String.valueOf(12345678)) };
 
 	public static final String[] STEP_NAMES = new String[] { String.format("When I have parameter %s", PARAMETERS[0].getValue()),
@@ -125,5 +133,29 @@ public class ParameterStepReporterTest {
 				.collect(Collectors.toList());
 		twoParameterItems.forEach(i -> assertThat(i.getParameters(), allOf(notNullValue(), hasSize(2))));
 		oneParameterItems.forEach(i -> assertThat(i.getParameters(), allOf(notNullValue(), hasSize(1))));
+	}
+
+	@Test
+	public void verify_inline_parameters() {
+		TestUtils.runTests(InlineParametersTestStepReporter.class);
+
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor.capture());
+
+		List<StartTestItemRQ> items = captor.getAllValues();
+		assertThat(items.get(1).getParameters(), allOf(notNullValue(), hasSize(1)));
+		ParameterResource param1 = items.get(1).getParameters().get(0);
+		assertThat(param1.getKey(), equalTo("int"));
+		assertThat(param1.getValue(), equalTo("42"));
+
+		assertThat(items.get(2).getParameters(), allOf(notNullValue(), hasSize(1)));
+		ParameterResource param2 = items.get(2).getParameters().get(0);
+		assertThat(param2.getKey(), equalTo("java.lang.String"));
+		assertThat(param2.getValue(), equalTo("string"));
+
+		assertThat(items.get(3).getParameters(), allOf(notNullValue(), hasSize(1)));
+		ParameterResource param3 = items.get(3).getParameters().get(0);
+		assertThat(param3.getKey(), equalTo("my name"));
+		assertThat(param3.getValue(), equalTo("string"));
 	}
 }

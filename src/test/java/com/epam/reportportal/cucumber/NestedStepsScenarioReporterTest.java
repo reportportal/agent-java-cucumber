@@ -47,7 +47,7 @@ public class NestedStepsScenarioReporterTest {
 	private final List<String> nestedStepIds = Stream.generate(() -> CommonUtils.namedId("nested_step_"))
 			.limit(4)
 			.collect(Collectors.toList());
-	private final List<String> nestedNestedStepIds = Stream.generate(() -> CommonUtils.namedId("double_nested_step_"))
+	private final List<String> secondNestedStepIds = Stream.generate(() -> CommonUtils.namedId("double_nested_step_"))
 			.limit(3)
 			.collect(Collectors.toList());
 	private final String nestedNestedNestedStepId = CommonUtils.namedId("triple_nested_step_");
@@ -56,9 +56,9 @@ public class NestedStepsScenarioReporterTest {
 			.collect(Collectors.toList());
 
 	private final List<Pair<String, String>> secondLevelNestedStepIds = Stream.concat(Stream.of(Pair.of(nestedStepIds.get(1),
-			nestedNestedStepIds.get(0)
+			secondNestedStepIds.get(0)
 			)),
-			nestedNestedStepIds.stream().skip(1).map(i -> Pair.of(nestedStepIds.get(2), i))
+			secondNestedStepIds.stream().skip(1).map(i -> Pair.of(nestedStepIds.get(2), i))
 	).collect(Collectors.toList());
 
 	private final ListenerParameters params = TestUtils.standardParameters();
@@ -71,7 +71,7 @@ public class NestedStepsScenarioReporterTest {
 		TestUtils.mockLaunch(client, launchId, suiteId, testId, stepId);
 		TestUtils.mockNestedSteps(client, firstLevelNestedStepIds);
 		TestUtils.mockNestedSteps(client, secondLevelNestedStepIds);
-		TestUtils.mockNestedSteps(client, Pair.of(nestedNestedStepIds.get(0), nestedNestedNestedStepId));
+		TestUtils.mockNestedSteps(client, Pair.of(secondNestedStepIds.get(0), nestedNestedNestedStepId));
 		TestScenarioReporter.RP.set(reportPortal);
 		TestStepReporter.RP.set(reportPortal);
 	}
@@ -149,7 +149,7 @@ public class NestedStepsScenarioReporterTest {
 		assertThat(tagList.get(0).getValue(), equalTo("tag"));
 
 		ArgumentCaptor<StartTestItemRQ> thirdLevelCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(1)).startTestItem(same(nestedNestedStepIds.get(0)), thirdLevelCaptor.capture());
+		verify(client, times(1)).startTestItem(same(secondNestedStepIds.get(0)), thirdLevelCaptor.capture());
 
 		StartTestItemRQ thirdLevelRq = thirdLevelCaptor.getValue();
 		assertThat(thirdLevelRq.getName(), equalTo("A step inside nested step"));

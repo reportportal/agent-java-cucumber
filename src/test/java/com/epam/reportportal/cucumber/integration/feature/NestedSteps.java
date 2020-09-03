@@ -17,7 +17,7 @@ public class NestedSteps {
 
 	public static final String PARAM2 = "second param";
 
-	@Given("I have a step")
+	@Given("^I have a step$")
 	public void i_have_empty_step() throws InterruptedException {
 		LOGGER.info("Inside 'I have a step'");
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);

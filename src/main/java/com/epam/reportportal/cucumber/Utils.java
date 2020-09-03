@@ -22,6 +22,7 @@ import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.utils.AttributeParser;
+import com.epam.reportportal.utils.ParameterUtils;
 import com.epam.reportportal.utils.TestCaseIdUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.ParameterResource;
@@ -33,11 +34,11 @@ import gherkin.formatter.Argument;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
 import io.reactivex.annotations.Nullable;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
-import rp.com.google.common.collect.Lists;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -45,8 +46,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -60,7 +59,6 @@ public class Utils {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String METHOD_FIELD_NAME = "method";
-	private static final String PARAMETER_TYPE_REGEX = "\\(.+\\)$";
 
 	//@formatter:off
 	private static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
@@ -266,26 +264,11 @@ public class Utils {
 		return (prefix == null ? "" : prefix) + infix + argument + (suffix == null ? "" : suffix);
 	}
 
-	static List<ParameterResource> getParameters(Match match) {
-		List<ParameterResource> parameters = Lists.newArrayList();
-
-		String text = match.getLocation();
-		Matcher matcher = Pattern.compile(PARAMETER_TYPE_REGEX).matcher(text);
-		if (matcher.find()) {
-			String methodParameters = text.substring(matcher.start() + 1, matcher.end() - 1);
-			String[] parameterTypes = methodParameters.split(",");
-			IntStream.range(0, parameterTypes.length).forEach(index -> {
-				String parameterType = parameterTypes[index];
-				if (index < match.getArguments().size()) {
-					String value = match.getArguments().get(index).getVal();
-					ParameterResource parameterResource = new ParameterResource();
-					parameterResource.setKey(parameterType);
-					parameterResource.setValue(value);
-					parameters.add(parameterResource);
-				}
-			});
-		}
-		return parameters;
+	static List<ParameterResource> getParameters(String codeRef, Match match) {
+		List<Pair<String, String>> params = ofNullable(match.getArguments()).map(a -> IntStream.range(0, a.size())
+				.mapToObj(i -> Pair.of("arg" + i, a.get(i).getVal()))
+				.collect(Collectors.toList())).orElse(null);
+		return ParameterUtils.getParameters(codeRef, params);
 	}
 
 	private static Method retrieveMethod(Match match) throws NoSuchFieldException, IllegalAccessException {
@@ -333,8 +316,8 @@ public class Utils {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
 		rq.setHasStats(hasStats);
-		rq.setParameters(Utils.getParameters(match));
 		String codeRef = Utils.getCodeRef(match);
+		rq.setParameters(Utils.getParameters(codeRef, match));
 		rq.setCodeRef(codeRef);
 		rq.setTestCaseId(ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).orElse(null));
 		rq.setAttributes(Utils.getAttributes(match));
