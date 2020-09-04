@@ -4,8 +4,6 @@ import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.step.StepReporter;
 import com.epam.reportportal.util.test.CommonUtils;
-import cucumber.api.java.After;
-import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import org.slf4j.Logger;
@@ -40,7 +38,7 @@ public class ManualStepReporterSteps {
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 		LOGGER.info(SECOND_NESTED_STEP_LOG);
 
-		stepReporter.sendStep(ItemStatus.FAILED, THIRD_NAME, new File("pug/unlucky.jpg"));
+		stepReporter.sendStep(ItemStatus.FAILED, THIRD_NAME, new File("files/unlucky.jpg"));
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 		LOGGER.error(THIRD_NESTED_STEP_LOG);
 	}

@@ -28,9 +28,17 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
+import org.apache.tika.Tika;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypeException;
+import org.apache.tika.mime.MimeTypes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
@@ -46,6 +54,8 @@ import static rp.com.google.common.base.Strings.isNullOrEmpty;
  * @author Andrei Varabyeu
  */
 public abstract class AbstractReporter implements Formatter, Reporter {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
 	protected static final String COLON_INFIX = ": ";
@@ -296,13 +306,51 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		beforeStep(getCurrentScenarioContext().getNextStep(), match);
 	}
 
+	private static final ThreadLocal<Tika> TIKA_THREAD_LOCAL = ThreadLocal.withInitial(Tika::new);
+
+	private volatile MimeTypes mimeTypes = null;
+
+	private MimeTypes getMimeTypes() {
+		if (mimeTypes == null) {
+			mimeTypes = MimeTypes.getDefaultMimeTypes();
+		}
+		return mimeTypes;
+	}
+
+	/**
+	 * Send a log with data attached.
+	 *
+	 * @param mimeType an attachment type
+	 * @param data data to attach
+	 */
 	@Override
 	public void embedding(String mimeType, byte[] data) {
 		File file = new File();
-		file.setName(UUID.randomUUID().toString());
+		String type = mimeType;
+		try {
+			type = TIKA_THREAD_LOCAL.get().detect(new ByteArrayInputStream(data));
+		} catch (IOException e) {
+			// nothing to do we will use bypassed mime type
+			LOGGER.warn("Mime-type not found", e);
+		}
+		String prefix = "";
+		String extension = "";
+		try {
+			MediaType mt = getMimeTypes().forName(type).getType();
+			prefix = mt.getType();
+			if (MediaType.TEXT_PLAIN.equals(mt)) {
+				extension = "txt";
+			} else {
+				extension = mt.getSubtype();
+			}
+		} catch (MimeTypeException e) {
+			LOGGER.warn("Mime-type not found", e);
+		}
+		String name = prefix + UUID.randomUUID().toString() + "." + extension;
+		file.setName(name);
 		file.setContent(data);
-		file.setContentType(mimeType);
-		Utils.sendLog("embedding", "UNKNOWN", file);
+		file.setContentType(type);
+		Utils.sendLog(prefix, "UNKNOWN", file);
 	}
 
 	@Override
