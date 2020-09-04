@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
@@ -128,11 +128,7 @@ public class EmbeddingTest {
 
 		assertThat(logs, hasSize(3));
 
-		logs.forEach(l -> {
-			SaveLogRQ.File file = l.getFile();
-			assertThat(file.getContentType(), equalTo("text/plain"));
-			assertThat(file.getName(), endsWith("txt"));
-		});
+		logs.forEach(l -> assertThat(l.getFile().getContentType(), equalTo("text/plain")));
 	}
 
 	@Test
