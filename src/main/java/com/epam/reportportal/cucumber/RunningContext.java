@@ -9,7 +9,17 @@ import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+/**
+ * Running context that contains mostly manipulations with Gherkin objects.
+ * Keeps necessary information regarding current Feature, Scenario and Step
+ *
+ * @author Vadzim Hushchanskou
+ */
 public class RunningContext {
+
+	private RunningContext() {
+		throw new AssertionError("No instances should exist for the class!");
+	}
 
 	public static class FeatureContext {
 		private Maybe<String> id;
