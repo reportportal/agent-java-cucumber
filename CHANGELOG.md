@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Callback reporting
 ### Changed
 - Test step parameters handling
 - Mime type processing for data embedding was improved
