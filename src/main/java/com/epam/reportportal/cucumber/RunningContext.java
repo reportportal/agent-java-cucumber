@@ -22,11 +22,12 @@ public class RunningContext {
 	}
 
 	public static class FeatureContext {
+		private final String uri;
 		private Maybe<String> id;
-		private final StartTestItemRQ itemRq;
+		private StartTestItemRQ itemRq;
 
-		public FeatureContext(StartTestItemRQ startRq) {
-			itemRq = startRq;
+		public FeatureContext(String featureUri) {
+			uri = featureUri;
 		}
 
 		public void setId(Maybe<String> newId) {
@@ -39,6 +40,14 @@ public class RunningContext {
 
 		public StartTestItemRQ getItemRq() {
 			return itemRq;
+		}
+
+		public void setItemRq(StartTestItemRQ startRq) {
+			itemRq = startRq;
+		}
+
+		public String getUri() {
+			return uri;
 		}
 	}
 
@@ -55,6 +64,9 @@ public class RunningContext {
 
 		private Maybe<String> id;
 		private ItemStatus status;
+		private Integer line;
+		private String currentText;
+		private String featureUri;
 
 		public ScenarioContext() {
 			stepPrefix = "";
@@ -138,6 +150,26 @@ public class RunningContext {
 
 		public ItemStatus getStatus() {
 			return status;
+		}
+
+		public Integer getLine() {
+			return line;
+		}
+
+		public void setLine(Integer scenarioLine) {
+			line = scenarioLine;
+		}
+
+		public void setCurrentText(String stepText) {
+			currentText = stepText;
+		}
+
+		public void setFeatureUri(String featureUri) {
+			this.featureUri = featureUri;
+		}
+
+		public String getFeatureUri() {
+			return featureUri;
 		}
 	}
 }

@@ -21,6 +21,7 @@ import com.epam.reportportal.message.ReportPortalMessage;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.item.TestCaseIdEntry;
+import com.epam.reportportal.service.tree.TestItemTree;
 import com.epam.reportportal.utils.properties.SystemAttributesExtractor;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
@@ -49,24 +50,31 @@ import java.util.stream.IntStream;
 
 import static com.epam.reportportal.cucumber.Utils.extractAttributes;
 import static com.epam.reportportal.cucumber.Utils.getCodeRef;
+import static com.epam.reportportal.cucumber.util.ItemTreeUtils.createKey;
+import static com.epam.reportportal.cucumber.util.ItemTreeUtils.retrieveLeaf;
 import static java.util.Optional.ofNullable;
 import static rp.com.google.common.base.Strings.isNullOrEmpty;
+import static rp.com.google.common.base.Throwables.getStackTraceAsString;
 
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
  *
  * @author Sergey Gvozdyukevich
  * @author Andrei Varabyeu
+ * @author Vadzim Hushchanskou
  */
 public abstract class AbstractReporter implements Formatter, Reporter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
-
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
-	protected static final String COLON_INFIX = ": ";
-	private static final String SKIPPED_ISSUE_KEY = "skippedIssue";
+	private static final int DEFAULT_CAPACITY = 16;
 
-	protected final ThreadLocal<String> currentFeatureUri = new ThreadLocal<>();
+	public static final TestItemTree ITEM_TREE = new TestItemTree();
+	private static volatile ReportPortal REPORT_PORTAL = ReportPortal.builder().build();
+
+	protected static final String COLON_INFIX = ": ";
+	protected static final String SKIPPED_ISSUE_KEY = "skippedIssue";
+
 	protected final ThreadLocal<RunningContext.FeatureContext> currentFeatureContext = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.ScenarioContext> currentScenarioContext = new ThreadLocal<>();
 
@@ -108,6 +116,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		}
 	});
 
+	public static ReportPortal getReportPortal() {
+		return REPORT_PORTAL;
+	}
+
+	protected static void setReportPortal(ReportPortal reportPortal) {
+		REPORT_PORTAL = reportPortal;
+	}
+
 	/**
 	 * Extension point to customize ReportPortal instance
 	 *
@@ -126,6 +142,73 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		launch.get().finish(finishLaunchRq);
 	}
 
+	private void addToTree(RunningContext.FeatureContext featureContext, RunningContext.ScenarioContext scenarioContext) {
+		retrieveLeaf(featureContext.getUri(), ITEM_TREE).ifPresent(suiteLeaf -> suiteLeaf.getChildItems()
+				.put(createKey(scenarioContext.getLine()), TestItemTree.createTestItemLeaf(scenarioContext.getId(), DEFAULT_CAPACITY)));
+	}
+
+	private void addToTree(RunningContext.FeatureContext context) {
+		ITEM_TREE.getTestItems()
+				.put(createKey(context.getUri()), TestItemTree.createTestItemLeaf(context.getId(), DEFAULT_CAPACITY));
+	}
+
+	/**
+	 * Start Cucumber Feature (if not started) and Scenario
+	 *
+	 * @param scenario         Scenario
+	 * @param outlineIteration - suffix to append to scenario name, can be null
+	 */
+	protected void beforeScenario(Scenario scenario, String outlineIteration) {
+		// start Feature here, because it should be started only if at least one Scenario is included.
+		// By this reason, it cannot be started in #beforeFeature method,
+		// because it will be executed even if all Scenarios in the Feature are excluded.
+		RunningContext.FeatureContext featureContext = currentFeatureContext.get();
+		if (null == featureContext.getId()) {
+			StartTestItemRQ startFeatureRq = featureContext.getItemRq();
+			Optional<Maybe<String>> root = getRootItemId();
+			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
+			Maybe<String> currentFeatureId = root.map(i -> launch.get().startTestItem(i, startFeatureRq))
+					.orElseGet(() -> launch.get().startTestItem(startFeatureRq));
+			featureContext.setId(currentFeatureId);
+			addToTree(featureContext);
+		}
+		String uri = featureContext.getUri();
+		String description = Utils.getDescription(uri);
+		String codeRef = Utils.getCodeRef(uri, scenario.getLine());
+		Launch myLaunch = launch.get();
+		Maybe<String> id = Utils.startNonLeafNode(
+				myLaunch,
+				featureContext.getId(),
+				Utils.buildStatementName(scenario, null, outlineIteration),
+				description,
+				codeRef,
+				scenario.getTags(),
+				getScenarioTestItemType()
+		);
+		RunningContext.ScenarioContext scenarioContext = getCurrentScenarioContext();
+		scenarioContext.setId(id);
+		scenarioContext.setLine(scenario.getLine());
+		scenarioContext.setFeatureUri(uri);
+		if (myLaunch.getParameters().isCallbackReportingEnabled()) {
+			addToTree(featureContext, scenarioContext);
+		}
+	}
+
+	private void removeFromTree(RunningContext.FeatureContext featureContext, RunningContext.ScenarioContext scenarioContext) {
+		retrieveLeaf(featureContext.getUri(), ITEM_TREE).ifPresent(suiteLeaf -> suiteLeaf.getChildItems()
+				.remove(createKey(scenarioContext.getLine())));
+	}
+
+	/**
+	 * Finish Cucumber scenario
+	 */
+	protected void afterScenario() {
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		Utils.finishTestItem(launch.get(), context.getId(), context.getStatus());
+		currentScenarioContext.set(null);
+		removeFromTree(currentFeatureContext.get(), context);
+	}
+
 	/**
 	 * Define Start Cucumber feature RQ
 	 *
@@ -133,16 +216,16 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void beforeFeature(Feature feature) {
 		//define start feature RQ in this method, because only here we can receive Feature details
-		String uri = currentFeatureUri.get();
+		RunningContext.FeatureContext featureContext = currentFeatureContext.get();
 		String featureKeyword = feature.getKeyword();
 		String featureName = feature.getName();
 		StartTestItemRQ startFeatureRq = new StartTestItemRQ();
-		startFeatureRq.setDescription(Utils.getDescription(uri));
-		startFeatureRq.setCodeRef(getCodeRef(uri, 0));
+		startFeatureRq.setDescription(Utils.getDescription(featureContext.getUri()));
+		startFeatureRq.setCodeRef(getCodeRef(featureContext.getUri(), 0));
 		startFeatureRq.setName(Utils.buildNodeName(featureKeyword, AbstractReporter.COLON_INFIX, featureName, null));
 		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
 		startFeatureRq.setType(getFeatureTestItemType());
-		currentFeatureContext.set(new RunningContext.FeatureContext(startFeatureRq));
+		featureContext.setItemRq(startFeatureRq);
 	}
 
 	/**
@@ -163,48 +246,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			currentScenarioContext.set(context);
 		}
 		return context;
-	}
-
-	/**
-	 * Start Cucumber Feature (if not started) and Scenario
-	 *
-	 * @param scenario         Scenario
-	 * @param outlineIteration - suffix to append to scenario name, can be null
-	 */
-	protected void beforeScenario(Scenario scenario, String outlineIteration) {
-		// start Feature here, because it should be started only if at least one Scenario is included.
-		// By this reason, it cannot be started in #beforeFeature method,
-		// because it will be executed even if all Scenarios in the Feature are excluded.
-		RunningContext.FeatureContext currentFeature = currentFeatureContext.get();
-		if (null == currentFeature.getId()) {
-			StartTestItemRQ startFeatureRq = currentFeature.getItemRq();
-			Optional<Maybe<String>> root = getRootItemId();
-			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
-			Maybe<String> currentFeatureId = root.map(i -> launch.get().startTestItem(i, startFeatureRq))
-					.orElseGet(() -> launch.get().startTestItem(startFeatureRq));
-			currentFeature.setId(currentFeatureId);
-		}
-		String codeRef = currentFeatureUri.get() + ":" + scenario.getLine();
-		Maybe<String> id = Utils.startNonLeafNode(
-				launch.get(),
-				currentFeature.getId(),
-				Utils.buildStatementName(scenario, null, outlineIteration),
-				currentFeatureUri.get(),
-				codeRef,
-				scenario.getTags(),
-				getScenarioTestItemType()
-		);
-		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		context.setId(id);
-	}
-
-	/**
-	 * Finish Cucumber scenario
-	 */
-	protected void afterScenario() {
-		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		Utils.finishTestItem(launch.get(), context.getId(), context.getStatus());
-		currentScenarioContext.set(null);
 	}
 
 	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
@@ -229,7 +270,16 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void beforeStep(Step step, Match match) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		context.setCurrentStepId(launch.get().startTestItem(context.getId(), buildStartStepRequest(step, context.getStepPrefix(), match)));
+		StartTestItemRQ rq = buildStartStepRequest(step, context.getStepPrefix(), match);
+		Launch myLaunch = launch.get();
+		Maybe<String> stepId = myLaunch.startTestItem(context.getId(), rq);
+		context.setCurrentStepId(stepId);
+		String stepText = step.getName();
+		context.setCurrentText(stepText);
+
+		if (myLaunch.getParameters().isCallbackReportingEnabled()) {
+			addToTree(context, stepText, stepId);
+		}
 	}
 
 	/**
@@ -244,6 +294,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		myLaunch.getStepReporter().finishPreviousStep();
 		Utils.finishTestItem(myLaunch, context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
 		context.setCurrentStepId(null);
+		context.setCurrentText(null);
 	}
 
 	/**
@@ -307,13 +358,15 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void reportResult(Result result, String message) {
 		String cukesStatus = result.getStatus();
 		String level = Utils.mapLevel(cukesStatus);
+		if (message != null) {
+			Utils.sendLog(message, level);
+		}
 		String errorMessage = result.getErrorMessage();
 		if (errorMessage != null) {
 			Utils.sendLog(errorMessage, level);
 		}
-
-		if (message != null) {
-			Utils.sendLog(message, level);
+		if (result.getError() != null) {
+			Utils.sendLog(getStackTraceAsString(result.getError()), level);
 		}
 		RunningContext.ScenarioContext currentScenario = getCurrentScenarioContext();
 		currentScenario.updateStatus(Utils.mapStatus(result.getStatus()));
@@ -390,7 +443,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		}
 		String prefix = "";
 		try {
-
 			MediaType mt = getMimeTypes().forName(type).getType();
 			prefix = mt.getType();
 		} catch (MimeTypeException e) {
@@ -411,8 +463,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	@Override
 	public void uri(String uri) {
-		currentFeatureUri.set(uri);
-		launch.get().start();
+		currentFeatureContext.set(new RunningContext.FeatureContext(uri));
+		Maybe<String> launchId = launch.get().start();
+		ITEM_TREE.setLaunchId(launchId);
 	}
 
 	@Override
@@ -495,4 +548,19 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	protected abstract Optional<Maybe<String>> getRootItemId();
 
+	protected void addToTree(RunningContext.ScenarioContext scenarioContext, String text, Maybe<String> stepId) {
+		retrieveLeaf(
+				scenarioContext.getFeatureUri(),
+				scenarioContext.getLine(),
+				ITEM_TREE
+		).ifPresent(scenarioLeaf -> scenarioLeaf.getChildItems().put(createKey(text), TestItemTree.createTestItemLeaf(stepId, 0)));
+	}
+
+	protected void removeFromTree(RunningContext.ScenarioContext scenarioContext, String text) {
+		retrieveLeaf(
+				scenarioContext.getFeatureUri(),
+				scenarioContext.getLine(),
+				ITEM_TREE
+		).ifPresent(scenarioLeaf -> scenarioLeaf.getChildItems().remove(createKey(text)));
+	}
 }
