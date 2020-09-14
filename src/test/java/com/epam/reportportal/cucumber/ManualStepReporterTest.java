@@ -183,7 +183,7 @@ public class ManualStepReporterTest {
 		ArgumentCaptor<StartTestItemRQ> firstStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(1)).startTestItem(same(scenarioNestedStepIds.get(1)), firstStepCaptor.capture());
 		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(5)).log(logCaptor.capture());
+		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
 		List<SaveLogRQ> logs = logCaptor.getAllValues()
 				.stream()
@@ -191,14 +191,14 @@ public class ManualStepReporterTest {
 				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
 				.collect(Collectors.toList());
 
-		SaveLogRQ firstStepLog = logs.get(0);
+		SaveLogRQ firstStepLog = logs.get(1);
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);
 		verifyLogEntry(firstStepLog, scenarioSecondNestedStepIds.get(0), ManualStepReporterSteps.FIRST_NESTED_STEP_LOG);
 
 		ArgumentCaptor<StartTestItemRQ> secondStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(2)).startTestItem(same(scenarioNestedStepIds.get(2)), secondStepCaptor.capture());
 		List<StartTestItemRQ> secondSteps = secondStepCaptor.getAllValues();
-		List<SaveLogRQ> secondStepLogs = logs.subList(1, logs.size());
+		List<SaveLogRQ> secondStepLogs = logs.subList(2, logs.size() - 1);
 
 		StartTestItemRQ secondStep = secondSteps.get(0);
 		verifyStepStart(secondStep, ManualStepReporterSteps.SECOND_NAME);
@@ -217,7 +217,7 @@ public class ManualStepReporterTest {
 
 		ArgumentCaptor<String> finishIdCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<FinishTestItemRQ> finishRqCaptor = ArgumentCaptor.forClass(FinishTestItemRQ.class);
-		verify(client, times(10)).finishTestItem(finishIdCaptor.capture(), finishRqCaptor.capture());
+		verify(client, times(9)).finishTestItem(finishIdCaptor.capture(), finishRqCaptor.capture());
 		List<String> finishIds = finishIdCaptor.getAllValues();
 		List<FinishTestItemRQ> finishRqs = finishRqCaptor.getAllValues();
 		List<FinishTestItemRQ> nestedStepFinishes = IntStream.range(0, finishIds.size())
@@ -240,6 +240,5 @@ public class ManualStepReporterTest {
 		assertThat(stepFinishes.get(3).getStatus(), equalTo("PASSED"));
 		assertThat(stepFinishes.get(4).getStatus(), equalTo("FAILED"));
 		assertThat(stepFinishes.get(5).getStatus(), equalTo("FAILED"));
-		assertThat(stepFinishes.get(6).getStatus(), equalTo("FAILED"));
 	}
 }

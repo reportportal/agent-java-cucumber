@@ -19,7 +19,7 @@ public class ManualStepReporterSteps {
 	public static final String FIRST_NESTED_STEP_LOG = "Inside first nested step";
 	public static final String SECOND_NESTED_STEP_LOG = "Inside second nested step";
 	public static final String THIRD_NESTED_STEP_LOG = "Third error log of the second step";
-	public static final String DURING_SECOND_NESTED_STEP_LOG = "A log entry during the first nested step report";
+	public static final String DURING_SECOND_NESTED_STEP_LOG = "A log entry during the second nested step report";
 
 	@Given("A step with a manual step")
 	public void i_have_a_step_with_a_manual_step() throws InterruptedException {
