@@ -233,7 +233,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void afterFeature() {
 		RunningContext.FeatureContext currentFeature = currentFeatureContext.get();
-		currentFeatureContext.remove();
 		if (null != currentFeature && null != currentFeature.getId()) {
 			Utils.finishTestItem(launch.get(), currentFeature.getId());
 		}

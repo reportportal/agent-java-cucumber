@@ -217,7 +217,7 @@ public class ManualStepReporterTest {
 
 		ArgumentCaptor<String> finishIdCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<FinishTestItemRQ> finishRqCaptor = ArgumentCaptor.forClass(FinishTestItemRQ.class);
-		verify(client, times(9)).finishTestItem(finishIdCaptor.capture(), finishRqCaptor.capture());
+		verify(client, times(10)).finishTestItem(finishIdCaptor.capture(), finishRqCaptor.capture());
 		List<String> finishIds = finishIdCaptor.getAllValues();
 		List<FinishTestItemRQ> finishRqs = finishRqCaptor.getAllValues();
 		List<FinishTestItemRQ> nestedStepFinishes = IntStream.range(0, finishIds.size())
@@ -240,5 +240,6 @@ public class ManualStepReporterTest {
 		assertThat(stepFinishes.get(3).getStatus(), equalTo("PASSED"));
 		assertThat(stepFinishes.get(4).getStatus(), equalTo("FAILED"));
 		assertThat(stepFinishes.get(5).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(6).getStatus(), equalTo("FAILED"));
 	}
 }

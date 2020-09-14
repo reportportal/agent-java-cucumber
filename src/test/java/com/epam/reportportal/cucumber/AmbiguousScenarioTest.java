@@ -118,7 +118,7 @@ public class AmbiguousScenarioTest {
 
 		ArgumentCaptor<String> finishIdCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<FinishTestItemRQ> finishRqCaptor = ArgumentCaptor.forClass(FinishTestItemRQ.class);
-		verify(client, times(5)).finishTestItem(finishIdCaptor.capture(), finishRqCaptor.capture());
+		verify(client, times(6)).finishTestItem(finishIdCaptor.capture(), finishRqCaptor.capture());
 
 		List<String> finishIds = finishIdCaptor.getAllValues();
 		List<Integer> finishIdxs = IntStream.range(0, finishIds.size())
