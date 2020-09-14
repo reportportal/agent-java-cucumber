@@ -144,6 +144,7 @@ public class Utils {
 	 * @param cukesStatus - Cucumber status
 	 * @return regular status
 	 */
+	@Nonnull
 	public static ItemStatus mapStatus(String cukesStatus) {
 		if (Strings.isNullOrEmpty(cukesStatus)) {
 			return ItemStatus.FAILED;
@@ -295,20 +296,5 @@ public class Utils {
 	@Nonnull
 	public static String getDescription(@Nonnull String uri) {
 		return uri;
-	}
-
-	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match, boolean hasStats) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(Utils.buildStatementName(step, stepPrefix, null));
-		rq.setDescription(Utils.buildMultilineArgument(step));
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("STEP");
-		rq.setHasStats(hasStats);
-		String codeRef = Utils.getCodeRef(match);
-		rq.setParameters(Utils.getParameters(codeRef, match));
-		rq.setCodeRef(codeRef);
-		rq.setTestCaseId(ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).orElse(null));
-		rq.setAttributes(Utils.getAttributes(match));
-		return rq;
 	}
 }

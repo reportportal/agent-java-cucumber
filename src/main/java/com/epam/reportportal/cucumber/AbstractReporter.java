@@ -15,16 +15,17 @@
  */
 package com.epam.reportportal.cucumber;
 
+import com.epam.reportportal.listeners.ItemStatus;
 import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.message.ReportPortalMessage;
 import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
+import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.utils.properties.SystemAttributesExtractor;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
-import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
@@ -39,6 +40,7 @@ import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
 import rp.com.google.common.io.ByteSource;
 
+import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
@@ -47,6 +49,7 @@ import java.util.stream.IntStream;
 
 import static com.epam.reportportal.cucumber.Utils.extractAttributes;
 import static com.epam.reportportal.cucumber.Utils.getCodeRef;
+import static java.util.Optional.ofNullable;
 import static rp.com.google.common.base.Strings.isNullOrEmpty;
 
 /**
@@ -175,14 +178,10 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		RunningContext.FeatureContext currentFeature = currentFeatureContext.get();
 		if (null == currentFeature.getId()) {
 			StartTestItemRQ startFeatureRq = currentFeature.getItemRq();
-			Maybe<String> root = getRootItemId();
+			Optional<Maybe<String>> root = getRootItemId();
 			startFeatureRq.setStartTime(Calendar.getInstance().getTime());
-			Maybe<String> currentFeatureId;
-			if (null == root) {
-				currentFeatureId = launch.get().startTestItem(startFeatureRq);
-			} else {
-				currentFeatureId = launch.get().startTestItem(root, startFeatureRq);
-			}
+			Maybe<String> currentFeatureId = root.map(i -> launch.get().startTestItem(i, startFeatureRq))
+					.orElseGet(() -> launch.get().startTestItem(startFeatureRq));
 			currentFeature.setId(currentFeatureId);
 		}
 		String codeRef = currentFeatureUri.get() + ":" + scenario.getLine();
@@ -208,34 +207,84 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		currentScenarioContext.set(null);
 	}
 
+	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setName(Utils.buildStatementName(step, stepPrefix, null));
+		rq.setDescription(Utils.buildMultilineArgument(step));
+		rq.setStartTime(Calendar.getInstance().getTime());
+		rq.setType("STEP");
+		String codeRef = Utils.getCodeRef(match);
+		rq.setParameters(Utils.getParameters(codeRef, match));
+		rq.setCodeRef(codeRef);
+		rq.setTestCaseId(ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).orElse(null));
+		rq.setAttributes(Utils.getAttributes(match));
+		return rq;
+	}
+
 	/**
 	 * Start Cucumber step
 	 *
 	 * @param step  Step object
 	 * @param match Match object
 	 */
-	protected abstract void beforeStep(Step step, Match match);
+	protected void beforeStep(Step step, Match match) {
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		context.setCurrentStepId(launch.get().startTestItem(context.getId(), buildStartStepRequest(step, context.getStepPrefix(), match)));
+	}
 
 	/**
 	 * Finish Cucumber step
 	 *
 	 * @param result Step result
 	 */
-	protected abstract void afterStep(Result result);
+	protected void afterStep(Result result) {
+		reportResult(result, null);
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		Launch myLaunch = launch.get();
+		myLaunch.getStepReporter().finishPreviousStep();
+		Utils.finishTestItem(myLaunch, context.getCurrentStepId(), Utils.mapStatus(result.getStatus()));
+		context.setCurrentStepId(null);
+	}
+
+	/**
+	 * Extension point to customize test creation event/request
+	 *
+	 * @param isBefore a cucumber hook type object
+	 * @return Request to ReportPortal
+	 */
+	protected StartTestItemRQ buildStartHookRequest(boolean isBefore) {
+		StartTestItemRQ rq = new StartTestItemRQ();
+		rq.setType(isBefore ? "BEFORE_TEST" : "AFTER_TEST");
+		rq.setName(isBefore ? "Before hooks" : "After hooks");
+		rq.setStartTime(Calendar.getInstance().getTime());
+		return rq;
+	}
 
 	/**
 	 * Called when before/after-hooks are started
 	 *
-	 * @param isBefore - if true, before-hook is started, if false - after-hook
+	 * @param isBefore - if true, before-hook is finished, if false - after-hook
 	 */
-	protected abstract void beforeHooks(Boolean isBefore);
+	protected void beforeHooks(boolean isBefore) {
+		StartTestItemRQ rq = buildStartHookRequest(isBefore);
+
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		context.setHookStepId(launch.get().startTestItem(context.getId(), rq));
+		context.setHookStatus(ItemStatus.PASSED);
+	}
 
 	/**
 	 * Called when before/after-hooks are finished
 	 *
 	 * @param isBefore - if true, before-hook is finished, if false - after-hook
 	 */
-	protected abstract void afterHooks(Boolean isBefore);
+	protected void afterHooks(Boolean isBefore) {
+		RunningContext.ScenarioContext context = getCurrentScenarioContext();
+		Launch myLaunch = launch.get();
+		myLaunch.getStepReporter().finishPreviousStep();
+		Utils.finishTestItem(myLaunch, context.getHookStepId(), context.getHookStatus());
+		context.setHookStepId(null);
+	}
 
 	/**
 	 * Called when a specific before/after-hook is finished
@@ -244,7 +293,10 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param result   Hook result
 	 * @param isBefore - if true, before-hook, if false - after-hook
 	 */
-	protected abstract void hookFinished(Match match, Result result, Boolean isBefore);
+	protected void hookFinished(Match match, Result result, Boolean isBefore) {
+		reportResult(result, (isBefore ? "Before" : "After") + " hook: " + match.getLocation());
+		getCurrentScenarioContext().setHookStatus(Utils.mapStatus(result.getStatus()));
+	}
 
 	/**
 	 * Report test item result and error (if present)
@@ -272,6 +324,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 *
 	 * @return test item name
 	 */
+	@Nonnull
 	protected abstract String getFeatureTestItemType();
 
 	/**
@@ -279,6 +332,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 *
 	 * @return test item name
 	 */
+	@Nonnull
 	protected abstract String getScenarioTestItemType();
 
 	/********************************
@@ -439,6 +493,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		afterFeature();
 	}
 
-	protected abstract Maybe<String> getRootItemId();
+	protected abstract Optional<Maybe<String>> getRootItemId();
 
 }

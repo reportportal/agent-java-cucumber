@@ -48,7 +48,8 @@ public class ItemTreeUtils {
 		return suiteLeaf.map(leaf -> leaf.getChildItems().get(createKey(lineNumber)));
 	}
 
-	public static Optional<TestItemTree.TestItemLeaf> retrieveLeaf(String featureUri, int lineNumber, String text, TestItemTree testItemTree) {
+	public static Optional<TestItemTree.TestItemLeaf> retrieveLeaf(String featureUri, int lineNumber, String text,
+			TestItemTree testItemTree) {
 		Optional<TestItemTree.TestItemLeaf> testClassLeaf = retrieveLeaf(featureUri, lineNumber, testItemTree);
 		return testClassLeaf.map(leaf -> leaf.getChildItems().get(createKey(text)));
 	}
