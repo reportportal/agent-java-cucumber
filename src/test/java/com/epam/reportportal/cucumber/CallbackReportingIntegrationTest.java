@@ -109,7 +109,7 @@ public class CallbackReportingIntegrationTest {
 
 		ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass(String.class);
 		ArgumentCaptor<FinishTestItemRQ> rqCaptor = ArgumentCaptor.forClass(FinishTestItemRQ.class);
-		verify(client, times(11)).finishTestItem(idCaptor.capture(), rqCaptor.capture()); // Start test class and test method
+		verify(client, times(12)).finishTestItem(idCaptor.capture(), rqCaptor.capture()); // Start test class and test method
 
 		ArgumentCaptor<SaveLogRQ> saveLogRQArgumentCaptor = ArgumentCaptor.forClass(SaveLogRQ.class);
 		verify(client, times(1)).log(saveLogRQArgumentCaptor.capture());
