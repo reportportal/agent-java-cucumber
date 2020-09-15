@@ -248,7 +248,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
 		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(Utils.buildName(stepPrefix, COLON_INFIX, step.getName()));
+		rq.setName(stepPrefix == null ? "" : stepPrefix + Utils.buildName(step.getKeyword(), "", step.getName()));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
