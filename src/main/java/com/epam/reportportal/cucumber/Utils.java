@@ -154,18 +154,6 @@ public class Utils {
 	}
 
 	/**
-	 * Generate statement representation
-	 *
-	 * @param stmt   - Cucumber statement
-	 * @param prefix - substring to be prepended at the beginning (optional)
-	 * @param suffix - substring to be appended at the end (optional)
-	 * @return transformed string
-	 */
-	public static String buildStatementName(BasicStatement stmt, String prefix, String suffix) {
-		return (prefix == null ? "" : prefix) + stmt.getKeyword() + stmt.getName() + (suffix == null ? "" : suffix);
-	}
-
-	/**
 	 * Generate multiline argument (DataTable or DocString) representation
 	 *
 	 * @param step - Cucumber step object
@@ -241,16 +229,10 @@ public class Utils {
 	 * @param prefix   - substring to be prepended at the beginning (optional)
 	 * @param infix    - substring to be inserted between keyword and name
 	 * @param argument - main text to process
-	 * @param suffix   - substring to be appended at the end (optional)
 	 * @return transformed string
 	 */
-	//TODO: pass Node as argument, not test event
-	public static String buildNodeName(String prefix, String infix, String argument, String suffix) {
-		return buildName(prefix, infix, argument, suffix);
-	}
-
-	private static String buildName(String prefix, String infix, String argument, String suffix) {
-		return (prefix == null ? "" : prefix) + infix + argument + (suffix == null ? "" : suffix);
+	public static String buildName(String prefix, String infix, String argument) {
+		return (prefix == null ? "" : prefix) + infix + argument;
 	}
 
 	static List<ParameterResource> getParameters(String codeRef, Match match) {

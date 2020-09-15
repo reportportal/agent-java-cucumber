@@ -148,8 +148,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	private void addToTree(RunningContext.FeatureContext context) {
-		ITEM_TREE.getTestItems()
-				.put(createKey(context.getUri()), TestItemTree.createTestItemLeaf(context.getId(), DEFAULT_CAPACITY));
+		ITEM_TREE.getTestItems().put(createKey(context.getUri()), TestItemTree.createTestItemLeaf(context.getId(), DEFAULT_CAPACITY));
 	}
 
 	/**
@@ -179,7 +178,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		Maybe<String> id = Utils.startNonLeafNode(
 				myLaunch,
 				featureContext.getId(),
-				Utils.buildStatementName(scenario, null, outlineIteration),
+				Utils.buildName(scenario.getKeyword(), COLON_INFIX, scenario.getName()),
 				description,
 				codeRef,
 				scenario.getTags(),
@@ -222,7 +221,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		StartTestItemRQ startFeatureRq = new StartTestItemRQ();
 		startFeatureRq.setDescription(Utils.getDescription(featureContext.getUri()));
 		startFeatureRq.setCodeRef(getCodeRef(featureContext.getUri(), 0));
-		startFeatureRq.setName(Utils.buildNodeName(featureKeyword, AbstractReporter.COLON_INFIX, featureName, null));
+		startFeatureRq.setName(Utils.buildName(featureKeyword, AbstractReporter.COLON_INFIX, featureName));
 		startFeatureRq.setAttributes(extractAttributes(feature.getTags()));
 		startFeatureRq.setType(getFeatureTestItemType());
 		featureContext.setItemRq(startFeatureRq);
@@ -249,7 +248,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
 		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(Utils.buildStatementName(step, stepPrefix, null));
+		rq.setName(Utils.buildName(stepPrefix, COLON_INFIX, step.getName()));
 		rq.setDescription(Utils.buildMultilineArgument(step));
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType("STEP");
