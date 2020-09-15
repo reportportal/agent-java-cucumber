@@ -111,13 +111,15 @@ public class ManualStepReporterTest {
 		ArgumentCaptor<StartTestItemRQ> firstStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(1)).startTestItem(same(stepIds.get(1)), firstStepCaptor.capture());
 		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(5)).log(logCaptor.capture());
+		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
 		List<SaveLogRQ> logs = logCaptor.getAllValues()
 				.stream()
+				.skip(1)
 				.flatMap(l -> l.getSerializedRQs().stream())
 				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
 				.collect(Collectors.toList());
+		logs = logs.subList(0, logs.size() - 1);
 		SaveLogRQ firstStepLog = logs.get(0);
 
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);
@@ -156,6 +158,18 @@ public class ManualStepReporterTest {
 		assertThat(nestedStepFinishes.get(0).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(1).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(2).getStatus(), equalTo("FAILED"));
+
+		List<FinishTestItemRQ> stepFinishes = IntStream.range(0, finishIds.size())
+				.filter(i -> !stepNestedStepIds.contains(finishIds.get(i)))
+				.mapToObj(finishRqs::get)
+				.collect(Collectors.toList());
+
+		assertThat(stepFinishes.get(0).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(1).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(2).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(3).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(4).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(5).getStatus(), equalTo("FAILED"));
 	}
 
 	@Test
@@ -169,7 +183,7 @@ public class ManualStepReporterTest {
 		ArgumentCaptor<StartTestItemRQ> firstStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(1)).startTestItem(same(scenarioNestedStepIds.get(1)), firstStepCaptor.capture());
 		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(5)).log(logCaptor.capture());
+		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
 		List<SaveLogRQ> logs = logCaptor.getAllValues()
 				.stream()
@@ -177,14 +191,14 @@ public class ManualStepReporterTest {
 				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
 				.collect(Collectors.toList());
 
-		SaveLogRQ firstStepLog = logs.get(0);
+		SaveLogRQ firstStepLog = logs.get(1);
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);
 		verifyLogEntry(firstStepLog, scenarioSecondNestedStepIds.get(0), ManualStepReporterSteps.FIRST_NESTED_STEP_LOG);
 
 		ArgumentCaptor<StartTestItemRQ> secondStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(2)).startTestItem(same(scenarioNestedStepIds.get(2)), secondStepCaptor.capture());
 		List<StartTestItemRQ> secondSteps = secondStepCaptor.getAllValues();
-		List<SaveLogRQ> secondStepLogs = logs.subList(1, logs.size());
+		List<SaveLogRQ> secondStepLogs = logs.subList(2, logs.size() - 1);
 
 		StartTestItemRQ secondStep = secondSteps.get(0);
 		verifyStepStart(secondStep, ManualStepReporterSteps.SECOND_NAME);
@@ -214,5 +228,18 @@ public class ManualStepReporterTest {
 		assertThat(nestedStepFinishes.get(0).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(1).getStatus(), equalTo("PASSED"));
 		assertThat(nestedStepFinishes.get(2).getStatus(), equalTo("FAILED"));
+
+		List<FinishTestItemRQ> stepFinishes = IntStream.range(0, finishIds.size())
+				.filter(i -> !scenarioSecondNestedStepIds.contains(finishIds.get(i)))
+				.mapToObj(finishRqs::get)
+				.collect(Collectors.toList());
+
+		assertThat(stepFinishes.get(0).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(1).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(2).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(3).getStatus(), equalTo("PASSED"));
+		assertThat(stepFinishes.get(4).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(5).getStatus(), equalTo("FAILED"));
+		assertThat(stepFinishes.get(6).getStatus(), equalTo("FAILED"));
 	}
 }

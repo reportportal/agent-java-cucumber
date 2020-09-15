@@ -22,22 +22,21 @@ import com.epam.reportportal.service.Launch;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.utils.AttributeParser;
+import com.epam.reportportal.utils.ParameterUtils;
 import com.epam.reportportal.utils.TestCaseIdUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
-import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
-import com.epam.ta.reportportal.ws.model.log.SaveLogRQ.File;
 import gherkin.formatter.Argument;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
 import io.reactivex.annotations.Nullable;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.collect.ImmutableMap;
-import rp.com.google.common.collect.Lists;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
@@ -45,8 +44,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -60,7 +57,6 @@ public class Utils {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String METHOD_FIELD_NAME = "method";
-	private static final String PARAMETER_TYPE_REGEX = "\\(.+\\)$";
 
 	//@formatter:off
 	private static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
@@ -102,24 +98,14 @@ public class Utils {
 		rq.setStartTime(Calendar.getInstance().getTime());
 		rq.setType(type);
 		if ("STEP".equals(type)) {
-			rq.setTestCaseId(TestCaseIdUtils.getTestCaseId(codeRef, null).getId());
+			rq.setTestCaseId(ofNullable(Utils.getTestCaseId(codeRef, null)).map(TestCaseIdEntry::getId).orElse(null));
 		}
 
 		return rp.startTestItem(rootItemId, rq);
 	}
 
-	public static void sendLog(final String message, final String level, final File file) {
-		ReportPortal.emitLog(item -> {
-			SaveLogRQ rq = new SaveLogRQ();
-			rq.setMessage(message);
-			rq.setItemUuid(item);
-			rq.setLevel(level);
-			rq.setLogTime(Calendar.getInstance().getTime());
-			if (file != null) {
-				rq.setFile(file);
-			}
-			return rq;
-		});
+	static void sendLog(final String message, final String level) {
+		ReportPortal.emitLog(message, level, Calendar.getInstance().getTime());
 	}
 
 	/**
@@ -158,24 +144,13 @@ public class Utils {
 	 * @param cukesStatus - Cucumber status
 	 * @return regular status
 	 */
+	@Nonnull
 	public static ItemStatus mapStatus(String cukesStatus) {
 		if (Strings.isNullOrEmpty(cukesStatus)) {
 			return ItemStatus.FAILED;
 		}
 		ItemStatus status = STATUS_MAPPING.get(cukesStatus.toLowerCase());
 		return null == status ? ItemStatus.FAILED : status;
-	}
-
-	/**
-	 * Generate statement representation
-	 *
-	 * @param stmt   - Cucumber statement
-	 * @param prefix - substring to be prepended at the beginning (optional)
-	 * @param suffix - substring to be appended at the end (optional)
-	 * @return transformed string
-	 */
-	public static String buildStatementName(BasicStatement stmt, String prefix, String suffix) {
-		return (prefix == null ? "" : prefix) + stmt.getKeyword() + stmt.getName() + (suffix == null ? "" : suffix);
 	}
 
 	/**
@@ -243,44 +218,28 @@ public class Utils {
 
 	}
 
+	@Nonnull
+	public static String getCodeRef(@Nonnull String uri, int line) {
+		return uri + ":" + line;
+	}
+
 	/**
 	 * Generate name representation
 	 *
 	 * @param prefix   - substring to be prepended at the beginning (optional)
 	 * @param infix    - substring to be inserted between keyword and name
 	 * @param argument - main text to process
-	 * @param suffix   - substring to be appended at the end (optional)
 	 * @return transformed string
 	 */
-	//TODO: pass Node as argument, not test event
-	public static String buildNodeName(String prefix, String infix, String argument, String suffix) {
-		return buildName(prefix, infix, argument, suffix);
+	public static String buildName(String prefix, String infix, String argument) {
+		return (prefix == null ? "" : prefix) + infix + argument;
 	}
 
-	private static String buildName(String prefix, String infix, String argument, String suffix) {
-		return (prefix == null ? "" : prefix) + infix + argument + (suffix == null ? "" : suffix);
-	}
-
-	static List<ParameterResource> getParameters(Match match) {
-		List<ParameterResource> parameters = Lists.newArrayList();
-
-		String text = match.getLocation();
-		Matcher matcher = Pattern.compile(PARAMETER_TYPE_REGEX).matcher(text);
-		if (matcher.find()) {
-			String methodParameters = text.substring(matcher.start() + 1, matcher.end() - 1);
-			String[] parameterTypes = methodParameters.split(",");
-			IntStream.range(0, parameterTypes.length).forEach(index -> {
-				String parameterType = parameterTypes[index];
-				if (index < match.getArguments().size()) {
-					String value = match.getArguments().get(index).getVal();
-					ParameterResource parameterResource = new ParameterResource();
-					parameterResource.setKey(parameterType);
-					parameterResource.setValue(value);
-					parameters.add(parameterResource);
-				}
-			});
-		}
-		return parameters;
+	static List<ParameterResource> getParameters(String codeRef, Match match) {
+		List<Pair<String, String>> params = ofNullable(match.getArguments()).map(a -> IntStream.range(0, a.size())
+				.mapToObj(i -> Pair.of("arg" + i, a.get(i).getVal()))
+				.collect(Collectors.toList())).orElse(null);
+		return ParameterUtils.getParameters(codeRef, params);
 	}
 
 	private static Method retrieveMethod(Match match) throws NoSuchFieldException, IllegalAccessException {
@@ -319,25 +278,5 @@ public class Utils {
 	@Nonnull
 	public static String getDescription(@Nonnull String uri) {
 		return uri;
-	}
-
-	@Nonnull
-	public static String getCodeRef(@Nonnull String uri, int line) {
-		return uri + ":" + line;
-	}
-
-	public static StartTestItemRQ buildStartStepRequest(String stepPrefix, Step step, Match match, boolean hasStats) {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setName(Utils.buildStatementName(step, stepPrefix, null));
-		rq.setDescription(Utils.buildMultilineArgument(step));
-		rq.setStartTime(Calendar.getInstance().getTime());
-		rq.setType("STEP");
-		rq.setHasStats(hasStats);
-		rq.setParameters(Utils.getParameters(match));
-		String codeRef = Utils.getCodeRef(match);
-		rq.setCodeRef(codeRef);
-		rq.setTestCaseId(ofNullable(Utils.getTestCaseId(match, codeRef)).map(TestCaseIdEntry::getId).orElse(null));
-		rq.setAttributes(Utils.getAttributes(match));
-		return rq;
 	}
 }

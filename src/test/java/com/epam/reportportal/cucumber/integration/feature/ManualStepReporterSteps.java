@@ -12,14 +12,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 public class ManualStepReporterSteps {
-	private static final Logger LOGGER = LoggerFactory.getLogger(TestCaseIdOnMethodSteps.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ManualStepReporterSteps.class);
 	public static final String FIRST_NAME = "I am the first nested step";
 	public static final String SECOND_NAME = "I am the second nested step";
 	public static final String THIRD_NAME = "I am the third nested step";
 	public static final String FIRST_NESTED_STEP_LOG = "Inside first nested step";
 	public static final String SECOND_NESTED_STEP_LOG = "Inside second nested step";
 	public static final String THIRD_NESTED_STEP_LOG = "Third error log of the second step";
-	public static final String DURING_SECOND_NESTED_STEP_LOG = "A log entry during the first nested step report";
+	public static final String DURING_SECOND_NESTED_STEP_LOG = "A log entry during the second nested step report";
 
 	@Given("A step with a manual step")
 	public void i_have_a_step_with_a_manual_step() throws InterruptedException {
@@ -38,7 +38,7 @@ public class ManualStepReporterSteps {
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 		LOGGER.info(SECOND_NESTED_STEP_LOG);
 
-		stepReporter.sendStep(ItemStatus.FAILED, THIRD_NAME, new File("pug/unlucky.jpg"));
+		stepReporter.sendStep(ItemStatus.FAILED, THIRD_NAME, new File("files/unlucky.jpg"));
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 		LOGGER.error(THIRD_NESTED_STEP_LOG);
 	}

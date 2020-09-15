@@ -73,8 +73,8 @@ public class TestUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static void mockLaunch(ReportPortalClient client, String launchUuid, String suiteUuid,
-			Collection<Pair<String, ? extends Collection<String>>> testSteps) {
+	public static <T extends Collection<String>> void mockLaunch(ReportPortalClient client, String launchUuid, String suiteUuid,
+			Collection<Pair<String, T>> testSteps) {
 		when(client.startLaunch(any())).thenReturn(createMaybe(new StartLaunchRS(launchUuid, 1L)));
 
 		Maybe<ItemCreatedRS> suiteMaybe = createMaybe(new ItemCreatedRS(suiteUuid, suiteUuid));

@@ -35,7 +35,7 @@ public class HooksTest {
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/DummyScenario.feature", glue = {
-			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
+			"com.epam.reportportal.cucumber.integration.nohooks" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class MyStepReporter2 extends AbstractTestNGCucumberTests {
 

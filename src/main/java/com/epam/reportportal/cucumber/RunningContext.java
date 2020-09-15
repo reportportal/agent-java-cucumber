@@ -9,14 +9,25 @@ import javax.annotation.Nonnull;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+/**
+ * Running context that contains mostly manipulations with Gherkin objects.
+ * Keeps necessary information regarding current Feature, Scenario and Step
+ *
+ * @author Vadzim Hushchanskou
+ */
 public class RunningContext {
 
-	public static class FeatureContext {
-		private Maybe<String> id;
-		private final StartTestItemRQ itemRq;
+	private RunningContext() {
+		throw new AssertionError("No instances should exist for the class!");
+	}
 
-		public FeatureContext(StartTestItemRQ startRq) {
-			itemRq = startRq;
+	public static class FeatureContext {
+		private final String uri;
+		private Maybe<String> id;
+		private StartTestItemRQ itemRq;
+
+		public FeatureContext(String featureUri) {
+			uri = featureUri;
 		}
 
 		public void setId(Maybe<String> newId) {
@@ -29,6 +40,14 @@ public class RunningContext {
 
 		public StartTestItemRQ getItemRq() {
 			return itemRq;
+		}
+
+		public void setItemRq(StartTestItemRQ startRq) {
+			itemRq = startRq;
+		}
+
+		public String getUri() {
+			return uri;
 		}
 	}
 
@@ -45,17 +64,15 @@ public class RunningContext {
 
 		private Maybe<String> id;
 		private ItemStatus status;
+		private Integer line;
+		private String currentText;
+		private String featureUri;
 
 		public ScenarioContext() {
 			stepPrefix = "";
 			steps = new ArrayDeque<>();
 			outlineIterations = new ArrayDeque<>();
 			status = ItemStatus.PASSED;
-		}
-
-		public ScenarioContext(Maybe<String> newId) {
-			this();
-			id = newId;
 		}
 
 		@Nonnull
@@ -133,6 +150,26 @@ public class RunningContext {
 
 		public ItemStatus getStatus() {
 			return status;
+		}
+
+		public Integer getLine() {
+			return line;
+		}
+
+		public void setLine(Integer scenarioLine) {
+			line = scenarioLine;
+		}
+
+		public void setCurrentText(String stepText) {
+			currentText = stepText;
+		}
+
+		public void setFeatureUri(String featureUri) {
+			this.featureUri = featureUri;
+		}
+
+		public String getFeatureUri() {
+			return featureUri;
 		}
 	}
 }
