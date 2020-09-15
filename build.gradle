@@ -52,7 +52,7 @@ dependencies {
     api 'com.epam.reportportal:commons-model:5.0.0'
     api 'com.google.code.findbugs:jsr305:3.0.2'
 
-    implementation 'info.cukes:gherkin:2.12.2'
+    api 'info.cukes:gherkin:2.12.2'
 
     testImplementation 'org.aspectj:aspectjweaver:1.9.2'
     testImplementation 'info.cukes:cucumber-java:1.2.6'
