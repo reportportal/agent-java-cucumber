@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [5.0.0]
 ### Changed
 - Many static methods from Util class were moved to AbstractReporter class and made protected to ease extension 
 
