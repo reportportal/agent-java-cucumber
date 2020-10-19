@@ -53,6 +53,13 @@ public class ParameterStepReporterTest {
 
 	}
 
+	@CucumberOptions(features = "src/test/resources/features/BasicDocStringParameters.feature", glue = {
+			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
+			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
+	public static class DocstringParameterTestStepReporter extends AbstractTestNGCucumberTests {
+
+	}
+
 	private final String launchId = CommonUtils.namedId("launch_");
 	private final String suiteId = CommonUtils.namedId("suite_");
 	private final List<String> testIds = Stream.generate(() -> CommonUtils.namedId("test_")).limit(3).collect(Collectors.toList());
@@ -156,5 +163,20 @@ public class ParameterStepReporterTest {
 		ParameterResource param3 = items.get(3).getParameters().get(0);
 		assertThat(param3.getKey(), equalTo("my name"));
 		assertThat(param3.getValue(), equalTo("string"));
+	}
+
+	@Test
+	public void verify_docstring_parameters() {
+		TestUtils.runTests(DocstringParameterTestStepReporter.class);
+
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(4)).startTestItem(same(testIds.get(0)), captor.capture());
+
+		List<StartTestItemRQ> items = captor.getAllValues();
+		List<ParameterResource> params = items.get(2).getParameters();
+		assertThat(params, allOf(notNullValue(), hasSize(1)));
+		ParameterResource param1 = params.get(0);
+		assertThat(param1.getKey(), equalTo("java.lang.String"));
+		assertThat(param1.getValue(), equalTo("My very long parameter\nWith some new lines"));
 	}
 }

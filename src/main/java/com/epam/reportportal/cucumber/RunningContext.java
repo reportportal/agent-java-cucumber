@@ -65,7 +65,6 @@ public class RunningContext {
 		private Maybe<String> id;
 		private ItemStatus status;
 		private Integer line;
-		private String currentText;
 		private String featureUri;
 
 		public ScenarioContext() {
@@ -158,10 +157,6 @@ public class RunningContext {
 
 		public void setLine(Integer scenarioLine) {
 			line = scenarioLine;
-		}
-
-		public void setCurrentText(String stepText) {
-			currentText = stepText;
 		}
 
 		public void setFeatureUri(String featureUri) {
