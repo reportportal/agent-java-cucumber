@@ -100,7 +100,7 @@ public class ScenarioReporter extends AbstractReporter {
 			LOGGER.debug("There is no scenarios in the launch");
 			return;
 		}
-		Utils.finishTestItem(launch.get(), rootSuiteId.get());
+		finishTestItem(rootSuiteId.get());
 		rootSuiteId = null;
 		super.afterLaunch();
 	}
