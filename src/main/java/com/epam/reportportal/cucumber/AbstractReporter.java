@@ -39,7 +39,6 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
-import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.Tika;
@@ -55,6 +54,7 @@ import rp.com.google.common.collect.ImmutableMap;
 import rp.com.google.common.io.ByteSource;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -202,7 +202,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Extension point to customize scenario creation event/request
 	 *
 	 * @param scenario Cucumber's Scenario object
-	 * @param uri a scenario relative path
+	 * @param uri      a scenario relative path
 	 * @return start test item request ready to send on RP
 	 */
 	protected StartTestItemRQ buildStartScenarioRequest(Scenario scenario, String uri) {
@@ -274,7 +274,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Extension point to customize feature creation event/request
 	 *
 	 * @param feature a Cucumber's Feature object
-	 * @param uri a path to the feature
+	 * @param uri     a path to the feature
 	 * @return Request to ReportPortal
 	 */
 	protected StartTestItemRQ buildStartFeatureRequest(Feature feature, String uri) {
@@ -322,9 +322,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Extension point to customize step creation event/request
 	 *
-	 * @param step a Cucumber's Step object
+	 * @param step       a Cucumber's Step object
 	 * @param stepPrefix a prefix of the step (e.g. 'Background')
-	 * @param match a Cucumber's Match object
+	 * @param match      a Cucumber's Match object
 	 * @return Request to ReportPortal
 	 */
 	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
@@ -637,7 +637,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Return a Test Case ID for a feature file
 	 *
-	 * @param codeRef a code reference
+	 * @param codeRef   a code reference
 	 * @param arguments a scenario arguments
 	 * @return Test Case ID entity or null if it's not possible to calculate
 	 */
@@ -650,7 +650,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Return a Test Case ID for mapped code
 	 *
-	 * @param match Cucumber's Match object
+	 * @param match   Cucumber's Match object
 	 * @param codeRef a code reference
 	 * @return Test Case ID entity or null if it's not possible to calculate
 	 */
@@ -676,7 +676,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Build an item description for a scenario
 	 *
 	 * @param scenario a Cucumber's Scenario object
-	 * @param uri a feature URI
+	 * @param uri      a feature URI
 	 * @return item description
 	 */
 	@Nonnull
@@ -688,7 +688,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Build an item description for a feature
 	 *
 	 * @param feature a Cucumber's Feature object
-	 * @param uri a feature URI
+	 * @param uri     a feature URI
 	 * @return item description
 	 */
 	@Nonnull
@@ -750,7 +750,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Returns code reference for feature files by URI and text line number
 	 *
-	 * @param uri a feature URI
+	 * @param uri  a feature URI
 	 * @param line a scenario line number
 	 * @return a code reference
 	 */
@@ -793,7 +793,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Send a text log entry to Report Portal using current datetime as timestamp
 	 *
 	 * @param message a text message
-	 * @param level a log level, see standard Log4j / logback logging levels
+	 * @param level   a log level, see standard Log4j / logback logging levels
 	 */
 	protected void sendLog(final String message, final String level) {
 		ReportPortal.emitLog(message, level, Calendar.getInstance().getTime());
@@ -817,9 +817,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Returns a list of parameters for a step
 	 *
-	 * @param step Cucumber's Step object
+	 * @param step    Cucumber's Step object
 	 * @param codeRef a method code reference to retrieve parameter types
-	 * @param match Cucumber's Match object
+	 * @param match   Cucumber's Match object
 	 * @return a list of parameters or empty list if none
 	 */
 	@Nonnull
