@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
-import rp.com.google.common.collect.ImmutableMap;
 import rp.com.google.common.io.ByteSource;
 
 import javax.annotation.Nonnull;
@@ -65,8 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.epam.reportportal.cucumber.Utils.ARGUMENTS_TRANSFORM;
-import static com.epam.reportportal.cucumber.Utils.retrieveMethod;
+import static com.epam.reportportal.cucumber.Utils.*;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.createKey;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.retrieveLeaf;
 import static java.util.Optional.ofNullable;
@@ -90,21 +88,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
-
-	//@formatter:off
-	private static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
-			.put("passed", ItemStatus.PASSED)
-			.put("failed", ItemStatus.FAILED)
-			.put("skipped", ItemStatus.SKIPPED)
-			.put("pending", ItemStatus.SKIPPED)
-			.put("undefined", ItemStatus.SKIPPED).build();
-	private static final Map<String, String> LOG_LEVEL_MAPPING = ImmutableMap.<String, String>builder()
-			.put("passed", "INFO")
-			.put("failed", "ERROR")
-			.put("skipped", "WARN")
-			.put("pending", "WARN")
-			.put("undefined", "WARN").build();
-	//@formatter:on
 
 	public static final TestItemTree ITEM_TREE = new TestItemTree();
 	private static volatile ReportPortal REPORT_PORTAL = ReportPortal.builder().build();
@@ -814,21 +797,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	/**
-	 * Transform tags from Cucumber to RP format
-	 *
-	 * @param tags - Cucumber tags
-	 * @return set of tags
-	 */
-	@Nonnull
-	protected Set<ItemAttributesRQ> extractAttributes(@Nonnull List<Tag> tags) {
-		Set<ItemAttributesRQ> result = new HashSet<>();
-		for (Tag tag : tags) {
-			result.add(new ItemAttributesRQ(null, tag.getName()));
-		}
-		return result;
-	}
-
-	/**
 	 * Returns a list of parameters for a step
 	 *
 	 * @param step    Cucumber's Step object
@@ -853,6 +821,21 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		} else {
 			return ParameterUtils.getParameters(codeRef, params);
 		}
+	}
+
+	/**
+	 * Transform tags from Cucumber to RP format
+	 *
+	 * @param tags - Cucumber tags
+	 * @return set of tags
+	 */
+	@Nonnull
+	protected Set<ItemAttributesRQ> extractAttributes(@Nonnull List<Tag> tags) {
+		Set<ItemAttributesRQ> result = new HashSet<>();
+		for (Tag tag : tags) {
+			result.add(new ItemAttributesRQ(null, tag.getName()));
+		}
+		return result;
 	}
 
 	/**
