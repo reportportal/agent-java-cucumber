@@ -534,11 +534,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	@Override
-	public void write(String text) {
-		sendLog(text, "INFO");
-	}
-
-	@Override
 	public void syntaxError(String state, String event, List<String> legalEvents, String uri, Integer line) {
 	}
 
@@ -787,6 +782,25 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		}
 		String level = LOG_LEVEL_MAPPING.get(cukesStatus.toLowerCase());
 		return null == level ? "ERROR" : level;
+	}
+
+	/**
+	 * Send a log entry to Report Portal with 'INFO' level.
+	 *
+	 * @param text a log text to send
+	 */
+	@Override
+	public void write(String text) {
+		sendLog(text);
+	}
+
+	/**
+	 * Send a text log entry to Report Portal with 'INFO' level, using current datetime as timestamp
+	 *
+	 * @param message a text message
+	 */
+	protected void sendLog(final String message) {
+		sendLog(message, "INFO");
 	}
 
 	/**
