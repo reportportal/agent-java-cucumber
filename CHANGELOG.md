@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 ### Changed
-- Client version updated
+- Client version updated on 5.0.12
 
 ## [5.0.0]
 ### Changed
