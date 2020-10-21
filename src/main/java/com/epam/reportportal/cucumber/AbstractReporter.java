@@ -211,6 +211,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param scenario         Scenario
 	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
+	@SuppressWarnings("unused")
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
 		// start Feature here, because it should be started only if at least one Scenario is included.
 		// By this reason, it cannot be started in #beforeFeature method,
@@ -395,6 +396,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 *
 	 * @param isBefore - if true, before-hook is finished, if false - after-hook
 	 */
+	@SuppressWarnings("unused")
 	protected void afterHooks(Boolean isBefore) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		launch.get().getStepReporter().finishPreviousStep();
@@ -658,6 +660,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @return item description
 	 */
 	@Nonnull
+	@SuppressWarnings("unused")
 	protected String getDescription(@Nonnull Scenario scenario, @Nonnull String uri) {
 		return uri;
 	}
@@ -670,6 +673,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @return item description
 	 */
 	@Nonnull
+	@SuppressWarnings("unused")
 	protected String getDescription(@Nonnull Feature feature, @Nonnull String uri) {
 		return uri;
 	}
