@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Changed
+- Some code refactoring to unify style between all cucumber agents
 - Client version updated on 5.0.12
 
 ## [5.0.0]
