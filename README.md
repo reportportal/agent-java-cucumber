@@ -24,12 +24,14 @@
 
 ## Compatibility matrix for cucumber agents
 
-| Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Tested version of cucumber agent | Link to agent's repo | Link to agent's github |
-| - | - | - | - | - |
-| 1.2.5  | 2.12.2  | 4.0.2 | [bintray/cucumber1](https://bintray.com/epam/reportportal/agent-java-cucumber) | [github/cucumber1](https://github.com/reportportal/agent-java-cucumber) |
-| 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | 4.0.0 | [bintray/cucumber2](https://bintray.com/epam/reportportal/agent-java-cucumber2) | [github/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
-| 3x | _ | 0.0.1-beta | [bintray/cucumber3](https://bintray.com/epam/reportportal/agent-java-cucumber3) | [github/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
-| 4.0.0 - 4.2.6  | 3.2.0 - 5.1.0 | 4.0.0 | [bintray/cucumber4](https://bintray.com/epam/reportportal/agent-java-cucumber4) | [github/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
+| Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Link to agent's repo | Link to agent's github |
+| - | - | - | - |
+| 1.2.5  | 2.12.2  | [bintray/cucumber1](https://bintray.com/epam/reportportal/agent-java-cucumber) | [github/cucumber1](https://github.com/reportportal/agent-java-cucumber) |
+| 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | [bintray/cucumber2](https://bintray.com/epam/reportportal/agent-java-cucumber2) | [github/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
+| 3.0.0 - 3.0.2 | _ | [bintray/cucumber3](https://bintray.com/epam/reportportal/agent-java-cucumber3) | [github/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
+| 4.4.0 - 4.8.1  | 3.2.0 - 5.1.0 | [bintray/cucumber4](https://bintray.com/epam/reportportal/agent-java-cucumber4) | [github/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
+| 5.0.0 - 5.7.0  | _ | [bintray/cucumber5](https://bintray.com/epam/reportportal/agent-java-cucumber5) | [github/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
+| 6.0.0 - 6.9.0  | _ | [bintray/cucumber6](https://bintray.com/epam/reportportal/agent-java-cucumber6) | [github/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
 
 ## Installation
 
