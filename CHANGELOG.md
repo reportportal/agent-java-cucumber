@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [5.0.1]
 ### Changed
 - Some code refactoring to unify style between all cucumber agents
 - Client version updated on [5.0.15](https://github.com/reportportal/client-java/releases/tag/5.0.15)
