@@ -39,7 +39,6 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
-import javax.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tika.Tika;
@@ -51,10 +50,10 @@ import org.slf4j.LoggerFactory;
 import rp.com.google.common.base.Strings;
 import rp.com.google.common.base.Supplier;
 import rp.com.google.common.base.Suppliers;
-import rp.com.google.common.collect.ImmutableMap;
 import rp.com.google.common.io.ByteSource;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -65,8 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.epam.reportportal.cucumber.Utils.ARGUMENTS_TRANSFORM;
-import static com.epam.reportportal.cucumber.Utils.retrieveMethod;
+import static com.epam.reportportal.cucumber.Utils.*;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.createKey;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.retrieveLeaf;
 import static java.util.Optional.ofNullable;
@@ -84,27 +82,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractReporter.class);
 	private static final String AGENT_PROPERTIES_FILE = "agent.properties";
-	private static final int DEFAULT_CAPACITY = 16;
 	private static final String STEP_DEFINITION_FIELD_NAME = "stepDefinition";
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
-
-	//@formatter:off
-	private static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
-			.put("passed", ItemStatus.PASSED)
-			.put("failed", ItemStatus.FAILED)
-			.put("skipped", ItemStatus.SKIPPED)
-			.put("pending", ItemStatus.SKIPPED)
-			.put("undefined", ItemStatus.SKIPPED).build();
-	private static final Map<String, String> LOG_LEVEL_MAPPING = ImmutableMap.<String, String>builder()
-			.put("passed", "INFO")
-			.put("failed", "ERROR")
-			.put("skipped", "WARN")
-			.put("pending", "WARN")
-			.put("undefined", "WARN").build();
-	//@formatter:on
 
 	public static final TestItemTree ITEM_TREE = new TestItemTree();
 	private static volatile ReportPortal REPORT_PORTAL = ReportPortal.builder().build();
@@ -181,11 +163,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	private void addToTree(RunningContext.FeatureContext featureContext, RunningContext.ScenarioContext scenarioContext) {
 		retrieveLeaf(featureContext.getUri(), ITEM_TREE).ifPresent(suiteLeaf -> suiteLeaf.getChildItems()
-				.put(createKey(scenarioContext.getLine()), TestItemTree.createTestItemLeaf(scenarioContext.getId(), DEFAULT_CAPACITY)));
+				.put(createKey(scenarioContext.getLine()), TestItemTree.createTestItemLeaf(scenarioContext.getId())));
 	}
 
 	private void addToTree(RunningContext.FeatureContext context) {
-		ITEM_TREE.getTestItems().put(createKey(context.getUri()), TestItemTree.createTestItemLeaf(context.getId(), DEFAULT_CAPACITY));
+		ITEM_TREE.getTestItems().put(createKey(context.getUri()), TestItemTree.createTestItemLeaf(context.getId()));
 	}
 
 	/**
@@ -202,7 +184,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Extension point to customize scenario creation event/request
 	 *
 	 * @param scenario Cucumber's Scenario object
-	 * @param uri a scenario relative path
+	 * @param uri      a scenario relative path
 	 * @return start test item request ready to send on RP
 	 */
 	protected StartTestItemRQ buildStartScenarioRequest(Scenario scenario, String uri) {
@@ -228,6 +210,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param scenario         Scenario
 	 * @param outlineIteration - suffix to append to scenario name, can be null
 	 */
+	@SuppressWarnings("unused")
 	protected void beforeScenario(Scenario scenario, String outlineIteration) {
 		// start Feature here, because it should be started only if at least one Scenario is included.
 		// By this reason, it cannot be started in #beforeFeature method,
@@ -274,7 +257,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Extension point to customize feature creation event/request
 	 *
 	 * @param feature a Cucumber's Feature object
-	 * @param uri a path to the feature
+	 * @param uri     a path to the feature
 	 * @return Request to ReportPortal
 	 */
 	protected StartTestItemRQ buildStartFeatureRequest(Feature feature, String uri) {
@@ -322,9 +305,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Extension point to customize step creation event/request
 	 *
-	 * @param step a Cucumber's Step object
+	 * @param step       a Cucumber's Step object
 	 * @param stepPrefix a prefix of the step (e.g. 'Background')
-	 * @param match a Cucumber's Match object
+	 * @param match      a Cucumber's Match object
 	 * @return Request to ReportPortal
 	 */
 	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
@@ -345,7 +328,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		retrieveLeaf(scenarioContext.getFeatureUri(),
 				scenarioContext.getLine(),
 				ITEM_TREE
-		).ifPresent(scenarioLeaf -> scenarioLeaf.getChildItems().put(createKey(text), TestItemTree.createTestItemLeaf(stepId, 0)));
+		).ifPresent(scenarioLeaf -> scenarioLeaf.getChildItems().put(createKey(text), TestItemTree.createTestItemLeaf(stepId)));
 	}
 
 	/**
@@ -412,6 +395,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 *
 	 * @param isBefore - if true, before-hook is finished, if false - after-hook
 	 */
+	@SuppressWarnings("unused")
 	protected void afterHooks(Boolean isBefore) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		launch.get().getStepReporter().finishPreviousStep();
@@ -446,8 +430,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		String errorMessage = result.getErrorMessage();
 		if (errorMessage != null) {
 			sendLog(errorMessage, level);
-		}
-		if (result.getError() != null) {
+		}else if (result.getError() != null) {
 			sendLog(getStackTraceAsString(result.getError()), level);
 		}
 		RunningContext.ScenarioContext currentScenario = getCurrentScenarioContext();
@@ -531,11 +514,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			LOGGER.warn("Mime-type not found", e);
 		}
 		ReportPortal.emitLog(new ReportPortalMessage(ByteSource.wrap(data), type, prefix), "UNKNOWN", Calendar.getInstance().getTime());
-	}
-
-	@Override
-	public void write(String text) {
-		sendLog(text, "INFO");
 	}
 
 	@Override
@@ -637,7 +615,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Return a Test Case ID for a feature file
 	 *
-	 * @param codeRef a code reference
+	 * @param codeRef   a code reference
 	 * @param arguments a scenario arguments
 	 * @return Test Case ID entity or null if it's not possible to calculate
 	 */
@@ -650,7 +628,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Return a Test Case ID for mapped code
 	 *
-	 * @param match Cucumber's Match object
+	 * @param match   Cucumber's Match object
 	 * @param codeRef a code reference
 	 * @return Test Case ID entity or null if it's not possible to calculate
 	 */
@@ -676,10 +654,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Build an item description for a scenario
 	 *
 	 * @param scenario a Cucumber's Scenario object
-	 * @param uri a feature URI
+	 * @param uri      a feature URI
 	 * @return item description
 	 */
 	@Nonnull
+	@SuppressWarnings("unused")
 	protected String getDescription(@Nonnull Scenario scenario, @Nonnull String uri) {
 		return uri;
 	}
@@ -688,10 +667,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * Build an item description for a feature
 	 *
 	 * @param feature a Cucumber's Feature object
-	 * @param uri a feature URI
+	 * @param uri     a feature URI
 	 * @return item description
 	 */
 	@Nonnull
+	@SuppressWarnings("unused")
 	protected String getDescription(@Nonnull Feature feature, @Nonnull String uri) {
 		return uri;
 	}
@@ -750,7 +730,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Returns code reference for feature files by URI and text line number
 	 *
-	 * @param uri a feature URI
+	 * @param uri  a feature URI
 	 * @param line a scenario line number
 	 * @return a code reference
 	 */
@@ -790,36 +770,40 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	/**
+	 * Send a log entry to Report Portal with 'INFO' level.
+	 *
+	 * @param text a log text to send
+	 */
+	@Override
+	public void write(String text) {
+		sendLog(text);
+	}
+
+	/**
+	 * Send a text log entry to Report Portal with 'INFO' level, using current datetime as timestamp
+	 *
+	 * @param message a text message
+	 */
+	protected void sendLog(final String message) {
+		sendLog(message, "INFO");
+	}
+
+	/**
 	 * Send a text log entry to Report Portal using current datetime as timestamp
 	 *
 	 * @param message a text message
-	 * @param level a log level, see standard Log4j / logback logging levels
+	 * @param level   a log level, see standard Log4j / logback logging levels
 	 */
 	protected void sendLog(final String message, final String level) {
 		ReportPortal.emitLog(message, level, Calendar.getInstance().getTime());
 	}
 
 	/**
-	 * Transform tags from Cucumber to RP format
-	 *
-	 * @param tags - Cucumber tags
-	 * @return set of tags
-	 */
-	@Nonnull
-	protected Set<ItemAttributesRQ> extractAttributes(@Nonnull List<Tag> tags) {
-		Set<ItemAttributesRQ> result = new HashSet<>();
-		for (Tag tag : tags) {
-			result.add(new ItemAttributesRQ(null, tag.getName()));
-		}
-		return result;
-	}
-
-	/**
 	 * Returns a list of parameters for a step
 	 *
-	 * @param step Cucumber's Step object
+	 * @param step    Cucumber's Step object
 	 * @param codeRef a method code reference to retrieve parameter types
-	 * @param match Cucumber's Match object
+	 * @param match   Cucumber's Match object
 	 * @return a list of parameters or empty list if none
 	 */
 	@Nonnull
@@ -839,6 +823,21 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		} else {
 			return ParameterUtils.getParameters(codeRef, params);
 		}
+	}
+
+	/**
+	 * Transform tags from Cucumber to RP format
+	 *
+	 * @param tags - Cucumber tags
+	 * @return set of tags
+	 */
+	@Nonnull
+	protected Set<ItemAttributesRQ> extractAttributes(@Nonnull List<Tag> tags) {
+		Set<ItemAttributesRQ> result = new HashSet<>();
+		for (Tag tag : tags) {
+			result.add(new ItemAttributesRQ(null, tag.getName()));
+		}
+		return result;
 	}
 
 	/**
