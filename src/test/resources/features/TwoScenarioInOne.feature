@@ -4,6 +4,6 @@ Feature: Test with two scenarios
     Given I have empty step
     Then I have another empty step
 
-  Scenario: The first scenario
+  Scenario: The second scenario
     Given I have empty step
     Then I have another empty step
