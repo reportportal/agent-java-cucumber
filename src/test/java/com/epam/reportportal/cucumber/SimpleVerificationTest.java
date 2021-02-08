@@ -121,8 +121,16 @@ public class SimpleVerificationTest {
 		verify(client, times(5)).startTestItem(same(stepIds.get(0)), stepCaptor.capture());
 
 		List<StartTestItemRQ> steps = stepCaptor.getAllValues();
-		verifyRequest(steps.get(0), "BEFORE_TEST", false);
-		steps.subList(1, steps.size() - 1).forEach(rq -> verifyRequest(rq, "STEP", false));
-		verifyRequest(steps.get(steps.size() - 1), "AFTER_TEST", false);
+		Set<String> stepTypes = steps.stream().map(StartTestItemRQ::getType).collect(Collectors.toSet());
+		assertThat(stepTypes, hasSize(3));
+		assertThat(stepTypes, hasItems("BEFORE_TEST", "STEP", "AFTER_TEST"));
+
+		Optional<StartTestItemRQ> beforeTest = steps.stream().filter(s -> "BEFORE_TEST".equals(s.getType())).findAny();
+		//noinspection OptionalGetWithoutIsPresent
+		verifyRequest(beforeTest.get(), "BEFORE_TEST", false);
+		steps.stream().filter(s -> "STEP".equals(s.getType())).forEach(rq -> verifyRequest(rq, "STEP", false));
+		Optional<StartTestItemRQ> afterTest = steps.stream().filter(s -> "AFTER_TEST".equals(s.getType())).findAny();
+		//noinspection OptionalGetWithoutIsPresent
+		verifyRequest(afterTest.get(), "AFTER_TEST", false);
 	}
 }
