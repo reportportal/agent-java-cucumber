@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -55,13 +56,14 @@ public class SystemAttributesTest {
 	private final String suiteId = CommonUtils.namedId("suite_");
 	private final String testId = CommonUtils.namedId("test_");
 	private final List<String> stepIds = Stream.generate(() -> CommonUtils.namedId("step_")).limit(3).collect(Collectors.toList());
-	private final ListenerParameters params = TestUtils.standardParameters();
 	private final ReportPortalClient client = mock(ReportPortalClient.class);
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-	private final ReportPortal reportPortal = ReportPortal.create(client, params, executorService);
 
 	@BeforeEach
 	public void setup() {
+		ListenerParameters params = TestUtils.standardParameters();
+		params.setAttributes(Collections.singleton(new ItemAttributesRQ("key", "value")));
+		ReportPortal reportPortal = ReportPortal.create(client, params, executorService);
 		TestUtils.mockLaunch(client, launchId, suiteId, testId, stepIds);
 		TestScenarioReporter.RP.set(reportPortal);
 		TestStepReporter.RP.set(reportPortal);

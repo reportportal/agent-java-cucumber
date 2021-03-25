@@ -114,8 +114,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			rq.setName(parameters.getLaunchName());
 			rq.setStartTime(startTime);
 			rq.setMode(parameters.getLaunchRunningMode());
-			rq.setAttributes(parameters.getAttributes() == null ? new HashSet<>() : parameters.getAttributes());
-			rq.getAttributes().addAll(SystemAttributesExtractor.extract(AGENT_PROPERTIES_FILE, AbstractReporter.class.getClassLoader()));
+			HashSet<ItemAttributesRQ> attributes = new HashSet<>(parameters.getAttributes());
+			rq.setAttributes(attributes);
+			attributes.addAll(SystemAttributesExtractor.extract(AGENT_PROPERTIES_FILE, AbstractReporter.class.getClassLoader()));
 			rq.setDescription(parameters.getDescription());
 			rq.setRerun(parameters.isRerun());
 			if (isNotBlank(parameters.getRerunOf())) {
@@ -127,7 +128,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			skippedIssueAttr.setKey(SKIPPED_ISSUE_KEY);
 			skippedIssueAttr.setValue(skippedAnIssue == null ? "true" : skippedAnIssue.toString());
 			skippedIssueAttr.setSystem(true);
-			rq.getAttributes().add(skippedIssueAttr);
+			attributes.add(skippedIssueAttr);
 
 			Launch launch = reportPortal.newLaunch(rq);
 			finished = new AtomicBoolean(false);
