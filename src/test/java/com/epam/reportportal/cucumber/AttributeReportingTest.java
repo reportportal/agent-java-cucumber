@@ -102,10 +102,12 @@ public class AttributeReportingTest {
 		verify(client, times(5)).startTestItem(same(testId), stepCaptor.capture());
 
 		List<StartTestItemRQ> allSteps = stepCaptor.getAllValues();
-		assertThat(allSteps.get(0).getAttributes(), anyOf(emptyIterable(), nullValue()));
-		List<StartTestItemRQ> testSteps = allSteps.subList(1, allSteps.size() - 1);
+		List<StartTestItemRQ> testSteps = allSteps.stream()
+				.filter(s -> !(s.getName().startsWith("Before") || s.getName().startsWith("After"))).collect(Collectors.toList());
 		verifyAnnotationAttributes(testSteps);
-		assertThat(allSteps.get(allSteps.size() - 1).getAttributes(), anyOf(emptyIterable(), nullValue()));
+		ArrayList<StartTestItemRQ> beforeAfter = new ArrayList<>(allSteps);
+		beforeAfter.removeAll(testSteps);
+		beforeAfter.forEach(s->assertThat(s.getAttributes(), anyOf(emptyIterable(), nullValue())));
 	}
 
 	@Test
@@ -129,9 +131,11 @@ public class AttributeReportingTest {
 		verify(client, times(5)).startTestItem(same(stepIds.get(0)), stepCaptor.capture());
 
 		List<StartTestItemRQ> allSteps = stepCaptor.getAllValues();
-		assertThat(allSteps.get(0).getAttributes(), anyOf(emptyIterable(), nullValue()));
-		List<StartTestItemRQ> testSteps = allSteps.subList(1, allSteps.size() - 1);
+		List<StartTestItemRQ> testSteps = allSteps.stream()
+				.filter(s -> !(s.getName().startsWith("Before") || s.getName().startsWith("After"))).collect(Collectors.toList());
 		verifyAnnotationAttributes(testSteps);
-		assertThat(allSteps.get(allSteps.size() - 1).getAttributes(), anyOf(emptyIterable(), nullValue()));
+		ArrayList<StartTestItemRQ> beforeAfter = new ArrayList<>(allSteps);
+		beforeAfter.removeAll(testSteps);
+		beforeAfter.forEach(s->assertThat(s.getAttributes(), anyOf(emptyIterable(), nullValue())));
 	}
 }
