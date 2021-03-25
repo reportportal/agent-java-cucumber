@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 public class TestCaseIdTest {
@@ -94,17 +94,17 @@ public class TestCaseIdTest {
 		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(5)).startTestItem(same(testId), captor.capture());
 
-		List<StartTestItemRQ> steps = captor.getAllValues().stream().skip(1).limit(3).collect(Collectors.toList());
+		List<StartTestItemRQ> allSteps = captor.getAllValues();
+		List<StartTestItemRQ> testSteps = allSteps.stream()
+				.filter(s -> !(s.getName().startsWith("Before") || s.getName().startsWith("After")))
+				.collect(Collectors.toList());
+		List<String> testCaseIds = testSteps.stream().map(StartTestItemRQ::getTestCaseId).collect(Collectors.toList());
 
-		assertThat(
-				steps.get(0).getTestCaseId(),
-				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_have_cukes_in_my_belly[42]")
-		);
-		assertThat(steps.get(1).getTestCaseId(), equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_wait[1]"));
-		assertThat(
-				steps.get(2).getTestCaseId(),
-				equalTo("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.my_belly_should_growl[]")
-		);
+		assertThat(testCaseIds, hasSize(3));
+
+		assertThat(testCaseIds, hasItem("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_have_cukes_in_my_belly[42]"));
+		assertThat(testCaseIds, hasItem("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.I_wait[1]"));
+		assertThat(testCaseIds, hasItem("com.epam.reportportal.cucumber.integration.feature.BellyStepdefs.my_belly_should_growl[]"));
 	}
 
 	@Test
