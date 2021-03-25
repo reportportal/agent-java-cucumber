@@ -103,19 +103,22 @@ public class CodeRefTest {
 		TestUtils.runTests(BellyStepReporter.class);
 
 		verify(client, times(1)).startTestItem(any());
-		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
-		verify(client, times(1)).startTestItem(same(suiteId), captor.capture());
-		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor.capture());
+		ArgumentCaptor<StartTestItemRQ> scenarioCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		ArgumentCaptor<StartTestItemRQ> testCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(1)).startTestItem(same(suiteId), scenarioCaptor.capture());
+		verify(client, times(5)).startTestItem(same(testIds.get(0)), testCaptor.capture());
 
-		List<StartTestItemRQ> items = captor.getAllValues();
-
-		StartTestItemRQ scenario = items.get(0);
-		List<StartTestItemRQ> steps = items.subList(2, items.size());
-
+		StartTestItemRQ scenario = scenarioCaptor.getValue();
 		assertThat(scenario.getCodeRef(), allOf(notNullValue(), equalTo(SCENARIO_CODE_REFERENCES)));
 
-		IntStream.range(0, STEP_CODE_REFERENCE.size())
-				.forEach(i -> assertThat(steps.get(i).getCodeRef(), allOf(notNullValue(), equalTo(STEP_CODE_REFERENCE.get(i)))));
+		List<StartTestItemRQ> allSteps = testCaptor.getAllValues();
+		List<StartTestItemRQ> testSteps = allSteps.stream()
+				.filter(s -> !(s.getName().startsWith("Before") || s.getName().startsWith("After")))
+				.collect(Collectors.toList());
+		List<String> codeReferences = testSteps.stream().map(StartTestItemRQ::getCodeRef).collect(Collectors.toList());
+		assertThat(codeReferences, hasSize(STEP_CODE_REFERENCE.size()));
+
+		STEP_CODE_REFERENCE.forEach(r -> assertThat(codeReferences, hasItem(r)));
 	}
 
 	private static final List<String> TWO_FEATURES_CODE_REFERENCES = Arrays.asList("src/test/resources/features/TwoScenarioInOne.feature:3",
