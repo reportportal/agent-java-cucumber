@@ -5,6 +5,7 @@
 - Client version updated on [5.0.21](https://github.com/reportportal/client-java/releases/tag/5.0.21)
 ### Fixed
 - Empty interrupted suite in case of duplicate step
+- Table parameter handling for different reporters
 
 ## [5.0.1]
 ### Changed

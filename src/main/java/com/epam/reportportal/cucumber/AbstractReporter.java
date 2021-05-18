@@ -85,7 +85,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final String STEP_DEFINITION_FIELD_NAME = "stepDefinition";
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
-	private static final String TABLE_SEPARATOR = "|";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
 
 	public static final TestItemTree ITEM_TREE = new TestItemTree();
@@ -431,7 +430,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		String errorMessage = result.getErrorMessage();
 		if (errorMessage != null) {
 			sendLog(errorMessage, level);
-		}else if (result.getError() != null) {
+		} else if (result.getError() != null) {
 			sendLog(getStackTrace(result.getError()), level);
 		}
 		RunningContext.ScenarioContext currentScenario = getCurrentScenarioContext();
@@ -811,19 +810,16 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected List<ParameterResource> getParameters(@Nonnull Step step, @Nullable String codeRef, @Nonnull Match match) {
 		List<Pair<String, String>> params = ofNullable(match.getArguments()).map(a -> IntStream.range(0, a.size())
 				.mapToObj(i -> Pair.of("arg" + i, a.get(i).getVal()))
-				.collect(Collectors.toList())).orElse(null);
-		if (params == null || params.isEmpty()) {
-			DocString docstring = step.getDocString();
-			if (docstring != null) {
-				return ParameterUtils.getParameters(codeRef,
-						Collections.singletonList(Pair.of("docstring", StringEscapeUtils.escapeHtml4(docstring.getValue())))
-				);
-			} else {
-				return Collections.emptyList();
-			}
-		} else {
-			return ParameterUtils.getParameters(codeRef, params);
-		}
+				.collect(Collectors.toList())).orElse(new ArrayList<>());
+
+		ofNullable(step.getDocString()).map(DocString::getValue)
+				.filter(ds -> !ds.isEmpty())
+				.ifPresent(ds -> params.add(Pair.of("docstring", StringEscapeUtils.escapeHtml4(ds))));
+		ofNullable(step.getRows()).filter(rows -> !rows.isEmpty())
+				.ifPresent(rows -> params.add(Pair.of("datatable",
+						Utils.formatDataTable(rows.stream().map(Row::getCells).collect(Collectors.toList()))
+				)));
+		return params.isEmpty() ? Collections.emptyList() : ParameterUtils.getParameters(codeRef, params);
 	}
 
 	/**
@@ -872,29 +868,13 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * none)
 	 */
 	protected String buildMultilineArgument(Step step) {
-		List<DataTableRow> table = step.getRows();
-		DocString ds = step.getDocString();
 		StringBuilder marg = new StringBuilder();
-		StringBuilder markDownSeparator = new StringBuilder();
-		if (table != null) {
-			marg.append("\r\n\r\n");
-			for (Row row : table) {
-				marg.append(TABLE_SEPARATOR);
-				for (String cell : row.getCells()) {
-					marg.append(" ").append(cell).append(" ").append(TABLE_SEPARATOR);
-				}
-				marg.append("\r\n");
-				if (markDownSeparator.length() == 0) {
-					markDownSeparator.append(TABLE_SEPARATOR).append("-").append(TABLE_SEPARATOR);
-					marg.append(markDownSeparator);
-					marg.append("\r\n");
-				}
-			}
-		}
-
-		if (ds != null) {
-			marg.append(DOCSTRING_DECORATOR).append(ds.getValue()).append(DOCSTRING_DECORATOR);
-		}
+		ofNullable(step.getRows()).map(rows -> rows.stream().map(Row::getCells).collect(Collectors.toList()))
+				.filter(t -> t.size() > 0)
+				.ifPresent(t -> marg.append(formatDataTable(t)));
+		ofNullable(step.getDocString()).map(DocString::getValue)
+				.filter(ds -> !ds.isEmpty())
+				.ifPresent(ds -> marg.append(DOCSTRING_DECORATOR).append(ds).append(DOCSTRING_DECORATOR));
 		return marg.toString();
 	}
 }
