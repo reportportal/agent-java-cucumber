@@ -5,7 +5,7 @@
 > ReportPortal team only and is not supposed for sharing with 3rd parties.
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.epam.reportportal/agent-java-cucumber.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber%22)
-![CI Build](https://github.com/reportportal/agent-java-cucumber/workflows/CI%20Build/badge.svg)
+[![CI Build](https://github.com/reportportal/agent-java-cucumber/actions/workflows/ci.yml/badge.svg)](https://github.com/reportportal/agent-java-cucumber/actions/workflows/ci.yml)
 [![Join Slack chat!](https://reportportal-slack-auto.herokuapp.com/badge.svg)](https://reportportal-slack-auto.herokuapp.com)
 [![stackoverflow](https://img.shields.io/badge/reportportal-stackoverflow-orange.svg?style=flat)](http://stackoverflow.com/questions/tagged/reportportal)
 [![Build with Love](https://img.shields.io/badge/build%20with-❤%EF%B8%8F%E2%80%8D-lightgrey.svg)](http://reportportal.io?style=flat)
@@ -43,10 +43,23 @@ Add to POM.xml
 **dependency**
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<repositories>
+     <repository>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
+        <id>bintray-epam-reportportal</id>
+        <name>bintray</name>
+        <url>http://dl.bintray.com/epam/reportportal</url>
+     </repository>
+</repositories>
+
+
+
 <dependency>
   <groupId>com.epam.reportportal</groupId>
   <artifactId>agent-java-cucumber</artifactId>
-  <version>5.0.1</version>
+  <version>5.0.2</version>
 </dependency>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
