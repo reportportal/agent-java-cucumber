@@ -29,7 +29,7 @@ on:
 env:
   VERSION_FILE: gradle.properties
   VERSION_EXTRACT_PATTERN: '(?<=version=).+'
-  GH_USER_NAME: github.actor
+  REPOSITORY_URL: 'https://maven.pkg.github.com/'
   CHANGE_LOG_FILE: CHANGELOG.md
   CHANGE_LOG_TMP_FILE: CHANGELOG_updated.md
   README_FILE: README.md
@@ -68,9 +68,13 @@ jobs:
       - name: Release with Gradle
         id: release
         run: |
-          ./gradlew release -PreleaseMode -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{env.RELEASE_VERSION}} \
-          -Prelease.newVersion=${{env.NEXT_VERSION}} -PbintrayUser=${{secrets.BINTRAY_USER}} -PbintrayApiKey=${{secrets.BINTRAY_API_KEY}} \
-          -PgithubUserName=${{env.GH_USER_NAME}} -PgithubToken=${{secrets.GITHUB_TOKEN}}
+          ./gradlew release -Prelease.useAutomaticVersion=true -Prelease.releaseVersion=${{ env.RELEASE_VERSION }} \
+          -Prelease.newVersion=${{ env.NEXT_VERSION }} -PpublishRepo=${{ env.REPOSITORY_URL }}${{ github.repository }} \
+          -PgithubUserName=${{ github.actor }} -PgithubToken=${{ secrets.GITHUB_TOKEN }} \
+          -PgpgPassphrase=${{  secrets.GPG_PASSPHRASE  }} -PgpgPrivateKey="$(cat <<'EOF'
+          ${{ secrets.GPG_PRIVATE_KEY }}
+          EOF
+          )"
 
       - name: Update README.md
         id: readmeUpdate
@@ -104,7 +108,7 @@ jobs:
         id: createRelease
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.RELEASE_VERSION }}
           release_name: Release ${{ env.RELEASE_VERSION }}
@@ -113,7 +117,7 @@ jobs:
           prerelease: false
 
       - name: Checkout develop branch
-        if: ${{github.ref}} == 'master'
+        if: ${{ github.ref }} == 'master'
         uses: actions/checkout@v2
         with:
           ref: 'develop'
