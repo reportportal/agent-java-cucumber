@@ -1,10 +1,13 @@
 # Cucumber Agent for ReportPortal
- [ ![Download](https://api.bintray.com/packages/epam/reportportal/agent-java-cucumber/images/download.svg) ](https://bintray.com/epam/reportportal/agent-java-cucumber/_latestVersion)
- 
-![CI Build](https://github.com/reportportal/agent-java-cucumber/workflows/CI%20Build/badge.svg)
+
+> **DISCLAIMER**: We use Google Analytics for sending anonymous usage information such as agent's and client's names, and their versions
+> after a successful launch start. This information might help us to improve both ReportPortal backend and client sides. It is used by the
+> ReportPortal team only and is not supposed for sharing with 3rd parties.
+
+[![Maven Central](https://img.shields.io/maven-central/v/com.epam.reportportal/agent-java-cucumber.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber%22)
+[![CI Build](https://github.com/reportportal/agent-java-cucumber/actions/workflows/ci.yml/badge.svg)](https://github.com/reportportal/agent-java-cucumber/actions/workflows/ci.yml)
 [![Join Slack chat!](https://reportportal-slack-auto.herokuapp.com/badge.svg)](https://reportportal-slack-auto.herokuapp.com)
 [![stackoverflow](https://img.shields.io/badge/reportportal-stackoverflow-orange.svg?style=flat)](http://stackoverflow.com/questions/tagged/reportportal)
-[![UserVoice](https://img.shields.io/badge/uservoice-vote%20ideas-orange.svg?style=flat)](https://rpp.uservoice.com/forums/247117-report-portal)
 [![Build with Love](https://img.shields.io/badge/build%20with-❤%EF%B8%8F%E2%80%8D-lightgrey.svg)](http://reportportal.io?style=flat)
 
 ---
@@ -26,12 +29,12 @@
 
 | Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Link to agent's repo | Link to agent's github |
 | - | - | - | - |
-| 1.2.5  | 2.12.2  | [bintray/cucumber1](https://bintray.com/epam/reportportal/agent-java-cucumber) | [github/cucumber1](https://github.com/reportportal/agent-java-cucumber) |
-| 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | [bintray/cucumber2](https://bintray.com/epam/reportportal/agent-java-cucumber2) | [github/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
-| 3.0.0 - 3.0.2 | _ | [bintray/cucumber3](https://bintray.com/epam/reportportal/agent-java-cucumber3) | [github/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
-| 4.4.0 - 4.8.1  | 3.2.0 - 5.1.0 | [bintray/cucumber4](https://bintray.com/epam/reportportal/agent-java-cucumber4) | [github/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
-| 5.0.0 - 5.7.0  | _ | [bintray/cucumber5](https://bintray.com/epam/reportportal/agent-java-cucumber5) | [github/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
-| 6.0.0 - 6.9.0  | _ | [bintray/cucumber6](https://bintray.com/epam/reportportal/agent-java-cucumber6) | [github/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
+| 1.2.5  | 2.12.2  | [binaries/cucumber1](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber%22) | [sources/cucumber1](https://github.com/reportportal/agent-java-cucumber) |
+| 2.0.0 - 2.4.0 | 3.2.0 - 5.1.0 | [binaries/cucumber2](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber2%22) | [sources/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
+| 3.0.0 - 3.0.2 | _ | [binaries/cucumber3](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber3%22) | [sources/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
+| 4.4.0 - 4.8.1  | 3.2.0 - 5.1.0 | [binaries/cucumber4](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber4%22) | [sources/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
+| 5.0.0 - 5.7.0  | _ | [binaries/cucumber5](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber5%22) | [sources/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
+| 6.0.0 - 6.9.0  | _ | [binaries/cucumber6](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber6%22) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
 
 ## Installation
 

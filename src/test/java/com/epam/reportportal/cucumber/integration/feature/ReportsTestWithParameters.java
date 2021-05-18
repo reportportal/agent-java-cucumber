@@ -1,6 +1,8 @@
 package com.epam.reportportal.cucumber.integration.feature;
 
 import com.epam.reportportal.annotations.ParameterKey;
+import com.epam.reportportal.util.test.CommonUtils;
+import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -44,5 +46,11 @@ public class ReportsTestWithParameters {
 	@When("I have a step with a named string parameter (\\w+)")
 	public void iHaveANamedStrInlineParameter(@ParameterKey("my name") String str) {
 		LOGGER.info("String parameter {}", str);
+	}
+
+	@Given("a step with a data table:")
+	public void testStep(DataTable dataTable) throws InterruptedException {
+		LOGGER.info("DataTable parameter:&#13;&#10;{}", dataTable.toString());
+		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 	}
 }

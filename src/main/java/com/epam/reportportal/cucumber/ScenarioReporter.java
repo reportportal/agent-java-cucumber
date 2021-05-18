@@ -15,6 +15,7 @@
  */
 package com.epam.reportportal.cucumber;
 
+import com.epam.reportportal.utils.MemoizingSupplier;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Match;
 import gherkin.formatter.model.Step;
@@ -54,7 +55,7 @@ public class ScenarioReporter extends AbstractReporter {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioReporter.class);
 
-	protected Supplier<Maybe<String>> rootSuiteId = Suppliers.memoize(() -> {
+	protected MemoizingSupplier<Maybe<String>> rootSuiteId = new MemoizingSupplier<>(() -> {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setName("Root User Story");
 		rq.setStartTime(Calendar.getInstance().getTime());
@@ -67,6 +68,15 @@ public class ScenarioReporter extends AbstractReporter {
 		StartTestItemRQ rq = super.buildStartStepRequest(step, stepPrefix, match);
 		rq.setHasStats(false);
 		return rq;
+	}
+
+	@Override
+	protected void beforeStep(Step step, Match match) {
+		super.beforeStep(step, match);
+		String description = buildMultilineArgument(step).trim();
+		if (!description.isEmpty()) {
+			sendLog(description);
+		}
 	}
 
 	@Override
@@ -94,14 +104,23 @@ public class ScenarioReporter extends AbstractReporter {
 		return Optional.of(rootSuiteId.get());
 	}
 
+	/**
+	 * Finish root suite
+	 */
+	protected void finishRootItem() {
+		if(rootSuiteId.isInitialized()) {
+			finishTestItem(rootSuiteId.get());
+			rootSuiteId = null;
+		}
+	}
+
 	@Override
 	protected void afterLaunch() {
 		if (currentFeatureContext.get() == null || currentFeatureContext.get().getId() == null) {
 			LOGGER.debug("There is no scenarios in the launch");
 			return;
 		}
-		finishTestItem(rootSuiteId.get());
-		rootSuiteId = null;
+		finishRootItem();
 		super.afterLaunch();
 	}
 }

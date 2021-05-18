@@ -144,6 +144,7 @@ public class TestUtils {
 		result.setLaunchName("My-test-launch" + generateUniqueId());
 		result.setProjectName("test-project");
 		result.setEnable(true);
+		result.setBaseUrl("http://localhost:8080");
 		return result;
 	}
 
