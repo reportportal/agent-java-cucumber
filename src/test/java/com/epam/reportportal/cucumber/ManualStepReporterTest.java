@@ -115,7 +115,7 @@ public class ManualStepReporterTest {
 		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
 		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> true);
-		logs = logs.subList(0, logs.size() - 1);
+		logs = logs.subList(1, logs.size() - 1);
 		SaveLogRQ firstStepLog = logs.get(0);
 
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);
