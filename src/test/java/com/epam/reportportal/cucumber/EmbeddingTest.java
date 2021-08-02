@@ -20,18 +20,21 @@ import com.epam.reportportal.cucumber.integration.TestScenarioReporter;
 import com.epam.reportportal.cucumber.integration.TestStepReporter;
 import com.epam.reportportal.cucumber.integration.util.TestUtils;
 import com.epam.reportportal.listeners.ListenerParameters;
-import com.epam.reportportal.restendpoint.http.MultiPartRequest;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
+import com.epam.ta.reportportal.ws.model.Constants;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import cucumber.api.CucumberOptions;
 import cucumber.api.testng.AbstractTestNGCucumberTests;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -39,35 +42,37 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.epam.reportportal.cucumber.integration.util.TestUtils.filterLogs;
+import static java.util.Optional.ofNullable;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.*;
 
 @SuppressWarnings("unchecked")
 public class EmbeddingTest {
-	@CucumberOptions(features = "src/test/resources/features/ImageEmbeddingFeature.feature", glue = {
+	@CucumberOptions(features = "src/test/resources/features/embedding/ImageEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.image" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class ImageStepReporter extends AbstractTestNGCucumberTests {
 
 	}
 
-	@CucumberOptions(features = "src/test/resources/features/TextEmbeddingFeature.feature", glue = {
+	@CucumberOptions(features = "src/test/resources/features/embedding/TextEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.text" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class TextStepReporter extends AbstractTestNGCucumberTests {
 
 	}
 
-	@CucumberOptions(features = "src/test/resources/features/PdfEmbeddingFeature.feature", glue = {
+	@CucumberOptions(features = "src/test/resources/features/embedding/PdfEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.pdf" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class PdfStepReporter extends AbstractTestNGCucumberTests {
 
 	}
 
-	@CucumberOptions(features = "src/test/resources/features/ArchiveEmbeddingFeature.feature", glue = {
+	@CucumberOptions(features = "src/test/resources/features/embedding/ArchiveEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.zip" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class ZipStepReporter extends AbstractTestNGCucumberTests {
@@ -86,6 +91,23 @@ public class EmbeddingTest {
 	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 	private final ReportPortal reportPortal = ReportPortal.create(client, params, executorService);
 
+	private static List<MultipartBody.Part> getLogFiles(String name, ArgumentCaptor<List<MultipartBody.Part>> logCaptor) {
+		return logCaptor.getAllValues()
+				.stream()
+				.flatMap(Collection::stream)
+				.filter(p -> ofNullable(p.headers()).map(headers -> headers.get("Content-Disposition"))
+						.map(h -> h.contains(Constants.LOG_REQUEST_BINARY_PART) && h.contains(name))
+						.orElse(false))
+				.collect(Collectors.toList());
+	}
+
+	private static List<String> getTypes(ArgumentCaptor<List<MultipartBody.Part>> logCaptor, List<SaveLogRQ> logs) {
+		return logs.stream()
+				.flatMap(l -> getLogFiles(l.getFile().getName(), logCaptor).stream())
+				.flatMap(f -> ofNullable(f.body().contentType()).map(MediaType::toString).map(Stream::of).orElse(Stream.empty()))
+				.collect(Collectors.toList());
+	}
+
 	@BeforeEach
 	public void setup() {
 		TestUtils.mockLaunch(client, launchId, suiteId, tests);
@@ -98,72 +120,54 @@ public class EmbeddingTest {
 	public void verify_image_embedding() {
 		TestUtils.runTests(ImageStepReporter.class);
 
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(6)).log(logCaptor.capture());
-		List<SaveLogRQ> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.filter(l -> Objects.nonNull(l.getFile()))
-				.collect(Collectors.toList());
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
+		verify(client, atLeastOnce()).log(logCaptor.capture());
+		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> Objects.nonNull(l.getFile()));
 
-		assertThat(logs, hasSize(3));
+		List<String> types = getTypes(logCaptor, logs);
 
-		logs.forEach(l -> assertThat(l.getFile().getContentType(), equalTo("image/jpeg")));
+		assertThat(types, hasSize(3));
+		assertThat(types, containsInAnyOrder("image/jpeg", "image/png", "image/jpeg"));
 	}
 
 	@Test
 	public void verify_text_embedding() {
 		TestUtils.runTests(TextStepReporter.class);
 
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(6)).log(logCaptor.capture());
-		List<SaveLogRQ> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.filter(l -> Objects.nonNull(l.getFile()))
-				.collect(Collectors.toList());
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
+		verify(client, atLeastOnce()).log(logCaptor.capture());
+		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> Objects.nonNull(l.getFile()));
 
-		assertThat(logs, hasSize(3));
+		List<String> types = getTypes(logCaptor, logs);
 
-		logs.forEach(l -> assertThat(l.getFile().getContentType(), equalTo("text/plain")));
+		assertThat(types, hasSize(3));
+		assertThat(types, containsInAnyOrder("text/plain", "image/png", "application/octet-stream"));
 	}
 
 	@Test
 	public void verify_pfd_embedding() {
 		TestUtils.runTests(PdfStepReporter.class);
 
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(6)).log(logCaptor.capture());
-		List<SaveLogRQ> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.filter(l -> Objects.nonNull(l.getFile()))
-				.collect(Collectors.toList());
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
+		verify(client, atLeastOnce()).log(logCaptor.capture());
+		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> Objects.nonNull(l.getFile()));
 
-		assertThat(logs, hasSize(3));
+		List<String> types = getTypes(logCaptor, logs);
 
-		logs.forEach(l -> assertThat(l.getFile().getContentType(), equalTo("application/pdf")));
+		assertThat(types, hasSize(3));
+		assertThat(types, containsInAnyOrder("application/pdf", "image/png", "application/octet-stream"));
 	}
 
 	@Test
 	public void verify_archive_embedding() {
 		TestUtils.runTests(ZipStepReporter.class);
 
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
-		verify(client, times(6)).log(logCaptor.capture());
-		List<SaveLogRQ> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.filter(l -> Objects.nonNull(l.getFile()))
-				.collect(Collectors.toList());
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
+		verify(client, atLeastOnce()).log(logCaptor.capture());
+		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> Objects.nonNull(l.getFile()));
 
-		assertThat(logs, hasSize(3));
-
-		logs.forEach(l -> assertThat(l.getFile().getContentType(), equalTo("application/zip")));
+		List<String> types = getTypes(logCaptor, logs);
+		assertThat(types, hasSize(3));
+		assertThat(types, containsInAnyOrder("application/zip", "image/png", "application/octet-stream"));
 	}
-
 }

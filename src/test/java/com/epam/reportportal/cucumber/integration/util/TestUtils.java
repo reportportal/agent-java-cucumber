@@ -1,25 +1,31 @@
 package com.epam.reportportal.cucumber.integration.util;
 
 import com.epam.reportportal.listeners.ListenerParameters;
-import com.epam.reportportal.restendpoint.http.MultiPartRequest;
 import com.epam.reportportal.service.ReportPortalClient;
+import com.epam.reportportal.utils.http.HttpRequestUtils;
 import com.epam.ta.reportportal.ws.model.BatchSaveOperatingRS;
+import com.epam.ta.reportportal.ws.model.Constants;
 import com.epam.ta.reportportal.ws.model.OperationCompletionRS;
-import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.item.ItemCreatedRS;
-import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRS;
+import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.reactivex.Maybe;
+import okhttp3.MultipartBody;
+import okio.Buffer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.testng.TestNG;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.epam.reportportal.util.test.CommonUtils.createMaybe;
 import static com.epam.reportportal.util.test.CommonUtils.generateUniqueId;
+import static java.util.Optional.ofNullable;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -37,29 +43,6 @@ public class TestUtils {
 		testNG.setExcludedGroups("optional");
 		testNG.run();
 		return testNG;
-	}
-
-	public static StartTestItemRQ extractRequest(ArgumentCaptor<StartTestItemRQ> captor, String methodType) {
-		return captor.getAllValues()
-				.stream()
-				.filter(it -> methodType.equalsIgnoreCase(it.getType()))
-				.findAny()
-				.orElseThrow(() -> new AssertionError(String.format("Method type '%s' should be present among requests", methodType)));
-	}
-
-	public static List<StartTestItemRQ> extractRequests(ArgumentCaptor<StartTestItemRQ> captor, String methodType) {
-		return captor.getAllValues().stream().filter(it -> methodType.equalsIgnoreCase(it.getType())).collect(Collectors.toList());
-	}
-
-	public static StartTestItemRQ standardStartStepRequest() {
-		StartTestItemRQ rq = new StartTestItemRQ();
-		rq.setStartTime(Calendar.getInstance().getTime());
-		String id = generateUniqueId();
-		rq.setName("Step_" + id);
-		rq.setDescription("Test step description");
-		rq.setUniqueId(id);
-		rq.setType("STEP");
-		return rq;
 	}
 
 	public static void mockLaunch(ReportPortalClient client, String launchUuid, String suiteUuid, String testClassUuid,
@@ -110,8 +93,9 @@ public class TestUtils {
 		when(client.finishLaunch(eq(launchUuid), any())).thenReturn(createMaybe(new OperationCompletionRS()));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static void mockLogging(ReportPortalClient client) {
-		when(client.log(any(MultiPartRequest.class))).thenReturn(createMaybe(new BatchSaveOperatingRS()));
+		when(client.log(any(List.class))).thenReturn(createMaybe(new BatchSaveOperatingRS()));
 	}
 
 	public static void mockNestedSteps(ReportPortalClient client, Pair<String, String> parentNestedPair) {
@@ -148,10 +132,33 @@ public class TestUtils {
 		return result;
 	}
 
-	public static StartLaunchRQ launchRQ(ListenerParameters parameters) {
-		StartLaunchRQ result = new StartLaunchRQ();
-		result.setName(parameters.getLaunchName());
-		result.setStartTime(Calendar.getInstance().getTime());
-		return result;
+	public static List<SaveLogRQ> extractJsonParts(List<MultipartBody.Part> parts) {
+		return parts.stream()
+				.filter(p -> ofNullable(p.headers()).map(headers -> headers.get("Content-Disposition"))
+						.map(h -> h.contains(Constants.LOG_REQUEST_JSON_PART))
+						.orElse(false))
+				.map(MultipartBody.Part::body)
+				.map(b -> {
+					Buffer buf = new Buffer();
+					try {
+						b.writeTo(buf);
+					} catch (IOException ignore) {
+					}
+					return buf.readByteArray();
+				})
+				.map(b -> {
+					try {
+						return HttpRequestUtils.MAPPER.readValue(b, new TypeReference<List<SaveLogRQ>>() {
+						});
+					} catch (IOException e) {
+						return Collections.<SaveLogRQ>emptyList();
+					}
+				})
+				.flatMap(Collection::stream)
+				.collect(Collectors.toList());
+	}
+
+	public static List<SaveLogRQ> filterLogs(ArgumentCaptor<List<MultipartBody.Part>> logCaptor, Predicate<SaveLogRQ> filter) {
+		return logCaptor.getAllValues().stream().flatMap(l -> extractJsonParts(l).stream()).filter(filter).collect(Collectors.toList());
 	}
 }

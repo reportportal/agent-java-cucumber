@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import rp.com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +64,7 @@ public class LaunchSystemAttributesTest {
 			emitter.onComplete();
 		}).cache());
 
+		//noinspection ResultOfMethodCallIgnored
 		stepReporter.launch.get().start().blockingGet();
 
 		ArgumentCaptor<StartLaunchRQ> launchRQArgumentCaptor = ArgumentCaptor.forClass(StartLaunchRQ.class);
@@ -73,7 +74,7 @@ public class LaunchSystemAttributesTest {
 
 		assertThat(startLaunchRequest.getAttributes(), notNullValue());
 
-		List<ItemAttributesRQ> attributes = Lists.newArrayList(startLaunchRequest.getAttributes());
+		List<ItemAttributesRQ> attributes = new ArrayList<>(startLaunchRequest.getAttributes());
 		attributes.removeIf(attribute -> attribute.getKey().equals(SKIPPED_ISSUE_KEY));
 
 		assertThat(attributes, hasSize(3));
