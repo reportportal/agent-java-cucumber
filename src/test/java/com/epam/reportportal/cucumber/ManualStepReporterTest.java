@@ -5,7 +5,6 @@ import com.epam.reportportal.cucumber.integration.TestStepReporter;
 import com.epam.reportportal.cucumber.integration.feature.ManualStepReporterSteps;
 import com.epam.reportportal.cucumber.integration.util.TestUtils;
 import com.epam.reportportal.listeners.ListenerParameters;
-import com.epam.reportportal.restendpoint.http.MultiPartRequest;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
@@ -14,6 +13,7 @@ import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import cucumber.api.CucumberOptions;
 import cucumber.api.testng.AbstractTestNGCucumberTests;
+import okhttp3.MultipartBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.epam.reportportal.cucumber.integration.util.TestUtils.filterLogs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.same;
@@ -110,16 +111,11 @@ public class ManualStepReporterTest {
 		verify(client, times(4)).startTestItem(same(testId), any());
 		ArgumentCaptor<StartTestItemRQ> firstStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(1)).startTestItem(same(stepIds.get(1)), firstStepCaptor.capture());
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
-		List<SaveLogRQ> logs = logCaptor.getAllValues()
-				.stream()
-				.skip(1)
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.collect(Collectors.toList());
-		logs = logs.subList(0, logs.size() - 1);
+		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> true);
+		logs = logs.subList(1, logs.size() - 1);
 		SaveLogRQ firstStepLog = logs.get(0);
 
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);
@@ -182,14 +178,10 @@ public class ManualStepReporterTest {
 		verify(client, times(4)).startTestItem(same(stepIds.get(0)), any());
 		ArgumentCaptor<StartTestItemRQ> firstStepCaptor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(1)).startTestItem(same(scenarioNestedStepIds.get(1)), firstStepCaptor.capture());
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, times(7)).log(logCaptor.capture());
 		StartTestItemRQ firstStep = firstStepCaptor.getValue();
-		List<SaveLogRQ> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.collect(Collectors.toList());
+		List<SaveLogRQ> logs = filterLogs(logCaptor, l -> true);
 
 		SaveLogRQ firstStepLog = logs.get(1);
 		verifyStepStart(firstStep, ManualStepReporterSteps.FIRST_NAME);

@@ -29,20 +29,20 @@ public class EmbeddingStepdefs {
 	public String type;
 
 	@Given("I have a dummy step to attach a text with correct mime type")
-	public void i_have_a_dummy_step_to_make_a_screenshot_correct_type() throws InterruptedException {
-		type = "image/jpeg";
+	public void i_have_a_dummy_step_to_attach_a_text_correct_type() throws InterruptedException {
+		type = "text/plain";
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 	}
 
 	@Given("I have a dummy step to attach a text with incorrect mime type")
-	public void i_have_a_dummy_step_to_make_a_screenshot_incorrect_type() throws InterruptedException {
+	public void i_have_a_dummy_step_to_attach_a_text_incorrect_type() throws InterruptedException {
 		type = "image/png";
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 	}
 
 	@Given("I have a dummy step to attach a text with partially correct mime type")
-	public void i_have_a_dummy_step_to_make_a_screenshot_partially_correct_type() throws InterruptedException {
-		type = "jpeg";
+	public void i_have_a_dummy_step_to_attach_a_text_partially_correct_type() throws InterruptedException {
+		type = "text";
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 	}
 

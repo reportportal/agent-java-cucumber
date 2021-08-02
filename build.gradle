@@ -18,6 +18,16 @@ apply plugin: 'java-library'
 apply from: "${project.scripts_url}/${project.scripts_branch}/build-quality.gradle"
 apply from: "${project.scripts_url}/${project.scripts_branch}/release-commons.gradle"
 apply from: "${project.scripts_url}/${project.scripts_branch}/signing.gradle"
+apply from: "${project.scripts_url}/${project.scripts_branch}/jacoco.gradle"
+
+project.ext.limits = [
+        'instruction': 70,
+        'branch'     : 53,
+        'line'       : 75,
+        'complexity' : 60,
+        'method'     : 65,
+        'class'      : 87
+]
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -28,11 +38,12 @@ repositories {
 }
 
 dependencies {
-    api 'com.epam.reportportal:client-java:5.0.21'
+    api 'com.epam.reportportal:client-java:5.1.0-RC-4'
     api 'com.epam.reportportal:commons-model:5.0.0'
     api 'com.google.code.findbugs:jsr305:3.0.2'
     api 'info.cukes:gherkin:2.12.2'
 
+    implementation 'org.slf4j:slf4j-api:1.7.25'
     implementation 'org.apache.commons:commons-text:1.9'
 
     testImplementation 'com.github.reportportal:agent-java-test-utils:ddcf50ee20'
@@ -62,6 +73,7 @@ test {
         def weaver = configurations.testRuntimeClasspath.find { it.name.contains("aspectjweaver") }
         jvmArgs += "-javaagent:$weaver"
     }
+    environment "AGENT_NO_ANALYTICS", "1"
     testLogging {
         events "failed"
         exceptionFormat "full"
@@ -77,3 +89,5 @@ processResources {
         expand(project.properties)
     }
 }
+
+build.dependsOn jacocoTestReport

@@ -16,9 +16,9 @@ name: CI Build
 on:
   push:
     branches:
-    - '*'
-    - '!master'
-    - '!v4-hotfix'
+      - '*'
+      - '!master'
+      - '!v4-hotfix'
     paths-ignore:
       - README.md
       - README_TEMPLATE.md
@@ -27,23 +27,26 @@ on:
 
   pull_request:
     branches:
-    - master
-    - v4-hotfix
+      - master
+      - v4-hotfix
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.8
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Build with Gradle
-      run: ./gradlew build
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Codecov upload
+        run: bash <(curl -s https://codecov.io/bash)

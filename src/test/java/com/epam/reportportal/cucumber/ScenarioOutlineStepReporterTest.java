@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.Mockito.*;
 
 /**
@@ -51,6 +52,13 @@ public class ScenarioOutlineStepReporterTest {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
 	public static class RunOutlineParametersTestStepReporter extends AbstractTestNGCucumberTests {
+
+	}
+
+	@CucumberOptions(features = "src/test/resources/features/DynamicScenarioOutlineNames.feature", glue = {
+			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
+			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
+	public static class RunDynamicScenarioOutlineTitlesTestStepReporter extends AbstractTestNGCucumberTests {
 
 	}
 
@@ -85,5 +93,22 @@ public class ScenarioOutlineStepReporterTest {
 		List<String> items = captor.getAllValues().stream().map(StartTestItemRQ::getName).collect(Collectors.toList());
 
 		assertThat(items, equalTo(Collections.nCopies(3, "Scenario Outline: Test with different parameters")));
+	}
+
+	@Test
+	public void verify_dynamic_scenario_outline_names() {
+		TestUtils.runTests(RunDynamicScenarioOutlineTitlesTestStepReporter.class);
+
+		verify(client, times(1)).startTestItem(any());
+		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
+		verify(client, times(3)).startTestItem(same(suiteId), captor.capture());
+
+		List<String> items = captor.getAllValues().stream().map(StartTestItemRQ::getName).collect(Collectors.toList());
+
+		assertThat(items, hasItems(
+				"Scenario Outline: Test with the parameter \"first\"",
+				"Scenario Outline: Test with the parameter \"second\"",
+				"Scenario Outline: Test with the parameter \"third\""
+		));
 	}
 }

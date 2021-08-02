@@ -3,7 +3,6 @@ package com.epam.reportportal.cucumber;
 import com.epam.reportportal.cucumber.integration.TestScenarioReporter;
 import com.epam.reportportal.cucumber.integration.TestStepReporter;
 import com.epam.reportportal.cucumber.integration.util.TestUtils;
-import com.epam.reportportal.restendpoint.http.MultiPartRequest;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
@@ -12,6 +11,7 @@ import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import cucumber.api.CucumberOptions;
 import cucumber.api.testng.AbstractTestNGCucumberTests;
+import okhttp3.MultipartBody;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.epam.reportportal.cucumber.integration.util.TestUtils.filterLogs;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.any;
@@ -195,13 +196,9 @@ public class ParameterStepReporterTest {
 		assertThat(param1.getKey(), equalTo("java.lang.String"));
 		assertThat(param1.getValue(), equalTo(DOCSTRING_PARAM));
 
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, times(4)).log(logCaptor.capture());
-		List<String> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.filter(l -> l.getItemUuid().equals(tests.get(0).getValue().get(2)))
+		List<String> logs = filterLogs(logCaptor, l -> l.getItemUuid().equals(tests.get(0).getValue().get(2))).stream()
 				.map(SaveLogRQ::getMessage)
 				.collect(Collectors.toList());
 
@@ -224,15 +221,10 @@ public class ParameterStepReporterTest {
 		assertThat(param1.getKey(), equalTo("cucumber.api.DataTable"));
 		assertThat(param1.getValue(), equalTo(TABLE_PARAM));
 
-		ArgumentCaptor<MultiPartRequest> logCaptor = ArgumentCaptor.forClass(MultiPartRequest.class);
+		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, times(3)).log(logCaptor.capture());
-		List<MultiPartRequest> logRqs = logCaptor.getAllValues();
 
-		List<String> logs = logCaptor.getAllValues()
-				.stream()
-				.flatMap(l -> l.getSerializedRQs().stream())
-				.flatMap(l -> ((List<SaveLogRQ>) l.getRequest()).stream())
-				.filter(l -> l.getItemUuid().equals(tests.get(0).getValue().get(1)))
+		List<String> logs = filterLogs(logCaptor, l -> l.getItemUuid().equals(tests.get(0).getValue().get(1))).stream()
 				.map(SaveLogRQ::getMessage)
 				.collect(Collectors.toList());
 

@@ -16,9 +16,9 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.ItemStatus;
+import com.google.common.collect.ImmutableMap;
 import gherkin.formatter.Argument;
 import gherkin.formatter.model.Match;
-import rp.com.google.common.collect.ImmutableMap;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -86,7 +86,6 @@ public class Utils {
 	public static final Function<List<Argument>, List<?>> ARGUMENTS_TRANSFORM = arguments -> ofNullable(arguments).map(args -> args.stream()
 			.map(Argument::getVal)
 			.collect(Collectors.toList())).orElse(null);
-
 
 	/**
 	 * Converts a table represented as List of Lists to a formatted table string
