@@ -711,11 +711,19 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			Method getLocationMethod = javaStepDefinition.getClass().getDeclaredMethod(GET_LOCATION_METHOD_NAME, boolean.class);
 			getLocationMethod.setAccessible(true);
 			String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
-			return fullCodeRef != null ? fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET)) : null;
+			if(!fullCodeRef.isEmpty()) {
+				int openingBracketIndex = fullCodeRef.indexOf(METHOD_OPENING_BRACKET);
+				if(openingBracketIndex > 0) {
+					return fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET));
+				} else {
+					return fullCodeRef;
+				}
+			} else {
+				return match.getLocation();
+			}
 		} catch (NoSuchFieldException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-			return null;
+			return match.getLocation();
 		}
-
 	}
 
 	/**
