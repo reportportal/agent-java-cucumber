@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Cucumber-groovy crash
 
 ## [5.1.0-RC-2]
 ### Changed

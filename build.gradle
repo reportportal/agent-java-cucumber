@@ -48,8 +48,8 @@ dependencies {
 
     testImplementation 'com.github.reportportal:agent-java-test-utils:ddcf50ee20'
     testImplementation 'org.aspectj:aspectjweaver:1.9.2'
-    testImplementation "info.cukes:cucumber-java:${project.cucumber_version}"
-    testImplementation "info.cukes:cucumber-testng:${project.cucumber_version}"
+    testImplementation "io.cucumber:cucumber-java:${project.cucumber_version}"
+    testImplementation "io.cucumber:cucumber-testng:${project.cucumber_version}"
     testImplementation 'org.hamcrest:hamcrest-core:2.2'
     testImplementation 'org.mockito:mockito-core:3.3.3'
     testImplementation 'org.mockito:mockito-junit-jupiter:3.3.3'
