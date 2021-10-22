@@ -351,7 +351,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void afterStep(Result result) {
 		reportResult(result, null);
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		launch.get().getStepReporter().finishPreviousStep();
 		finishTestItem(context.getCurrentStepId(), mapStatus(result.getStatus()));
 		context.setCurrentStepId(null);
 	}
@@ -391,7 +390,6 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@SuppressWarnings("unused")
 	protected void afterHooks(Boolean isBefore) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		launch.get().getStepReporter().finishPreviousStep();
 		finishTestItem(context.getHookStepId(), context.getHookStatus());
 		context.setHookStepId(null);
 	}
@@ -711,9 +709,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			Method getLocationMethod = javaStepDefinition.getClass().getDeclaredMethod(GET_LOCATION_METHOD_NAME, boolean.class);
 			getLocationMethod.setAccessible(true);
 			String fullCodeRef = String.valueOf(getLocationMethod.invoke(javaStepDefinition, true));
-			if(!fullCodeRef.isEmpty()) {
+			if (!fullCodeRef.isEmpty()) {
 				int openingBracketIndex = fullCodeRef.indexOf(METHOD_OPENING_BRACKET);
-				if(openingBracketIndex > 0) {
+				if (openingBracketIndex > 0) {
 					return fullCodeRef.substring(0, fullCodeRef.indexOf(METHOD_OPENING_BRACKET));
 				} else {
 					return fullCodeRef;
