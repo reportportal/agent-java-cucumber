@@ -22,6 +22,8 @@ import com.epam.reportportal.util.test.CommonUtils;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import gherkin.formatter.model.Scenario;
 
+import javax.annotation.Nonnull;
+
 public class TestStepReporterWithPause extends StepReporter {
 	public static final ThreadLocal<ReportPortal> RP = new ThreadLocal<>();
 
@@ -31,7 +33,8 @@ public class TestStepReporterWithPause extends StepReporter {
 	}
 
 	@Override
-	protected StartTestItemRQ buildStartScenarioRequest(Scenario scenario, String uri)  {
+	@Nonnull
+	protected StartTestItemRQ buildStartScenarioRequest(@Nonnull Scenario scenario, @Nonnull String uri)  {
 		StartTestItemRQ result = super.buildStartScenarioRequest(scenario, uri);
 		try {
 			Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);

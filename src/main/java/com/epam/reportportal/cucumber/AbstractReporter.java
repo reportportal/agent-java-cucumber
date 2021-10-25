@@ -180,7 +180,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param uri      a scenario relative path
 	 * @return start test item request ready to send on RP
 	 */
-	protected StartTestItemRQ buildStartScenarioRequest(Scenario scenario, String uri) {
+	@Nonnull
+	protected StartTestItemRQ buildStartScenarioRequest(@Nonnull Scenario scenario, @Nonnull String uri) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setName(buildScenarioName(scenario));
 		String description = getDescription(scenario, uri);
@@ -253,7 +254,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param uri     a path to the feature
 	 * @return Request to ReportPortal
 	 */
-	protected StartTestItemRQ buildStartFeatureRequest(Feature feature, String uri) {
+	@Nonnull
+	protected StartTestItemRQ buildStartFeatureRequest(@Nonnull Feature feature, @Nonnull String uri) {
 		String featureKeyword = feature.getKeyword();
 		String featureName = feature.getName();
 		StartTestItemRQ startFeatureRq = new StartTestItemRQ();
@@ -303,7 +305,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param match      a Cucumber's Match object
 	 * @return Request to ReportPortal
 	 */
-	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
+	@Nonnull
+	protected StartTestItemRQ buildStartStepRequest(@Nonnull Step step, @Nullable String stepPrefix, @Nonnull Match match) {
 		StartTestItemRQ rq = new StartTestItemRQ();
 		rq.setName(Utils.buildName(stepPrefix, step.getKeyword(), step.getName()));
 		rq.setDescription(buildMultilineArgument(step));
@@ -701,7 +704,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @return a code reference, or null if not possible to determine (ambiguous, undefined, etc.)
 	 */
 	@Nullable
-	protected String getCodeRef(Match match) {
+	protected String getCodeRef(@Nonnull Match match) {
 		try {
 			Field stepDefinitionField = match.getClass().getDeclaredField(STEP_DEFINITION_FIELD_NAME);
 			stepDefinitionField.setAccessible(true);
