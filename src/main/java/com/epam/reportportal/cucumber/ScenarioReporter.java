@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Calendar;
 import java.util.Optional;
 
@@ -62,7 +63,8 @@ public class ScenarioReporter extends AbstractReporter {
 	});
 
 	@Override
-	protected StartTestItemRQ buildStartStepRequest(Step step, String stepPrefix, Match match) {
+	@Nonnull
+	protected StartTestItemRQ buildStartStepRequest(@Nonnull Step step, @Nullable String stepPrefix, @Nonnull Match match) {
 		StartTestItemRQ rq = super.buildStartStepRequest(step, stepPrefix, match);
 		rq.setHasStats(false);
 		return rq;
