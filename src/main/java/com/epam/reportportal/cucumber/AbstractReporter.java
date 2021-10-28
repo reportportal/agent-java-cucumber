@@ -434,6 +434,18 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	/**
+	 * Start before/after-hook item on Report Portal
+	 *
+	 * @param parentId  parent item id
+	 * @param rq hook start request
+	 * @return hook item id
+	 */
+	@Nonnull
+	protected Maybe<String> startHook(@Nonnull Maybe<String> parentId, @Nonnull StartTestItemRQ rq) {
+		return launch.get().startTestItem(parentId, rq);
+	}
+
+	/**
 	 * Called when before/after-hooks are started
 	 *
 	 * @param isBefore - if true, before-hook is finished, if false - after-hook
@@ -442,7 +454,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		StartTestItemRQ rq = buildStartHookRequest(isBefore);
 
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		context.setHookStepId(launch.get().startTestItem(context.getId(), rq));
+		context.setHookStepId(startHook(context.getId(), rq));
 		context.setHookStatus(ItemStatus.PASSED);
 	}
 

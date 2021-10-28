@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- `startHook` method
 
 ## [5.1.0-RC-5]
 ### Added
