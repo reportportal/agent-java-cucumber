@@ -42,27 +42,13 @@
 Add to POM.xml
 
 **dependency**
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-<repositories>
-     <repository>
-        <snapshots>
-          <enabled>false</enabled>
-        </snapshots>
-        <id>bintray-epam-reportportal</id>
-        <name>bintray</name>
-        <url>http://dl.bintray.com/epam/reportportal</url>
-     </repository>
-</repositories>
-
-
-
+```xml
 <dependency>
   <groupId>com.epam.reportportal</groupId>
   <artifactId>agent-java-cucumber</artifactId>
   <version>$LATEST_VERSION</version>
 </dependency>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+```
 
 ## Install Reporter
 
@@ -127,7 +113,7 @@ rp.batch.size.logs = 5
 
 ### Parameters
 
-User should provide next parameters to agent.
+User should provide next parameters to agent. These are only examples, for the aclual list of parameters please look into [client-java](https://github.com/reportportal/client-java) repository.
 
 | **Parameter**                                 | **Description**      | **Required**|
 |-----------------------------------------------|----------------------|-------------|
