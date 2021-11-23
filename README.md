@@ -35,7 +35,7 @@
 | 3.0.0 - 3.0.2 | _ | [binaries/cucumber3](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber3%22) | [sources/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
 | 4.4.0 - 4.8.1  | 3.2.0 - 5.1.0 | [binaries/cucumber4](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber4%22) | [sources/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
 | 5.0.0 - 5.7.0  | _ | [binaries/cucumber5](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber5%22) | [sources/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
-| 6.0.0 - 7.0.0  | _ | [binaries/cucumber6](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber6%22) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
+| 6.0.0 - 7.0.0  | 6.0.0 - 7.0.0 | [binaries/cucumber6](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber6%22) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
 
 ## Installation
 
