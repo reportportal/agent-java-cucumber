@@ -3,6 +3,9 @@
 ## [Unreleased]
 ### Added
 - `startHook` method
+### Changed
+- Version promoted to stable release
+- Client version updated on [5.1.0](https://github.com/reportportal/client-java/releases/tag/5.1.0)
 
 ## [5.1.0-RC-5]
 ### Added
