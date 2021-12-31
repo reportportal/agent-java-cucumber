@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.epam.reportportal.util.test.CommonUtils.createMaybe;
 import static com.epam.reportportal.util.test.CommonUtils.generateUniqueId;
 import static java.util.Optional.ofNullable;
 import static org.mockito.ArgumentMatchers.*;
@@ -58,14 +57,14 @@ public class TestUtils {
 	@SuppressWarnings("unchecked")
 	public static <T extends Collection<String>> void mockLaunch(ReportPortalClient client, String launchUuid, String suiteUuid,
 			Collection<Pair<String, T>> testSteps) {
-		when(client.startLaunch(any())).thenReturn(createMaybe(new StartLaunchRS(launchUuid, 1L)));
+		when(client.startLaunch(any())).thenReturn(Maybe.just(new StartLaunchRS(launchUuid, 1L)));
 
-		Maybe<ItemCreatedRS> suiteMaybe = createMaybe(new ItemCreatedRS(suiteUuid, suiteUuid));
+		Maybe<ItemCreatedRS> suiteMaybe = Maybe.just(new ItemCreatedRS(suiteUuid, suiteUuid));
 		when(client.startTestItem(any())).thenReturn(suiteMaybe);
 
 		List<Maybe<ItemCreatedRS>> testResponses = testSteps.stream()
 				.map(Pair::getKey)
-				.map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid)))
+				.map(uuid -> Maybe.just(new ItemCreatedRS(uuid, uuid)))
 				.collect(Collectors.toList());
 
 		Maybe<ItemCreatedRS> first = testResponses.get(0);
@@ -76,26 +75,26 @@ public class TestUtils {
 			String testClassUuid = test.getKey();
 			List<Maybe<ItemCreatedRS>> stepResponses = test.getValue()
 					.stream()
-					.map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid)))
+					.map(uuid -> Maybe.just(new ItemCreatedRS(uuid, uuid)))
 					.collect(Collectors.toList());
 
 			Maybe<ItemCreatedRS> myFirst = stepResponses.get(0);
 			Maybe<ItemCreatedRS>[] myOther = stepResponses.subList(1, stepResponses.size()).toArray(new Maybe[0]);
 			when(client.startTestItem(same(testClassUuid), any())).thenReturn(myFirst, myOther);
 			new HashSet<>(test.getValue()).forEach(testMethodUuid -> when(client.finishTestItem(same(testMethodUuid), any())).thenReturn(
-					createMaybe(new OperationCompletionRS())));
-			when(client.finishTestItem(same(testClassUuid), any())).thenReturn(createMaybe(new OperationCompletionRS()));
+					Maybe.just(new OperationCompletionRS())));
+			when(client.finishTestItem(same(testClassUuid), any())).thenReturn(Maybe.just(new OperationCompletionRS()));
 		});
 
-		Maybe<OperationCompletionRS> suiteFinishMaybe = createMaybe(new OperationCompletionRS());
+		Maybe<OperationCompletionRS> suiteFinishMaybe = Maybe.just(new OperationCompletionRS());
 		when(client.finishTestItem(eq(suiteUuid), any())).thenReturn(suiteFinishMaybe);
 
-		when(client.finishLaunch(eq(launchUuid), any())).thenReturn(createMaybe(new OperationCompletionRS()));
+		when(client.finishLaunch(eq(launchUuid), any())).thenReturn(Maybe.just(new OperationCompletionRS()));
 	}
 
 	@SuppressWarnings("unchecked")
 	public static void mockLogging(ReportPortalClient client) {
-		when(client.log(any(List.class))).thenReturn(createMaybe(new BatchSaveOperatingRS()));
+		when(client.log(any(List.class))).thenReturn(Maybe.just(new BatchSaveOperatingRS()));
 	}
 
 	public static void mockNestedSteps(ReportPortalClient client, Pair<String, String> parentNestedPair) {
@@ -108,7 +107,7 @@ public class TestUtils {
 				.collect(Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList())));
 		responseOrders.forEach((k, v) -> {
 			List<Maybe<ItemCreatedRS>> responses = v.stream()
-					.map(uuid -> createMaybe(new ItemCreatedRS(uuid, uuid)))
+					.map(uuid -> Maybe.just(new ItemCreatedRS(uuid, uuid)))
 					.collect(Collectors.toList());
 
 			Maybe<ItemCreatedRS> first = responses.get(0);
@@ -118,7 +117,7 @@ public class TestUtils {
 		parentNestedPairs.forEach(p -> when(client.finishTestItem(
 				same(p.getValue()),
 				any()
-		)).thenAnswer((Answer<Maybe<OperationCompletionRS>>) invocation -> createMaybe(new OperationCompletionRS())));
+		)).thenAnswer((Answer<Maybe<OperationCompletionRS>>) invocation -> Maybe.just(new OperationCompletionRS())));
 	}
 
 	public static ListenerParameters standardParameters() {
