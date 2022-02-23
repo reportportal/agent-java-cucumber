@@ -40,7 +40,7 @@ public class ParameterScenarioReporterTest {
 	@CucumberOptions(features = "src/test/resources/features/OneSimpleAndOneScenarioOutline.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestScenarioReporter" })
-	public static class OneSimpleAndOneScenarioOutlineScenarioReporter extends AbstractTestNGCucumberTests {
+	public static class OneSimpleAndOneScenarioOutlineScenarioReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
@@ -97,7 +97,7 @@ public class ParameterScenarioReporterTest {
 
 	@Test
 	public void verify_agent_creates_correct_step_names() {
-		TestUtils.runTests(OneSimpleAndOneScenarioOutlineScenarioReporter.class);
+		TestUtils.runTests(OneSimpleAndOneScenarioOutlineScenarioReporterTest.class);
 
 		verify(client, times(1)).startTestItem(any());
 		verify(client, times(1)).startTestItem(same(suiteId), any());
