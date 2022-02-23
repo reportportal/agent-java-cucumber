@@ -33,11 +33,6 @@ jobs:
 
     steps:
 
-      - name: Set up JDK 1.8
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
-
       - name: Get variables
         run: |
           echo "ARTIFACT=`echo ${{ github.repository }} | cut -d/ -f2- | awk '{print tolower($0)}'`" >> $GITHUB_ENV
