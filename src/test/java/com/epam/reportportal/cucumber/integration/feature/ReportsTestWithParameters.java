@@ -50,7 +50,7 @@ public class ReportsTestWithParameters {
 
 	@Given("a step with a data table:")
 	public void testStep(DataTable dataTable) throws InterruptedException {
-		LOGGER.info("DataTable parameter:&#13;&#10;{}", dataTable.toString());
+		LOGGER.info("DataTable parameter:\r\n{}", dataTable.toString());
 		Thread.sleep(CommonUtils.MINIMAL_TEST_PAUSE);
 	}
 }

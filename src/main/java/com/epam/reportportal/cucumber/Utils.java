@@ -36,10 +36,11 @@ import static java.util.Optional.ofNullable;
 public class Utils {
 	private static final String STEP_DEFINITION_FIELD_NAME = "stepDefinition";
 	private static final String METHOD_FIELD_NAME = "method";
-	private static final String ONE_SPACE = "&nbsp;";
+	public static final String ONE_SPACE = "\u00A0";
 	private static final String NEW_LINE = "\r\n";
-	private static final String TABLE_INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;";
-	private static final String TABLE_SEPARATOR = "|";
+	public static final String TABLE_INDENT = "\u00A0\u00A0\u00A0\u00A0";
+	public static final String TABLE_COLUMN_SEPARATOR = "|";
+	public static final String TABLE_ROW_SEPARATOR = "-";
 
 	//@formatter:off
 	public static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
@@ -103,8 +104,9 @@ public class Utils {
 				.map(col -> col.stream().mapToInt(String::length).max().orElse(0))
 				.collect(Collectors.toList());
 
+		boolean header = true;
 		for (List<String> row : table) {
-			result.append(TABLE_INDENT).append(TABLE_SEPARATOR);
+			result.append(TABLE_INDENT).append(TABLE_COLUMN_SEPARATOR);
 			for (int i = 0; i < row.size(); i++) {
 				String cell = row.get(i);
 				int maxSize = colSizes.get(i) - cell.length() + 2;
@@ -113,7 +115,17 @@ public class Utils {
 				IntStream.range(0, lSpace).forEach(j -> result.append(ONE_SPACE));
 				result.append(cell);
 				IntStream.range(0, rSpace).forEach(j -> result.append(ONE_SPACE));
-				result.append(TABLE_SEPARATOR);
+				result.append(TABLE_COLUMN_SEPARATOR);
+			}
+			if (header) {
+				header = false;
+				result.append(NEW_LINE);
+				result.append(TABLE_INDENT).append(TABLE_COLUMN_SEPARATOR);
+				for (int i = 0; i < row.size(); i++) {
+					int maxSize = colSizes.get(i) + 2;
+					IntStream.range(0, maxSize).forEach(j -> result.append(TABLE_ROW_SEPARATOR));
+					result.append(TABLE_COLUMN_SEPARATOR);
+				}
 			}
 			result.append(NEW_LINE);
 		}
