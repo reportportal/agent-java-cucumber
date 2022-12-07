@@ -60,7 +60,7 @@ jobs:
         with:
           name: 'reportportal.io'
           email: 'support@reportportal.io'
-          token: ${{ secrets.GH_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release with Gradle
         id: release
@@ -115,7 +115,7 @@ jobs:
 
       - name: Merge release branch into develop
         id: mergeIntoDevelop
-        if: ${{github.ref}} == 'master'
+        if: ${{ github.ref }} == 'master'
         run: |
           git merge -m 'Merge master branch into develop after a release' origin/master
           git status | (! grep -Fq 'both modified:') || git status | grep -F 'both modified:' \
