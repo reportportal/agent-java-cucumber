@@ -38,13 +38,13 @@ repositories {
 }
 
 dependencies {
-    api 'com.epam.reportportal:client-java:5.1.14'
+    api 'com.epam.reportportal:client-java:5.1.15'
     api 'com.epam.reportportal:commons-model:5.0.0'
     api 'com.google.code.findbugs:jsr305:3.0.2'
     api 'info.cukes:gherkin:2.12.2'
 
     implementation 'org.slf4j:slf4j-api:1.7.36'
-    implementation 'org.apache.commons:commons-text:1.9'
+    implementation 'org.apache.commons:commons-text:1.10.0'
 
     testImplementation 'com.github.reportportal:agent-java-test-utils:236a68c'
     testImplementation 'org.aspectj:aspectjweaver:1.9.2'
