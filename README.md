@@ -1,7 +1,7 @@
 # Cucumber Agent for ReportPortal
 
 > **DISCLAIMER**: We use Google Analytics for sending anonymous usage information such as agent's and client's names,
-> and their versions after a successful launch start. This information might help us to improve both Report Portal
+> and their versions after a successful launch start. This information might help us to improve both ReportPortal
 > backend and client sides. It is used by the ReportPortal team only and is not supposed for sharing with 3rd parties.
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.epam.reportportal/agent-java-cucumber.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.epam.reportportal/agent-java-cucumber)
@@ -94,7 +94,7 @@ public class RunCukesTest {
 
 ## Configuration
 
-Copy you configuration from UI of Report Portal at `User Profile` section
+Copy you configuration from UI of ReportPortal at `User Profile` section
 
 or
 
@@ -104,7 +104,7 @@ In order to start using of agent, user should configure property file
 ### reportportal.properties
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-rp.endpoint = https://web.demo.reportportal.io
+rp.endpoint = https://demo.reportportal.io
 rp.username = default
 rp.api.key = 5145b879-83d9-4692-8b07-928cc4b2af7a
 rp.launch = default_TEST_EXAMPLE
@@ -118,20 +118,20 @@ rp.keystore.password = reportportal
 
 ### Parameters
 
-User should provide next parameters to agent. These are only examples, for the aclual list of parameters please look
+User should provide next parameters to agent. These are only examples, for the actual list of parameters please look
 into [client-java](https://github.com/reportportal/client-java) repository.
 
 | **Parameter**        | **Description**                                                                                                                                                                                                                                                                                                                                                               | **Required** |
 |----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
 | rp.endpoint          | URL of web service, where requests should be send                                                                                                                                                                                                                                                                                                                             | Yes          |
-| rp.api.key           | UUID of user.                                                                                                                                                                                                                                                                                                                                                                 | Yes          |
+| rp.api.key           | API key of the user.                                                                                                                                                                                                                                                                                                                                                          | Yes          |
 | rp.launch            | The unique name of Launch (Run). Based on that name a history of runs will be created for particular name                                                                                                                                                                                                                                                                     | Yes          |
 | rp.project           | Project name to identify scope                                                                                                                                                                                                                                                                                                                                                | Yes          |
-| rp.enable            | Enable/Disable logging to Report Portal: rp.enable=true - enable log to RP server.  Any other value means 'false': rp.enable=false - disable log to RP server.  If parameter is absent in  properties file then automation project results will be posted on RP.                                                                                                              | No           |
+| rp.enable            | Enable/Disable logging to ReportPortal: rp.enable=true - enable log to RP server.  Any other value means 'false': rp.enable=false - disable log to RP server.  If parameter is absent in  properties file then automation project results will be posted on RP.                                                                                                               | No           |
 | rp.tags              | Set of tags for specifying additional meta information for current launch. Format: tag1;tag2;build:12345-6. Tags should be separated by “;”. There are one special tag- build – it should be used for specification number of build for launch.                                                                                                                               | No           |
 | rp.convertimage      | Colored log images can be converted to grayscale for reducing image size. Values: ‘true’ – will be converted. Any other value means ‘false’.                                                                                                                                                                                                                                  | No           |
 | rp.mode              | ReportPortal provides possibility to specify visibility of executing launch. Currently two modes are supported: DEFAULT  - all users from project can see this launch; DEBUG - all users except of Customer role can see this launch (in debug sub tab). Note: for all java based clients (TestNG, Junit) mode will be set automatically to "DEFAULT" if it is not specified. | No           |
-| rp.skipped.issue     | ReportPortal provides feature to mark skipped tests as not 'To Investigate' items on WS side. Parameter could be equal boolean values: *TRUE* - skipped tests considered as issues and will be marked as 'To Investigate' on Report Portal. *FALSE* - skipped tests will not be marked as 'To Investigate' on application.                                                    | No           |
+| rp.skipped.issue     | ReportPortal provides feature to mark skipped tests as not 'To Investigate' items on WS side. Parameter could be equal boolean values: *TRUE* - skipped tests considered as issues and will be marked as 'To Investigate' on ReportPortal. *FALSE* - skipped tests will not be marked as 'To Investigate' on application.                                                     | No           |
 | rp.batch.size.logs   | In order to rise up performance and reduce number of requests to server. Default = 10                                                                                                                                                                                                                                                                                         | No           |
 | rp.keystore.resource | Put your JKS file into resources and specify path to it                                                                                                                                                                                                                                                                                                                       | No           |
 | rp.keystore.password | Access password for JKS (certificate storage) package, mentioned above                                                                                                                                                                                                                                                                                                        | No           |
@@ -165,9 +165,7 @@ There are two way to load parameters.
 Properties file should have name: “reportportal.properties”. Properties file can
 be situated on the class path (in the project directory).
 
-If listener can’t find properties file it throws FileNotFoundException. By
-default “reportportal.properties” exists in the reportportall-client.jar, but
-user can create his own “reportportal.properties” file and put in class path.
+If listener can’t find properties file it throws FileNotFoundException.
 
 - Use system variables
 

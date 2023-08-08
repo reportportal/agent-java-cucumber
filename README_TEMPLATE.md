@@ -101,7 +101,7 @@ In order to start using of agent, user should configure property file
 ### reportportal.properties
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-rp.endpoint = https://web.demo.reportportal.io
+rp.endpoint = https://demo.reportportal.io
 rp.username = default
 rp.api.key = 5145b879-83d9-4692-8b07-928cc4b2af7a
 rp.launch = default_TEST_EXAMPLE
@@ -162,9 +162,7 @@ There are two way to load parameters.
 Properties file should have name: “reportportal.properties”. Properties file can
 be situated on the class path (in the project directory).
 
-If listener can’t find properties file it throws FileNotFoundException. By
-default “reportportal.properties” exists in the reportportall-client.jar, but
-user can create his own “reportportal.properties” file and put in class path.
+If listener can’t find properties file it throws FileNotFoundException.
 
 - Use system variables
 
