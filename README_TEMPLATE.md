@@ -115,7 +115,7 @@ rp.keystore.password = reportportal
 
 ### Parameters
 
-User should provide next parameters to agent. These are only examples, for the aclual list of parameters please look
+User should provide next parameters to agent. These are only examples, for the actual list of parameters please look
 into [client-java](https://github.com/reportportal/client-java) repository.
 
 | **Parameter**        | **Description**                                                                                                                                                                                                                                                                                                                                                               | **Required** |
