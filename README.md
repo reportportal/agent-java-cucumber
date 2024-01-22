@@ -46,11 +46,10 @@ Add to POM.xml
 **dependency**
 
 ```xml
-
 <dependency>
-    <groupId>com.epam.reportportal</groupId>
-    <artifactId>agent-java-cucumber</artifactId>
-    <version>5.1.4</version>
+  <groupId>com.epam.reportportal</groupId>
+  <artifactId>agent-java-cucumber</artifactId>
+  <version>5.2.0</version>
 </dependency>
 ```
 
@@ -75,7 +74,6 @@ convenient for BDD users.
 Enabling **StepReporter**:
 
 ```java
-
 @RunWith(Cucumber.class)
 @CucumberOptions(plugin = {"pretty", "com.epam.reportportal.cucumber.StepReporter"})
 public class RunCukesTest {
@@ -85,7 +83,6 @@ public class RunCukesTest {
 Enabling **ScenarioReporter**:
 
 ```java
-
 @RunWith(Cucumber.class)
 @CucumberOptions(plugin = {"pretty", "com.epam.reportportal.cucumber.ScenarioReporter"})
 public class RunCukesTest {
