@@ -16,7 +16,6 @@
 package com.epam.reportportal.cucumber;
 
 import com.epam.reportportal.listeners.ItemStatus;
-import com.google.common.collect.ImmutableMap;
 import gherkin.formatter.Argument;
 import gherkin.formatter.model.Match;
 
@@ -24,9 +23,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -42,21 +39,21 @@ public class Utils {
 	public static final String TABLE_COLUMN_SEPARATOR = "|";
 	public static final String TABLE_ROW_SEPARATOR = "-";
 
-	//@formatter:off
-	public static final Map<String, ItemStatus> STATUS_MAPPING = ImmutableMap.<String, ItemStatus>builder()
-			.put("passed", ItemStatus.PASSED)
-			.put("failed", ItemStatus.FAILED)
-			.put("skipped", ItemStatus.SKIPPED)
-			.put("pending", ItemStatus.SKIPPED)
-			.put("undefined", ItemStatus.SKIPPED).build();
+	public static final Map<String, ItemStatus> STATUS_MAPPING = Collections.unmodifiableMap(new HashMap<String, ItemStatus>() {{
+		put("passed", ItemStatus.PASSED);
+		put("failed", ItemStatus.FAILED);
+		put("skipped", ItemStatus.SKIPPED);
+		put("pending", ItemStatus.SKIPPED);
+		put("undefined", ItemStatus.SKIPPED);
+	}});
 
-	public static final Map<String, String> LOG_LEVEL_MAPPING = ImmutableMap.<String, String>builder()
-			.put("passed", "INFO")
-			.put("failed", "ERROR")
-			.put("skipped", "WARN")
-			.put("pending", "WARN")
-			.put("undefined", "WARN").build();
-	//@formatter:on
+	public static final Map<String, String> LOG_LEVEL_MAPPING = Collections.unmodifiableMap(new HashMap<String, String>() {{
+		put("passed", "INFO");
+		put("failed", "ERROR");
+		put("skipped", "WARN");
+		put("pending", "WARN");
+		put("undefined", "WARN");
+	}});
 
 	private Utils() {
 	}

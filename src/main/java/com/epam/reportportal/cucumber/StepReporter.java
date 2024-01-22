@@ -36,8 +36,9 @@ import java.util.Optional;
  * created in hooks will be attached to these, and not to the actual failing
  * steps!)
  *
- * @author Sergey_Gvozdyukevich
+ * @deprecated Use {@link ScenarioReporter}, since the semantic of this class is completely broken and will be removed
  */
+@Deprecated
 public class StepReporter extends AbstractReporter {
 	private static final String RP_STORY_TYPE = "STORY";
 	private static final String RP_TEST_TYPE = "SCENARIO";
