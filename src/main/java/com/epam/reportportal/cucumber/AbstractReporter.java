@@ -25,6 +25,7 @@ import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.service.tree.TestItemTree;
 import com.epam.reportportal.utils.*;
+import com.epam.reportportal.utils.files.ByteSource;
 import com.epam.reportportal.utils.properties.SystemAttributesExtractor;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
@@ -32,7 +33,6 @@ import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.attribute.ItemAttributesRQ;
 import com.epam.ta.reportportal.ws.model.launch.StartLaunchRQ;
-import com.google.common.io.ByteSource;
 import gherkin.formatter.Argument;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
@@ -128,6 +128,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		}
 	});
 
+	@Nonnull
 	public static ReportPortal getReportPortal() {
 		return REPORT_PORTAL;
 	}
@@ -169,7 +170,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param scenario Cucumber's Scenario object
 	 * @return scenario name
 	 */
-	protected String buildScenarioName(Scenario scenario) {
+	@Nonnull
+	protected String buildScenarioName(@Nonnull Scenario scenario) {
 		return Utils.buildName(scenario.getKeyword(), COLON_INFIX, scenario.getName());
 	}
 
@@ -246,6 +248,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		// because it will be executed even if all Scenarios in the Feature are excluded.
 		RunningContext.FeatureContext featureContext = currentFeatureContext.get();
 		Launch myLaunch = launch.get();
+		//noinspection ReactiveStreamsUnusedPublisher
 		if (null == featureContext.getId()) {
 			featureContext.setId(startFeature(featureContext.getItemRq()));
 			addToTree(featureContext);
@@ -293,6 +296,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
 		}
+		//noinspection ReactiveStreamsUnusedPublisher
 		launch.get().finishTestItem(itemId, buildFinishTestItemRequest(itemId, status));
 	}
 
@@ -302,7 +306,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void afterScenario() {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
 		finishTestItem(context.getId(), context.getStatus());
-		currentScenarioContext.set(null);
+		currentScenarioContext.remove();
 		removeFromTree(currentFeatureContext.get(), context);
 	}
 
@@ -342,6 +346,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void afterFeature() {
 		RunningContext.FeatureContext currentFeature = currentFeatureContext.get();
+		//noinspection ReactiveStreamsUnusedPublisher
 		if (null != currentFeature && null != currentFeature.getId()) {
 			finishTestItem(currentFeature.getId());
 		}
@@ -923,7 +928,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected String buildMultilineArgument(Step step) {
 		StringBuilder marg = new StringBuilder();
 		ofNullable(step.getRows()).map(rows -> rows.stream().map(Row::getCells).collect(Collectors.toList()))
-				.filter(t -> t.size() > 0)
+				.filter(t -> !t.isEmpty())
 				.ifPresent(t -> marg.append(formatDataTable(t)));
 		ofNullable(step.getDocString()).map(DocString::getValue)
 				.filter(ds -> !ds.isEmpty())
