@@ -54,28 +54,28 @@ public class EmbeddingTest {
 	@CucumberOptions(features = "src/test/resources/features/embedding/ImageEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.image" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class ImageStepReporter extends AbstractTestNGCucumberTests {
+	public static class ImageStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/embedding/TextEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.text" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class TextStepReporter extends AbstractTestNGCucumberTests {
+	public static class TextStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/embedding/PdfEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.pdf" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class PdfStepReporter extends AbstractTestNGCucumberTests {
+	public static class PdfStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/embedding/ArchiveEmbeddingFeature.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.embed.zip" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class ZipStepReporter extends AbstractTestNGCucumberTests {
+	public static class ZipStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
@@ -118,7 +118,7 @@ public class EmbeddingTest {
 
 	@Test
 	public void verify_image_embedding() {
-		TestUtils.runTests(ImageStepReporter.class);
+		TestUtils.runTests(ImageStepReporterTest.class);
 
 		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, atLeastOnce()).log(logCaptor.capture());
@@ -132,7 +132,7 @@ public class EmbeddingTest {
 
 	@Test
 	public void verify_text_embedding() {
-		TestUtils.runTests(TextStepReporter.class);
+		TestUtils.runTests(TextStepReporterTest.class);
 
 		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, atLeastOnce()).log(logCaptor.capture());
@@ -145,8 +145,8 @@ public class EmbeddingTest {
 	}
 
 	@Test
-	public void verify_pfd_embedding() {
-		TestUtils.runTests(PdfStepReporter.class);
+	public void verify_pdf_embedding() {
+		TestUtils.runTests(PdfStepReporterTest.class);
 
 		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, atLeastOnce()).log(logCaptor.capture());
@@ -155,12 +155,12 @@ public class EmbeddingTest {
 		List<String> types = getTypes(logCaptor, logs);
 
 		assertThat(types, hasSize(3));
-		assertThat(types, containsInAnyOrder("application/pdf", "image/png", "application/octet-stream"));
+		assertThat(types, containsInAnyOrder("application/pdf", "image/png", "application/pdf"));
 	}
 
 	@Test
 	public void verify_archive_embedding() {
-		TestUtils.runTests(ZipStepReporter.class);
+		TestUtils.runTests(ZipStepReporterTest.class);
 
 		ArgumentCaptor<List<MultipartBody.Part>> logCaptor = ArgumentCaptor.forClass(List.class);
 		verify(client, atLeastOnce()).log(logCaptor.capture());
@@ -168,6 +168,6 @@ public class EmbeddingTest {
 
 		List<String> types = getTypes(logCaptor, logs);
 		assertThat(types, hasSize(3));
-		assertThat(types, containsInAnyOrder("application/zip", "image/png", "application/octet-stream"));
+		assertThat(types, containsInAnyOrder("application/zip", "image/png", "application/zip"));
 	}
 }
