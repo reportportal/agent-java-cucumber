@@ -39,6 +39,8 @@ import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
 import okhttp3.MediaType;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -51,6 +53,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -59,6 +62,7 @@ import java.util.stream.IntStream;
 import static com.epam.reportportal.cucumber.Utils.*;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.createKey;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.retrieveLeaf;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -79,6 +83,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
+	private static final String ERROR_FORMAT = "Error:\n%s";
+	private static final String DESCRIPTION_ERROR_FORMAT = "%s\n" + ERROR_FORMAT;
 
 	public static final TestItemTree ITEM_TREE = new TestItemTree();
 	private static volatile ReportPortal REPORT_PORTAL = ReportPortal.builder().build();
@@ -88,6 +94,15 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	protected final ThreadLocal<RunningContext.FeatureContext> currentFeatureContext = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.ScenarioContext> currentScenarioContext = new ThreadLocal<>();
+
+	/**
+	 * This map uses to record the description of the scenario and the step to append the error to the description.
+	 */
+	private final Map<String, String> descriptionsMap = new ConcurrentHashMap<>();
+	/**
+	 * This map uses to record scenario errors to append to the description.
+	 */
+	private final Map<String, Throwable> scenarioErrorMap = new ConcurrentHashMap<>();
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
 
@@ -259,6 +274,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		scenarioContext.setId(startScenario(featureContext.getId(), rq));
 		scenarioContext.setLine(scenario.getLine());
 		scenarioContext.setFeatureUri(uri);
+		descriptionsMap.put(scenarioContext.getId().blockingGet(), ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY));
 		if (myLaunch.getParameters().isCallbackReportingEnabled()) {
 			addToTree(featureContext, scenarioContext);
 		}
@@ -278,11 +294,31 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	@Nonnull
 	@SuppressWarnings("unused")
-	protected FinishTestItemRQ buildFinishTestItemRequest(@Nonnull Maybe<String> itemId, @Nullable ItemStatus status) {
+	protected FinishTestItemRQ buildFinishTestItemRequest(@Nonnull Maybe<String> itemId, @Nullable ItemStatus status,
+														  @Nullable Throwable error) {
 		FinishTestItemRQ rq = new FinishTestItemRQ();
+		if (status == ItemStatus.FAILED) {
+			Optional<String> currentDescription = Optional.ofNullable(descriptionsMap.get(itemId.blockingGet()));
+			currentDescription.flatMap(description -> Optional.ofNullable(error)
+							.map(errorMessage -> resolveDescriptionErrorMessage(description, errorMessage)))
+					.ifPresent(rq::setDescription);
+		}
 		ofNullable(status).ifPresent(s -> rq.setStatus(s.name()));
 		rq.setEndTime(Calendar.getInstance().getTime());
 		return rq;
+	}
+
+	/**
+	 * Resolve description
+	 * @param currentDescription Current description
+	 * @param error Error message
+	 * @return Description with error
+	 */
+	private String resolveDescriptionErrorMessage(String currentDescription, Throwable error) {
+		return Optional.ofNullable(currentDescription)
+				.filter(StringUtils::isNotBlank)
+				.map(description -> format(DESCRIPTION_ERROR_FORMAT, currentDescription, error))
+				.orElse(format(ERROR_FORMAT, error));
 	}
 
 	/**
@@ -291,13 +327,13 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param itemId an ID of the item
 	 * @param status the status of the item
 	 */
-	protected void finishTestItem(@Nullable Maybe<String> itemId, @Nullable ItemStatus status) {
+	protected void finishTestItem(@Nullable Maybe<String> itemId, @Nullable ItemStatus status, @Nullable Throwable error) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
 		}
 		//noinspection ReactiveStreamsUnusedPublisher
-		launch.get().finishTestItem(itemId, buildFinishTestItemRequest(itemId, status));
+		launch.get().finishTestItem(itemId, buildFinishTestItemRequest(itemId, status, error));
 	}
 
 	/**
@@ -305,7 +341,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void afterScenario() {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		finishTestItem(context.getId(), context.getStatus());
+		finishTestItem(context.getId(), context.getStatus(), scenarioErrorMap.get(context.getId().blockingGet()));
 		currentScenarioContext.remove();
 		removeFromTree(currentFeatureContext.get(), context);
 	}
@@ -406,6 +442,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		Maybe<String> stepId = startStep(context.getId(), rq);
 		context.setCurrentStepId(stepId);
 		String stepText = step.getName();
+		if (rq.isHasStats()) {
+			descriptionsMap.put(stepId.blockingGet(), ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY));
+		}
 
 		if (launch.get().getParameters().isCallbackReportingEnabled()) {
 			addToTree(context, stepText, stepId);
@@ -420,7 +459,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void afterStep(@Nonnull Result result) {
 		reportResult(result, null);
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		finishTestItem(context.getCurrentStepId(), mapStatus(result.getStatus()));
+		finishTestItem(context.getCurrentStepId(), mapStatus(result.getStatus()), result.getError());
 		context.setCurrentStepId(null);
 	}
 
@@ -471,7 +510,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@SuppressWarnings("unused")
 	protected void afterHooks(Boolean isBefore) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		finishTestItem(context.getHookStepId(), context.getHookStatus());
+		finishTestItem(context.getHookStepId(), context.getHookStatus(), null);
 		context.setHookStepId(null);
 	}
 
@@ -506,7 +545,11 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			sendLog(getStackTrace(result.getError()), level);
 		}
 		RunningContext.ScenarioContext currentScenario = getCurrentScenarioContext();
-		currentScenario.updateStatus(mapStatus(result.getStatus()));
+		ItemStatus itemStatus = mapStatus(result.getStatus());
+		currentScenario.updateStatus(itemStatus);
+		if (itemStatus == ItemStatus.FAILED) {
+			scenarioErrorMap.put(currentScenario.getId().blockingGet(), result.getError());
+		}
 	}
 
 	/**
@@ -752,7 +795,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param itemId an ID of the item
 	 */
 	protected void finishTestItem(Maybe<String> itemId) {
-		finishTestItem(itemId, null);
+		finishTestItem(itemId, null, null);
 	}
 
 	/**
