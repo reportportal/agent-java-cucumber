@@ -45,6 +45,7 @@ dependencies {
 
     testImplementation 'com.epam.reportportal:agent-java-test-utils:0.0.2'
 
+    testImplementation 'com.squareup.okhttp3:okhttp:4.12.0'
     testImplementation 'org.aspectj:aspectjweaver:1.9.19'
     testImplementation "io.cucumber:cucumber-java:${project.cucumber_version}"
     testImplementation "io.cucumber:cucumber-testng:${project.cucumber_version}"
