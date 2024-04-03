@@ -38,7 +38,6 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
-import okhttp3.MediaType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -570,15 +569,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	@Override
 	public void embedding(String mimeType, byte[] data) {
-		String type = ofNullable(mimeType).filter(m -> {
-			try {
-				MediaType.get(m);
-				return true;
-			} catch (IllegalArgumentException e) {
-				LOGGER.warn("Incorrect media type '{}'", m);
-				return false;
-			}
-		}).orElseGet(() -> getDataType(data));
+		String type = ofNullable(mimeType).filter(m -> m.contains("/")).orElseGet(() -> getDataType(data));
 		String attachmentName = ofNullable(type).map(t -> t.substring(0, t.indexOf("/"))).orElse("");
 		ReportPortal.emitLog(new ReportPortalMessage(ByteSource.wrap(data), type, attachmentName),
 				"UNKNOWN",
