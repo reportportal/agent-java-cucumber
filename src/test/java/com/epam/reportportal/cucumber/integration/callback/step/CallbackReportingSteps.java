@@ -65,6 +65,7 @@ public class CallbackReportingSteps {
 		finishTestItemRQ.setDescription(description);
 		finishTestItemRQ.setStatus(status);
 		finishTestItemRQ.setEndTime(Calendar.getInstance().getTime());
+		//noinspection ResultOfMethodCallIgnored
 		ItemTreeReporter.finishItem(AbstractReporter.getReportPortal().getClient(),
 				finishTestItemRQ,
 				AbstractReporter.ITEM_TREE.getLaunchId(),
