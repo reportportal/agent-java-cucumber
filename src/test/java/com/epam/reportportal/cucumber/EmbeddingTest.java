@@ -141,7 +141,7 @@ public class EmbeddingTest {
 		List<String> types = getTypes(logCaptor, logs);
 
 		assertThat(types, hasSize(3));
-		assertThat(types, containsInAnyOrder("text/plain", "image/png", "application/octet-stream"));
+		assertThat(types, containsInAnyOrder("text/plain", "image/png", "text/plain"));
 	}
 
 	@Test

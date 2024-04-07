@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [5.2.3]
+### Changed
+- Client version updated on [5.2.13](https://github.com/reportportal/client-java/releases/tag/5.2.13), by @HardNorth
+
+## [5.2.2]
+### Changed
+- Client version updated on [5.2.11](https://github.com/reportportal/client-java/releases/tag/5.2.11), by @HardNorth
+### Removed
+- `OkHttp` dependency, by @HardNorth
+
 ## [5.2.1]
 ### Changed
 - Client version updated on [5.2.4](https://github.com/reportportal/client-java/releases/tag/5.2.4), by @HardNorth
