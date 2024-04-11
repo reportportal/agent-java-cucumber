@@ -99,9 +99,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	private final Map<String, String> descriptionsMap = new ConcurrentHashMap<>();
 	/**
-	 * This map uses to record scenario errors to append to the description.
+	 * This map uses to record errors to append to the description.
 	 */
-	private final Map<String, Throwable> scenarioErrorMap = new ConcurrentHashMap<>();
+	private final Map<String, Throwable> errorMap = new ConcurrentHashMap<>();
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
 
@@ -273,7 +273,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		scenarioContext.setId(startScenario(featureContext.getId(), rq));
 		scenarioContext.setLine(scenario.getLine());
 		scenarioContext.setFeatureUri(uri);
-		descriptionsMap.put(scenarioContext.getId().blockingGet(), ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY));
+		scenarioContext.getId()
+				.subscribe(id -> descriptionsMap.put(id, ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY)));
 		if (myLaunch.getParameters().isCallbackReportingEnabled()) {
 			addToTree(featureContext, scenarioContext);
 		}
@@ -293,18 +294,20 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	@Nonnull
 	@SuppressWarnings("unused")
-	protected FinishTestItemRQ buildFinishTestItemRequest(@Nonnull Maybe<String> itemId, @Nullable ItemStatus status,
-														  @Nullable Throwable error) {
-		FinishTestItemRQ rq = new FinishTestItemRQ();
-		if (status == ItemStatus.FAILED) {
-			Optional<String> currentDescription = Optional.ofNullable(descriptionsMap.get(itemId.blockingGet()));
-			currentDescription.flatMap(description -> Optional.ofNullable(error)
-							.map(errorMessage -> resolveDescriptionErrorMessage(description, errorMessage)))
-					.ifPresent(rq::setDescription);
-		}
-		ofNullable(status).ifPresent(s -> rq.setStatus(s.name()));
-		rq.setEndTime(Calendar.getInstance().getTime());
-		return rq;
+	protected Maybe<FinishTestItemRQ> buildFinishTestItemRequest(@Nonnull Maybe<String> itemId, @Nullable ItemStatus status) {
+		return itemId.map(id -> {
+			FinishTestItemRQ rq = new FinishTestItemRQ();
+			if (status == ItemStatus.FAILED) {
+				Optional<String> currentDescription = Optional.ofNullable(descriptionsMap.get(id));
+				Optional<Throwable> currentError = Optional.ofNullable(errorMap.get(id));
+				currentDescription.flatMap(description -> currentError
+								.map(errorMessage -> resolveDescriptionErrorMessage(description, errorMessage)))
+						.ifPresent(rq::setDescription);
+			}
+			ofNullable(status).ifPresent(s -> rq.setStatus(s.name()));
+			rq.setEndTime(Calendar.getInstance().getTime());
+			return rq;
+		});
 	}
 
 	/**
@@ -326,13 +329,14 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param itemId an ID of the item
 	 * @param status the status of the item
 	 */
-	protected void finishTestItem(@Nullable Maybe<String> itemId, @Nullable ItemStatus status, @Nullable Throwable error) {
+	protected void finishTestItem(@Nullable Maybe<String> itemId, @Nullable ItemStatus status) {
 		if (itemId == null) {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
 		}
 		//noinspection ReactiveStreamsUnusedPublisher
-		launch.get().finishTestItem(itemId, buildFinishTestItemRequest(itemId, status, error));
+		Maybe<FinishTestItemRQ> finishTestItemRQMaybe = buildFinishTestItemRequest(itemId, status);
+		finishTestItemRQMaybe.subscribe(finishTestItemRQ -> launch.get().finishTestItem(itemId, finishTestItemRQ));
 	}
 
 	/**
@@ -340,7 +344,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 */
 	protected void afterScenario() {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		finishTestItem(context.getId(), context.getStatus(), scenarioErrorMap.get(context.getId().blockingGet()));
+		finishTestItem(context.getId(), context.getStatus());
 		currentScenarioContext.remove();
 		removeFromTree(currentFeatureContext.get(), context);
 	}
@@ -442,7 +446,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		context.setCurrentStepId(stepId);
 		String stepText = step.getName();
 		if (rq.isHasStats()) {
-			descriptionsMap.put(stepId.blockingGet(), ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY));
+			stepId.subscribe(id -> descriptionsMap.put(id, ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY)));
 		}
 
 		if (launch.get().getParameters().isCallbackReportingEnabled()) {
@@ -458,7 +462,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	protected void afterStep(@Nonnull Result result) {
 		reportResult(result, null);
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		finishTestItem(context.getCurrentStepId(), mapStatus(result.getStatus()), result.getError());
+		finishTestItem(context.getCurrentStepId(), mapStatus(result.getStatus()));
 		context.setCurrentStepId(null);
 	}
 
@@ -509,7 +513,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@SuppressWarnings("unused")
 	protected void afterHooks(Boolean isBefore) {
 		RunningContext.ScenarioContext context = getCurrentScenarioContext();
-		finishTestItem(context.getHookStepId(), context.getHookStatus(), null);
+		finishTestItem(context.getHookStepId(), context.getHookStatus());
 		context.setHookStepId(null);
 	}
 
@@ -547,7 +551,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		ItemStatus itemStatus = mapStatus(result.getStatus());
 		currentScenario.updateStatus(itemStatus);
 		if (itemStatus == ItemStatus.FAILED) {
-			scenarioErrorMap.put(currentScenario.getId().blockingGet(), result.getError());
+			currentScenario.getId().subscribe(id -> errorMap.put(id, result.getError()));
+			currentScenario.getCurrentStepId().subscribe(id -> errorMap.put(id, result.getError()));
 		}
 	}
 
@@ -786,7 +791,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	 * @param itemId an ID of the item
 	 */
 	protected void finishTestItem(Maybe<String> itemId) {
-		finishTestItem(itemId, null, null);
+		finishTestItem(itemId, null);
 	}
 
 	/**
