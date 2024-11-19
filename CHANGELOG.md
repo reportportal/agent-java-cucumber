@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [5.2.4]
 ### Added
 - Common Stack Trace frames skip in description and logs, by @HardNorth
 - Reporting of Last Error Log in Item description, by @HardNorth and @ArtemOAS
