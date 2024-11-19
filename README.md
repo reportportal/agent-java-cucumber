@@ -49,7 +49,7 @@ Add to POM.xml
 <dependency>
   <groupId>com.epam.reportportal</groupId>
   <artifactId>agent-java-cucumber</artifactId>
-  <version>5.2.3</version>
+  <version>5.2.4</version>
 </dependency>
 ```
 
