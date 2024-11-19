@@ -25,6 +25,7 @@ import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
+import com.epam.reportportal.utils.formatting.MarkdownUtils;
 import com.epam.ta.reportportal.ws.model.FinishTestItemRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
 import cucumber.api.CucumberOptions;
@@ -43,9 +44,8 @@ import java.util.stream.Stream;
 
 import static com.epam.reportportal.cucumber.integration.util.TestUtils.filterLogs;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 /**
@@ -54,22 +54,26 @@ import static org.mockito.Mockito.*;
 public class FailedTest {
 
 	private static final String EXPECTED_ERROR = "java.lang.IllegalStateException: " + FailedSteps.ERROR_MESSAGE;
-	private static final String ERROR_LOG_TEXT = "Error:\n" + EXPECTED_ERROR;
-	private static final String DESCRIPTION_ERROR_LOG_TEXT =
-			"src/test/resources/features/FailedScenario.feature\n"
-					+ ERROR_LOG_TEXT;
+	private static final String EXPECTED_STACK_TRACE = EXPECTED_ERROR
+			+ "\n\tat com.epam.reportportal.cucumber.integration.feature.FailedSteps.i_have_a_failed_step(FailedSteps.java:31)"
+			+ "\n\tat ✽.Given I have a failed step(src/test/resources/features/FailedScenario.feature:4)\n";
+	private static final String ERROR_LOG_TEXT = "Error:\n" + EXPECTED_STACK_TRACE;
+
+	private static final String SCENARIO_CODE_REFERENCES_WITH_ERROR = MarkdownUtils.asTwoParts("src/test/resources/features/FailedScenario.feature",
+			ERROR_LOG_TEXT
+	);
 
 	@CucumberOptions(features = "src/test/resources/features/FailedScenario.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestScenarioReporter" })
-	public static class FailedScenarioReporter extends AbstractTestNGCucumberTests {
+	public static class FailedScenarioReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/FailedScenario.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class FailedStepReporter extends AbstractTestNGCucumberTests {
+	public static class FailedStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
@@ -99,7 +103,7 @@ public class FailedTest {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void verify_failed_step_reporting_scenario_reporter() {
-		TestUtils.runTests(FailedScenarioReporter.class);
+		TestUtils.runTests(FailedScenarioReporterTest.class);
 
 		verify(client).startTestItem(any());
 		verify(client).startTestItem(same(suiteId), any());
@@ -125,7 +129,7 @@ public class FailedTest {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void verify_failed_step_reporting_step_reporter() {
-		TestUtils.runTests(FailedStepReporter.class);
+		TestUtils.runTests(FailedStepReporterTest.class);
 
 		verify(client).startTestItem(any());
 		verify(client).startTestItem(same(suiteId), any());
@@ -146,9 +150,8 @@ public class FailedTest {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void verify_failed_nested_step_description_scenario_reporter() {
-		TestUtils.runTests(FailedScenarioReporter.class);
+		TestUtils.runTests(FailedScenarioReporterTest.class);
 
 		verify(client).startTestItem(any());
 		verify(client).startTestItem(same(suiteId), any());
@@ -164,13 +167,12 @@ public class FailedTest {
 
 		FinishTestItemRQ step = finishRqs.get(0);
 		assertThat(step.getDescription(), not(equalTo(ERROR_LOG_TEXT)));
-		assertThat(step.getDescription(), not(equalTo(DESCRIPTION_ERROR_LOG_TEXT)));
+		assertThat(step.getDescription(), not(equalTo(SCENARIO_CODE_REFERENCES_WITH_ERROR)));
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void verify_failed_step_description_step_reporter() {
-		TestUtils.runTests(FailedStepReporter.class);
+		TestUtils.runTests(FailedStepReporterTest.class);
 
 		verify(client).startTestItem(any());
 		verify(client).startTestItem(same(suiteId), any());
@@ -185,6 +187,6 @@ public class FailedTest {
 		FinishTestItemRQ step = finishRqs.get(0);
 		assertThat(step.getDescription(), equalTo(ERROR_LOG_TEXT));
 		FinishTestItemRQ test = finishRqs.get(1);
-		assertThat(test.getDescription(), equalTo(DESCRIPTION_ERROR_LOG_TEXT));
+		assertThat(test.getDescription(), equalTo(SCENARIO_CODE_REFERENCES_WITH_ERROR));
 	}
 }

@@ -6,6 +6,7 @@ import com.epam.reportportal.cucumber.integration.util.TestUtils;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
+import com.epam.reportportal.utils.formatting.MarkdownUtils;
 import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
@@ -39,39 +40,40 @@ public class ParameterStepReporterTest {
 	@CucumberOptions(features = "src/test/resources/features/BasicScenarioOutlineParameters.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class RunOutlineParametersTestStepReporter extends AbstractTestNGCucumberTests {
+	public static class RunOutlineParametersTestStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/TwoScenarioOutlineParameters.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class RunTwoOutlineParametersTestStepReporter extends AbstractTestNGCucumberTests {
+	public static class RunTwoOutlineParametersTestStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/BasicInlineParameters.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class InlineParametersTestStepReporter extends AbstractTestNGCucumberTests {
+	public static class InlineParametersTestStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/DocStringParameters.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class DocstringParameterTestStepReporter extends AbstractTestNGCucumberTests {
+	public static class DocstringParameterTestStepReporterTest extends AbstractTestNGCucumberTests {
 
 	}
 
 	@CucumberOptions(features = "src/test/resources/features/DataTableParameter.feature", glue = {
 			"com.epam.reportportal.cucumber.integration.feature" }, plugin = { "pretty",
 			"com.epam.reportportal.cucumber.integration.TestStepReporter" })
-	public static class DataTableParameterTestStepReporter extends AbstractTestNGCucumberTests {
+	public static class DataTableParameterTestStepReporterTest extends AbstractTestNGCucumberTests {
 	}
 
 	private static final String DOCSTRING_PARAM = "My very long parameter\nWith some new lines";
-	private static final String TABLE_PARAM = Utils.formatDataTable(Arrays.asList(Arrays.asList("key", "value"),
+	private static final String TABLE_PARAM = MarkdownUtils.formatDataTable(Arrays.asList(
+			Arrays.asList("key", "value"),
 			Arrays.asList("myKey", "myValue")
 	));
 
@@ -108,7 +110,7 @@ public class ParameterStepReporterTest {
 
 	@Test
 	public void verify_agent_retrieves_parameters_from_request() {
-		TestUtils.runTests(RunOutlineParametersTestStepReporter.class);
+		TestUtils.runTests(RunOutlineParametersTestStepReporterTest.class);
 
 		verify(client, times(3)).startTestItem(same(suiteId), any());
 		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
@@ -137,7 +139,7 @@ public class ParameterStepReporterTest {
 
 	@Test
 	public void verify_agent_retrieves_two_parameters_from_request() {
-		TestUtils.runTests(RunTwoOutlineParametersTestStepReporter.class);
+		TestUtils.runTests(RunTwoOutlineParametersTestStepReporterTest.class);
 
 		verify(client, times(1)).startTestItem(any());
 		verify(client, times(3)).startTestItem(same(suiteId), any());
@@ -159,7 +161,7 @@ public class ParameterStepReporterTest {
 
 	@Test
 	public void verify_inline_parameters() {
-		TestUtils.runTests(InlineParametersTestStepReporter.class);
+		TestUtils.runTests(InlineParametersTestStepReporterTest.class);
 
 		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(5)).startTestItem(same(testIds.get(0)), captor.capture());
@@ -184,7 +186,7 @@ public class ParameterStepReporterTest {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void verify_docstring_parameters() {
-		TestUtils.runTests(DocstringParameterTestStepReporter.class);
+		TestUtils.runTests(DocstringParameterTestStepReporterTest.class);
 
 		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(4)).startTestItem(same(testIds.get(0)), captor.capture());
@@ -209,7 +211,7 @@ public class ParameterStepReporterTest {
 	@Test
 	@SuppressWarnings("unchecked")
 	public void verify_data_table_parameters() {
-		TestUtils.runTests(DataTableParameterTestStepReporter.class);
+		TestUtils.runTests(DataTableParameterTestStepReporterTest.class);
 
 		ArgumentCaptor<StartTestItemRQ> captor = ArgumentCaptor.forClass(StartTestItemRQ.class);
 		verify(client, times(3)).startTestItem(same(testIds.get(0)), captor.capture());
