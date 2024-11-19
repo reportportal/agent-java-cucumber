@@ -26,6 +26,7 @@ import com.epam.reportportal.service.item.TestCaseIdEntry;
 import com.epam.reportportal.service.tree.TestItemTree;
 import com.epam.reportportal.utils.*;
 import com.epam.reportportal.utils.files.ByteSource;
+import com.epam.reportportal.utils.formatting.MarkdownUtils;
 import com.epam.reportportal.utils.http.ContentType;
 import com.epam.reportportal.utils.properties.SystemAttributesExtractor;
 import com.epam.ta.reportportal.ws.model.FinishExecutionRQ;
@@ -39,6 +40,7 @@ import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 import io.reactivex.Maybe;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -51,6 +53,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -59,10 +62,12 @@ import java.util.stream.IntStream;
 import static com.epam.reportportal.cucumber.Utils.*;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.createKey;
 import static com.epam.reportportal.cucumber.util.ItemTreeUtils.retrieveLeaf;
+import static com.epam.reportportal.utils.formatting.ExceptionUtils.getStackTrace;
+import static com.epam.reportportal.utils.formatting.MarkdownUtils.formatDataTable;
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 
 /**
  * Abstract Cucumber formatter/reporter for Report Portal
@@ -79,6 +84,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	private static final String GET_LOCATION_METHOD_NAME = "getLocation";
 	private static final String METHOD_OPENING_BRACKET = "(";
 	private static final String DOCSTRING_DECORATOR = "\n\"\"\"\n";
+	private static final String ERROR_FORMAT = "Error:\n%s";
 
 	public static final TestItemTree ITEM_TREE = new TestItemTree();
 	private static volatile ReportPortal REPORT_PORTAL = ReportPortal.builder().build();
@@ -88,6 +94,15 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 
 	protected final ThreadLocal<RunningContext.FeatureContext> currentFeatureContext = new ThreadLocal<>();
 	protected final ThreadLocal<RunningContext.ScenarioContext> currentScenarioContext = new ThreadLocal<>();
+
+	/**
+	 * This map uses to record the description of the scenario and the step to append the error to the description.
+	 */
+	private final Map<Maybe<String>, String> descriptionsMap = new ConcurrentHashMap<>();
+	/**
+	 * This map uses to record errors to append to the description.
+	 */
+	private final Map<Maybe<String>, Throwable> errorMap = new ConcurrentHashMap<>();
 
 	private AtomicBoolean finished = new AtomicBoolean(false);
 
@@ -259,6 +274,7 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		scenarioContext.setId(startScenario(featureContext.getId(), rq));
 		scenarioContext.setLine(scenario.getLine());
 		scenarioContext.setFeatureUri(uri);
+		descriptionsMap.put(scenarioContext.getId(), ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY));
 		if (myLaunch.getParameters().isCallbackReportingEnabled()) {
 			addToTree(featureContext, scenarioContext);
 		}
@@ -280,9 +296,32 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	@SuppressWarnings("unused")
 	protected FinishTestItemRQ buildFinishTestItemRequest(@Nonnull Maybe<String> itemId, @Nullable ItemStatus status) {
 		FinishTestItemRQ rq = new FinishTestItemRQ();
+		if (status == ItemStatus.FAILED) {
+			Optional<String> currentDescription = Optional.ofNullable(descriptionsMap.get(itemId));
+			Optional<Throwable> currentError = Optional.ofNullable(errorMap.get(itemId));
+			currentDescription.flatMap(description -> currentError.map(errorMessage -> resolveDescriptionErrorMessage(
+					description,
+					errorMessage
+			))).ifPresent(rq::setDescription);
+		}
 		ofNullable(status).ifPresent(s -> rq.setStatus(s.name()));
 		rq.setEndTime(Calendar.getInstance().getTime());
 		return rq;
+	}
+
+	/**
+	 * Resolve description
+	 *
+	 * @param currentDescription Current description
+	 * @param error              Error message
+	 * @return Description with error
+	 */
+	private String resolveDescriptionErrorMessage(String currentDescription, Throwable error) {
+		String errorStr = format(ERROR_FORMAT, getStackTrace(error, new Throwable()));
+		return Optional.ofNullable(currentDescription)
+				.filter(StringUtils::isNotBlank)
+				.map(description -> MarkdownUtils.asTwoParts(currentDescription, errorStr))
+				.orElse(errorStr);
 	}
 
 	/**
@@ -296,8 +335,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			LOGGER.error("BUG: Trying to finish unspecified test item.");
 			return;
 		}
+		FinishTestItemRQ finishTestItemRQ = buildFinishTestItemRequest(itemId, status);
 		//noinspection ReactiveStreamsUnusedPublisher
-		launch.get().finishTestItem(itemId, buildFinishTestItemRequest(itemId, status));
+		launch.get().finishTestItem(itemId, finishTestItemRQ);
 	}
 
 	/**
@@ -388,7 +428,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	}
 
 	private void addToTree(@Nonnull RunningContext.ScenarioContext scenarioContext, @Nullable String text, @Nullable Maybe<String> stepId) {
-		retrieveLeaf(scenarioContext.getFeatureUri(),
+		retrieveLeaf(
+				scenarioContext.getFeatureUri(),
 				scenarioContext.getLine(),
 				ITEM_TREE
 		).ifPresent(scenarioLeaf -> scenarioLeaf.getChildItems().put(createKey(text), TestItemTree.createTestItemLeaf(stepId)));
@@ -406,6 +447,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		Maybe<String> stepId = startStep(context.getId(), rq);
 		context.setCurrentStepId(stepId);
 		String stepText = step.getName();
+		if (rq.isHasStats()) {
+			descriptionsMap.put(stepId, ofNullable(rq.getDescription()).orElse(StringUtils.EMPTY));
+		}
 
 		if (launch.get().getParameters().isCallbackReportingEnabled()) {
 			addToTree(context, stepText, stepId);
@@ -441,8 +485,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	/**
 	 * Start before/after-hook item on Report Portal
 	 *
-	 * @param parentId  parent item id
-	 * @param rq hook start request
+	 * @param parentId parent item id
+	 * @param rq       hook start request
 	 * @return hook item id
 	 */
 	@Nonnull
@@ -503,10 +547,15 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 		if (errorMessage != null) {
 			sendLog(errorMessage, level);
 		} else if (result.getError() != null) {
-			sendLog(getStackTrace(result.getError()), level);
+			sendLog(getStackTrace(result.getError(), new Throwable()), level);
 		}
 		RunningContext.ScenarioContext currentScenario = getCurrentScenarioContext();
-		currentScenario.updateStatus(mapStatus(result.getStatus()));
+		ItemStatus itemStatus = mapStatus(result.getStatus());
+		currentScenario.updateStatus(itemStatus);
+		if (itemStatus == ItemStatus.FAILED) {
+			errorMap.put(currentScenario.getId(), result.getError());
+			errorMap.put(currentScenario.getCurrentStepId(), result.getError());
+		}
 	}
 
 	/**
@@ -572,7 +621,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 	public void embedding(String mimeType, byte[] data) {
 		String type = ofNullable(mimeType).filter(ContentType::isValidType).orElseGet(() -> getDataType(data));
 		String attachmentName = ofNullable(type).map(t -> t.substring(0, t.indexOf("/"))).orElse("");
-		ReportPortal.emitLog(new ReportPortalMessage(ByteSource.wrap(data), type, attachmentName),
+		ReportPortal.emitLog(
+				new ReportPortalMessage(ByteSource.wrap(data), type, attachmentName),
 				"UNKNOWN",
 				Calendar.getInstance().getTime()
 		);
@@ -702,7 +752,8 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 			if (method == null) {
 				return getTestCaseId(codeRef, match.getArguments());
 			}
-			return TestCaseIdUtils.getTestCaseId(method.getAnnotation(TestCaseId.class),
+			return TestCaseIdUtils.getTestCaseId(
+					method.getAnnotation(TestCaseId.class),
 					method,
 					codeRef,
 					(List<Object>) ARGUMENTS_TRANSFORM.apply(match.getArguments())
@@ -866,8 +917,9 @@ public abstract class AbstractReporter implements Formatter, Reporter {
 				.filter(ds -> !ds.isEmpty())
 				.ifPresent(ds -> params.add(Pair.of("docstring", StringEscapeUtils.escapeHtml4(ds))));
 		ofNullable(step.getRows()).filter(rows -> !rows.isEmpty())
-				.ifPresent(rows -> params.add(Pair.of("datatable",
-						Utils.formatDataTable(rows.stream().map(Row::getCells).collect(Collectors.toList()))
+				.ifPresent(rows -> params.add(Pair.of(
+						"datatable",
+						formatDataTable(rows.stream().map(Row::getCells).collect(Collectors.toList()))
 				)));
 		return params.isEmpty() ? Collections.emptyList() : ParameterUtils.getParameters(codeRef, params);
 	}

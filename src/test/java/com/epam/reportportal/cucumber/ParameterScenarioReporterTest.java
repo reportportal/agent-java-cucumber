@@ -7,6 +7,7 @@ import com.epam.reportportal.listeners.ListenerParameters;
 import com.epam.reportportal.service.ReportPortal;
 import com.epam.reportportal.service.ReportPortalClient;
 import com.epam.reportportal.util.test.CommonUtils;
+import com.epam.reportportal.utils.formatting.MarkdownUtils;
 import com.epam.ta.reportportal.ws.model.ParameterResource;
 import com.epam.ta.reportportal.ws.model.StartTestItemRQ;
 import com.epam.ta.reportportal.ws.model.log.SaveLogRQ;
@@ -57,7 +58,8 @@ public class ParameterScenarioReporterTest {
 	}
 
 	private static final String DOCSTRING_PARAM = "My very long parameter\nWith some new lines";
-	private static final String TABLE_PARAM = Utils.formatDataTable(Arrays.asList(Arrays.asList("key", "value"),
+	private static final String TABLE_PARAM = MarkdownUtils.formatDataTable(Arrays.asList(
+			Arrays.asList("key", "value"),
 			Arrays.asList("myKey", "myValue")
 	));
 
@@ -70,7 +72,8 @@ public class ParameterScenarioReporterTest {
 			.limit(9)
 			.collect(Collectors.toList());
 
-	private final List<Pair<String, String>> nestedStepMap = Stream.concat(IntStream.range(0, 4)
+	private final List<Pair<String, String>> nestedStepMap = Stream.concat(
+			IntStream.range(0, 4)
 					.mapToObj(i -> Pair.of(stepIds.get(0), nestedStepIds.get(i))),
 			IntStream.range(4, 9).mapToObj(i -> Pair.of(stepIds.get(1), nestedStepIds.get(i)))
 	).collect(Collectors.toList());
@@ -91,7 +94,8 @@ public class ParameterScenarioReporterTest {
 
 	public static final List<Pair<String, Object>> PARAMETERS = Arrays.asList(Pair.of("String", "first"), Pair.of("int", 123));
 
-	public static final List<String> STEP_NAMES = Arrays.asList(String.format("When I have parameter %s", PARAMETERS.get(0).getValue()),
+	public static final List<String> STEP_NAMES = Arrays.asList(
+			String.format("When I have parameter %s", PARAMETERS.get(0).getValue()),
 			String.format("Then I emit number %s on level info", PARAMETERS.get(1).getValue().toString())
 	);
 
