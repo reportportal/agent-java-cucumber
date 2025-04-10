@@ -40,8 +40,7 @@
 | 4.4.0 - 4.8.1                                  | 3.2.0 - 5.1.0        | [binaries/cucumber4](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber4) | [sources/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
 | 5.0.0 - 5.7.0                                  | _                    | [binaries/cucumber5](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber5) | [sources/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
 | 6.0.0 - 7.0.0                                  | 6.0.0 - 7.0.0        | [binaries/cucumber6](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber6) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
-| 6.0.0 - 7.0.0                                  | 6.0.0 - 7.0.0        | [binaries/cucumber7](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber7) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber7) |
-
+| 6.0.0 - 7.0.0                                  | 6.0.0 - 7.0.0        | [binaries/cucumber7](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber7) | [sources/cucumber7](https://github.com/reportportal/agent-java-cucumber7) |
 ## Installation
 
 Add to POM.xml
@@ -52,7 +51,7 @@ Add to POM.xml
 <dependency>
   <groupId>com.epam.reportportal</groupId>
   <artifactId>agent-java-cucumber</artifactId>
-  <version>5.2.5</version>
+  <version>5.3.0</version>
 </dependency>
 ```
 
