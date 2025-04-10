@@ -1,5 +1,7 @@
 # Cucumber Agent for ReportPortal
 
+> **End of support**: The agent lifecycle already ended. You are free to use it as long as you prefer, but no new updates will be published.
+
 > **DISCLAIMER**: We use Google Analytics for sending anonymous usage information such as agent's and client's names,
 > and their versions after a successful launch start. This information might help us to improve both ReportPortal
 > backend and client sides. It is used by the ReportPortal team only and is not supposed for sharing with 3rd parties.
@@ -30,14 +32,15 @@
 
 ## Compatibility matrix for cucumber agents
 
-| Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Link to agent's repo                                                                                                       | Link to agent's github                                                    |
-|------------------------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
-| 1.2.5                                          | 2.12.2               | [binaries/cucumber1](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber%22)  | [sources/cucumber1](https://github.com/reportportal/agent-java-cucumber)  |
-| 2.0.0 - 2.4.0                                  | 3.2.0 - 5.1.0        | [binaries/cucumber2](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber2%22) | [sources/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
-| 3.0.0 - 3.0.2                                  | _                    | [binaries/cucumber3](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber3%22) | [sources/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
-| 4.4.0 - 4.8.1                                  | 3.2.0 - 5.1.0        | [binaries/cucumber4](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber4%22) | [sources/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
-| 5.0.0 - 5.7.0                                  | _                    | [binaries/cucumber5](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber5%22) | [sources/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
-| 6.0.0 - 7.0.0                                  | 6.0.0 - 7.0.0        | [binaries/cucumber6](https://search.maven.org/search?q=g:%22com.epam.reportportal%22%20AND%20a:%22agent-java-cucumber6%22) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
+| Version(s) of cucumber java and cucumber junit | Gherkin's version(s) | Link to agent's repo                                                                                                         | Link to agent's github                                                    |
+|------------------------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------|
+| 1.2.5                                          | 2.12.2               | [binaries/cucumber1](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber)  | [sources/cucumber1](https://github.com/reportportal/agent-java-cucumber)  |
+| 2.0.0 - 2.4.0                                  | 3.2.0 - 5.1.0        | [binaries/cucumber2](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber2) | [sources/cucumber2](https://github.com/reportportal/agent-java-cucumber2) |
+| 3.0.0 - 3.0.2                                  | _                    | [binaries/cucumber3](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber3) | [sources/cucumber3](https://github.com/reportportal/agent-java-cucumber3) |
+| 4.4.0 - 4.8.1                                  | 3.2.0 - 5.1.0        | [binaries/cucumber4](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber4) | [sources/cucumber4](https://github.com/reportportal/agent-java-cucumber4) |
+| 5.0.0 - 5.7.0                                  | _                    | [binaries/cucumber5](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber5) | [sources/cucumber5](https://github.com/reportportal/agent-java-cucumber5) |
+| 6.0.0 - 7.0.0                                  | 6.0.0 - 7.0.0        | [binaries/cucumber6](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber6) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber6) |
+| 6.0.0 - 7.0.0                                  | 6.0.0 - 7.0.0        | [binaries/cucumber7](https://central.sonatype.com/search?smo=true&namespace=com.epam.reportportal&name=agent-java-cucumber7) | [sources/cucumber6](https://github.com/reportportal/agent-java-cucumber7) |
 
 ## Installation
 
